@@ -50,3 +50,10 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Custom
+.idea
+cmake-build-release
+build
+sdkconfig
+sdkconfig.old
