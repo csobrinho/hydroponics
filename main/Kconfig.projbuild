@@ -1,5 +1,5 @@
 # put here your custom config value
-menu "Project Configuration"
+menu "Project config"
     config BLINK_GPIO
         int "Blink GPIO number"
         range 0 34
@@ -26,4 +26,14 @@ menu "Project Configuration"
         default 5
         help
             Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
+
+    config ESP_ONE_WIRE_GPIO
+        int "OneWire GPIO number"
+        range 0 34
+        default 22
+        help
+            GPIO number (IOxx) to access One Wire Bus.
+            Some GPIOs are used for other purposes (flash connections, etc.) and cannot be used.
+            GPIOs 35-39 are input-only so cannot be used to drive the One Wire Bus.
+
 endmenu

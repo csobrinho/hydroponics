@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <sensors/temperature.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -46,7 +47,8 @@ void app_main() {
     }
     ESP_ERROR_CHECK(ret);
 
-    display_init();
+    ESP_ERROR_CHECK(display_init());
+    ESP_ERROR_CHECK(temperature_init());
 
     xTaskCreatePinnedToCore(blink_task, "blink", 1024, NULL, BLINK_TASK_PRIO, NULL, tskNO_AFFINITY);
 }

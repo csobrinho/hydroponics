@@ -1,6 +1,6 @@
 #ifndef HYDROPONICS_NETWORK_WIFI_H
 #define HYDROPONICS_NETWORK_WIFI_H
 
-void wifi_init();
+void wifi_init(void);
 
 #endif //HYDROPONICS_NETWORK_WIFI_H

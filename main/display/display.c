@@ -5,7 +5,7 @@
 
 u8g2_t u8g2;
 
-void display_init() {
+esp_err_t display_init() {
     u8g2_esp32_hal_t u8g2_esp32_hal = U8G2_ESP32_HAL_DEFAULT;
     u8g2_esp32_hal.sda = OLED_DATA;
     u8g2_esp32_hal.scl = OLED_CLOCK;
@@ -23,4 +23,8 @@ void display_init() {
 
     u8g2_SetPowerSave(&u8g2, 0); // wake up display
     u8g2_ClearBuffer(&u8g2);
+
+    u8g2_DrawBox(&u8g2, 0, 0, 128, 64);
+
+    return ESP_OK;
 }

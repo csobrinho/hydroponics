@@ -8,6 +8,6 @@
 #define OLED_RESET GPIO_NUM_16
 #define OLED_DATA  GPIO_NUM_4
 
-void display_init();
+esp_err_t display_init(void);
 
 #endif //HYDROPONICS_DISPLAY_DISPLAY_H
