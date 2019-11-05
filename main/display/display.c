@@ -23,8 +23,7 @@ esp_err_t display_init() {
 
     u8g2_SetPowerSave(&u8g2, 0); // wake up display
     u8g2_ClearBuffer(&u8g2);
-
-    u8g2_DrawBox(&u8g2, 0, 0, 128, 64);
+    u8g2_SendBuffer(&u8g2);
 
     return ESP_OK;
 }
