@@ -7,3 +7,6 @@
 [submodule "components/esp32-ds18b20"]
 	path = components/esp32-ds18b20
 	url = https://github.com/DavidAntliff/esp32-ds18b20
+[submodule "components/bme280/driver"]
+	path = components/bme280/driver
+	url = https://github.com/BoschSensortec/BME280_driver.git
