@@ -31,8 +31,8 @@ ezo_sensor_t ec = {
         .type = "EC",
         .probe = "CS150",
         .address = EZO_EC_ADDR,
-        .cmd_device_info = {.cmd = "I", .delay_ms = 350, .has_read = true},
-        .cmd_read = {.cmd="R", .delay_ms=650, .has_read = true},
+        .cmd_device_info = {.cmd = "I", .delay_ms = 300, .has_read = true},
+        .cmd_read = {.cmd="R", .delay_ms=600, .has_read = true},
 };
 
 esp_err_t ezo_ec_set_temperature(float temp) {
@@ -47,8 +47,7 @@ esp_err_t ezo_ec_set_temperature(float temp) {
 }
 
 void ezo_ec_task(void *arg) {
-    // Wait 1s for the probe to startup.
-    vTaskDelay(pdMS_TO_TICKS(SAMPLE_PERIOD / 2));
+    ESP_ERROR_CHECK(ezo_init(&ec));
 
     float last_temperature = 25.0f;
     while (1) {
@@ -67,8 +66,6 @@ void ezo_ec_task(void *arg) {
 }
 
 esp_err_t ezo_ec_init(void) {
-    ESP_ERROR_CHECK(ezo_init(&ec));
-
     xTaskCreatePinnedToCore(ezo_ec_task, "ezo_ec", 2048, NULL, 10, NULL, tskNO_AFFINITY);
     return ESP_OK;
 }

@@ -12,7 +12,7 @@ static const char *TAG = "ezo";
 static const char *EZO_ERR_SENSOR_NULL = "sensor == null";
 static const char *EZO_ERR_VALUE_NULL = "value == null";
 
-#define LOG(args...) ESP_LOGI(args)
+#define LOG(args...) ESP_LOGD(args)
 #define EZO_CHECK(a, str, ret)  if(!(a)) {                                         \
         ESP_LOGE(TAG,"%s:%d (%s):%s", __FILE__, __LINE__, __FUNCTION__, str);      \
         return (ret);                                                              \
@@ -57,6 +57,10 @@ esp_err_t ezo_read_version(ezo_sensor_t *sensor) {
 esp_err_t ezo_init(ezo_sensor_t *sensor) {
     EZO_CHECK(sensor != NULL, EZO_ERR_SENSOR_NULL, ESP_ERR_INVALID_ARG);
 
+    // Allow the device to sleep a little bit just in case we were in the middle of a read operation before the reset.
+    // If we don't, then sometimes we read the probe value instead of what was requested.
+    vTaskDelay(pdMS_TO_TICKS(sensor->cmd_read.delay_ms));
+
     // Read version and device information.
     ESP_ERROR_CHECK(ezo_read_version(sensor));
     ESP_LOGI(TAG, "[0x%.2x] Found EZO-%s module (v%s) with probe %s", sensor->address, sensor->type, sensor->version,
@@ -85,14 +89,22 @@ esp_err_t ezo_send_command(ezo_sensor_t *sensor, const ezo_cmd_t cmd, const char
         strlcat(sensor->buf, args, EZO_MAX_BUFFER_LEN);
     }
 
-    // Write I2C address.
-    ESP_ERROR_CHECK(buses_i2c_write(sensor->address, (uint8_t *) sensor->buf, strlen(sensor->buf)));
-    memset(sensor->buf, 0, EZO_MAX_BUFFER_LEN);
+    // Write I2C address and send command.
+    i2c_cmd_handle_t handle = i2c_cmd_link_create();
+    ESP_ERROR_CHECK(i2c_master_start(handle));
+    ESP_ERROR_CHECK(i2c_master_write_byte(handle, (sensor->address << 1) | I2C_MASTER_WRITE, I2C_WRITE_ACK_CHECK));
+    ESP_ERROR_CHECK(i2c_master_write(handle, (uint8_t *) sensor->buf, strlen(sensor->buf), I2C_WRITE_ACK_CHECK));
+    ESP_ERROR_CHECK(i2c_master_stop(handle));
+    ESP_ERROR_CHECK(i2c_master_cmd_begin(I2C_MASTER_NUM, handle, pdMS_TO_TICKS(I2C_TIMEOUT_MS)));
+    i2c_cmd_link_delete(handle);
 
+    memset(sensor->buf, 0, EZO_MAX_BUFFER_LEN);
     if (cmd.delay_ms > 0) {
         vTaskDelay(pdMS_TO_TICKS(cmd.delay_ms));
     }
     if (!cmd.has_read) {
+        sensor->status = EZO_SENSOR_RESPONSE_SUCCESS;
+        sensor->bytes_read = 0;
         return ESP_OK;
     }
     for (int retry = 0; retry < EZO_MAX_RETRIES; retry++) {
@@ -100,34 +112,29 @@ esp_err_t ezo_send_command(ezo_sensor_t *sensor, const ezo_cmd_t cmd, const char
         sensor->bytes_read = 0;
         memset(sensor->buf, 0, EZO_MAX_BUFFER_LEN);
 
-        i2c_cmd_handle_t handle = i2c_cmd_link_create();
-        esp_err_t err = i2c_master_start(handle);
-        err += i2c_master_write_byte(handle, (sensor->address << 1) | I2C_MASTER_READ, I2C_WRITE_ACK_CHECK);
-        err += i2c_master_read_byte(handle, (uint8_t *) &sensor->status, I2C_MASTER_ACK);
-
-        // Restart the communications. This adds a small delay between reads. This dual operation is necessary since the
-        // EZO module doesn't seem ready to return the data and instead returns 0xFF after the response code.
-        err += i2c_master_start(handle);
-        err += i2c_master_write_byte(handle, (sensor->address << 1) | I2C_MASTER_READ, I2C_WRITE_ACK_CHECK);
-        err += i2c_master_read(handle, (uint8_t *) sensor->buf, EZO_MAX_BUFFER_LEN - 1, I2C_MASTER_ACK);
-        err += i2c_master_stop(handle);
-        err += i2c_master_cmd_begin(I2C_MASTER_NUM, handle, pdMS_TO_TICKS(I2C_TIMEOUT_MS));
+        handle = i2c_cmd_link_create();
+        i2c_master_start(handle);
+        i2c_master_write_byte(handle, (sensor->address << 1) | I2C_MASTER_READ, I2C_WRITE_ACK_CHECK);
+        i2c_master_read_byte(handle, (uint8_t *) &sensor->status, I2C_MASTER_ACK);
+        i2c_master_read(handle, (uint8_t *) sensor->buf, EZO_MAX_BUFFER_LEN - 1, I2C_MASTER_LAST_NACK);
+        i2c_master_stop(handle);
+        esp_err_t err = i2c_master_cmd_begin(I2C_MASTER_NUM, handle, pdMS_TO_TICKS(I2C_TIMEOUT_MS));
         i2c_cmd_link_delete(handle);
         LOG(TAG, "[0x%.2x] send_command err: 0x%02x status: %d", sensor->address, err, sensor->status);
 
-        if (err == ESP_ERR_TIMEOUT || sensor->status == EZO_SENSOR_RESPONSE_PROCESSING) {
+        if (sensor->status == EZO_SENSOR_RESPONSE_PROCESSING) {
             LOG(TAG, "[0x%.2x] send_command (retrying)", sensor->address);
             vTaskDelay(pdMS_TO_TICKS(20));
-            retry--;
             continue;
         }
         if (err == ESP_FAIL
+            || err == ESP_ERR_TIMEOUT
             || sensor->status == EZO_SENSOR_RESPONSE_UNKNOWN
             || sensor->status == EZO_SENSOR_RESPONSE_NO_DATA
             || sensor->status == EZO_SENSOR_RESPONSE_SYNTAX_ERROR) {
             break;
         }
-        if (err != ESP_OK && sensor->status != EZO_SENSOR_RESPONSE_SUCCESS) {
+        if (err != ESP_OK || sensor->status != EZO_SENSOR_RESPONSE_SUCCESS) {
             ESP_LOGE(TAG, "[0x%.2x] send_command unexpected state", sensor->address);
             break;
         }

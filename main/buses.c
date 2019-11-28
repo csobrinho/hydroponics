@@ -28,60 +28,21 @@ void buses_scan(void) {
     printf("     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f\n");
     printf("00:         ");
     for (uint8_t i = 3; i < 0x78; i++) {
-        esp_err_t ret = buses_i2c_write(i, NULL, 0);
         if (i % 16 == 0) {
             printf("\n%.2x:", i);
         }
-        if (ret == ESP_OK) {
+        i2c_cmd_handle_t handle = i2c_cmd_link_create();
+        ESP_ERROR_CHECK(i2c_master_start(handle));
+        ESP_ERROR_CHECK(i2c_master_write_byte(handle, (i << 1) | I2C_MASTER_WRITE, I2C_WRITE_ACK_CHECK));
+        ESP_ERROR_CHECK(i2c_master_stop(handle));
+        esp_err_t err = i2c_master_cmd_begin(I2C_MASTER_NUM, handle, pdMS_TO_TICKS(I2C_TIMEOUT_MS));
+        i2c_cmd_link_delete(handle);
+
+        if (err == ESP_OK) {
             printf(" %.2x", i);
         } else {
             printf(" --");
         }
     }
     printf("\n");
-}
-
-esp_err_t buses_i2c_write(uint8_t address, uint8_t *buf, size_t len) {
-    i2c_cmd_handle_t handle = i2c_cmd_link_create();
-    esp_err_t err = i2c_master_start(handle);
-    err += i2c_master_write_byte(handle, (address << 1) | I2C_MASTER_WRITE, I2C_WRITE_ACK_CHECK);
-    if (len > 0) {
-        err += i2c_master_write(handle, buf, len, I2C_WRITE_ACK_CHECK);
-    }
-    err += i2c_master_stop(handle);
-    err += i2c_master_cmd_begin(I2C_MASTER_NUM, handle, pdMS_TO_TICKS(I2C_TIMEOUT_MS));
-    i2c_cmd_link_delete(handle);
-    return err;
-}
-
-esp_err_t buses_i2c_read(uint8_t address, uint8_t *buf, size_t len, buses_i2c_stop_t stop) {
-    i2c_cmd_handle_t handle = i2c_cmd_link_create();
-    esp_err_t err = i2c_master_start(handle);
-    err += i2c_master_write_byte(handle, (address << 1) | I2C_MASTER_READ, I2C_WRITE_ACK_CHECK);
-    if (len > 0) {
-        err += i2c_master_read(handle, buf, len, I2C_MASTER_ACK);
-    }
-    if (stop == BUSES_I2C_STOP) {
-        err += i2c_master_stop(handle);
-    }
-    err += i2c_master_cmd_begin(I2C_MASTER_NUM, handle, pdMS_TO_TICKS(I2C_TIMEOUT_MS));
-    i2c_cmd_link_delete(handle);
-    return err;
-}
-
-esp_err_t buses_i2c_continue_read(uint8_t *buf, size_t len, i2c_ack_type_t ack) {
-    i2c_cmd_handle_t handle = i2c_cmd_link_create();
-    esp_err_t err = i2c_master_read(handle, buf, len, ack);
-    err += i2c_master_stop(handle);
-    err += i2c_master_cmd_begin(I2C_MASTER_NUM, handle, pdMS_TO_TICKS(I2C_TIMEOUT_MS));
-    i2c_cmd_link_delete(handle);
-    return err;
-}
-
-esp_err_t buses_i2c_stop(void) {
-    i2c_cmd_handle_t handle = i2c_cmd_link_create();
-    esp_err_t err = i2c_master_stop(handle);
-    err += i2c_master_cmd_begin(I2C_MASTER_NUM, handle, pdMS_TO_TICKS(I2C_TIMEOUT_MS));
-    i2c_cmd_link_delete(handle);
-    return err;
 }
