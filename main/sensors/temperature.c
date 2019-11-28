@@ -17,6 +17,7 @@
 #define SAMPLE_PERIOD      1000   // milliseconds
 
 static const char *TAG = "temperature";
+float temperature = 0.0f;
 
 owb_rmt_driver_info rmt_driver_info;
 OneWireBus *owb;
@@ -29,15 +30,16 @@ DS18B20_Info *devices[MAX_DEVICES] = {0};
         }                                           \
     } while(0)
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
 void temperature_task(void *arg) {
     // Read temperatures more efficiently by starting conversions on all devices at the same time
     int num_devices = (int) arg;
     int errors_count[MAX_DEVICES] = {0};
     int sample_count = 0;
-    TickType_t last_wake_time = xTaskGetTickCount();
 
     while (1) {
-        last_wake_time = xTaskGetTickCount();
+        TickType_t last_wake_time = xTaskGetTickCount();
 
         ds18b20_convert_all(owb);
         // All devices use the same resolution so use the first device to determine the delay
@@ -49,6 +51,7 @@ void temperature_task(void *arg) {
 
         for (int i = 0; i < num_devices; i++) {
             errors[i] = ds18b20_read_temp(devices[i], &readings[i]);
+            temperature = readings[i];
         }
         ESP_LOGI(TAG, "Temperature readings (degrees C): sample %d", ++sample_count);
         for (int i = 0; i < num_devices; i++) {
@@ -60,6 +63,8 @@ void temperature_task(void *arg) {
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(SAMPLE_PERIOD));
     }
 }
+
+#pragma clang diagnostic pop
 
 esp_err_t temperature_init(void) {
     // Setup the GPIOs.
