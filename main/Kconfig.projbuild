@@ -36,4 +36,31 @@ menu "Project config"
             Some GPIOs are used for other purposes (flash connections, etc.) and cannot be used.
             GPIOs 35-39 are input-only so cannot be used to drive the One Wire Bus.
 
+    menu "Sampling"
+        config ESP_SAMPLING_HUMIDITY_MS
+            int "Humidity"
+            default 1000
+            help
+                Set the sampling rate for humidity/outdoor temperature readings in ms.
+
+        config ESP_SAMPLING_TEMPERATURE_MS
+            int "Temperature"
+            default 1000
+            help
+                Set the sampling rate for water temperature readings in ms.
+
+        config ESP_SAMPLING_EC_MS
+            int "EC Probe"
+            default 1500
+            help
+                Set the sampling rate for electrical conductivity (EC) probe readings in ms.
+
+        config ESP_SAMPLING_PH_MS
+            int "PH Probe"
+            default 1500
+            help
+                Set the sampling rate for PH probe readings in ms.
+
+    endmenu
+
 endmenu
