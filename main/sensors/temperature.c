@@ -29,8 +29,6 @@ DS18B20_Info *devices[MAX_DEVICES] = {0};
         }                                           \
     } while(0)
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wmissing-noreturn"
 void temperature_task(void *arg) {
     // Read temperatures more efficiently by starting conversions on all devices at the same time
     int num_devices = (int) arg;
@@ -62,8 +60,6 @@ void temperature_task(void *arg) {
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_TEMPERATURE_MS));
     }
 }
-
-#pragma clang diagnostic pop
 
 esp_err_t temperature_init(void) {
     // Setup the GPIOs.
