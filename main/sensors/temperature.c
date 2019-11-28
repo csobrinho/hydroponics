@@ -14,7 +14,6 @@
 #define GPIO_DS18B20       CONFIG_ESP_ONE_WIRE_GPIO
 #define MAX_DEVICES        5
 #define DS18B20_RESOLUTION DS18B20_RESOLUTION_12_BIT
-#define SAMPLE_PERIOD      1000   // milliseconds
 
 static const char *TAG = "temperature";
 float temperature = 0.0f;
@@ -60,7 +59,7 @@ void temperature_task(void *arg) {
             }
             ESP_LOGI(TAG, "  %d: %.1f    %d errors", i, readings[i], errors_count[i]);
         }
-        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(SAMPLE_PERIOD));
+        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_TEMPERATURE_MS));
     }
 }
 
