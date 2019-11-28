@@ -10,7 +10,7 @@ CONFIG_IDF_FIRMWARE_CHIP_ID=0x0000
 #
 # SDK tool configuration
 #
-CONFIG_SDK_TOOLPREFIX=""
+CONFIG_SDK_TOOLPREFIX="xtensa-esp32-elf-"
 # end of SDK tool configuration
 
 #
@@ -922,7 +922,7 @@ CONFIG_WPA_MBEDTLS_CRYPTO=y
 # end of Compatibility options
 
 # Deprecated options for backward compatibility
-CONFIG_TOOLPREFIX=""
+CONFIG_TOOLPREFIX="xtensa-esp32-elf-"
 # CONFIG_LOG_BOOTLOADER_LEVEL_NONE is not set
 # CONFIG_LOG_BOOTLOADER_LEVEL_ERROR is not set
 # CONFIG_LOG_BOOTLOADER_LEVEL_WARN is not set
