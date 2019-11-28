@@ -7,10 +7,12 @@
 #include "driver/gpio.h"
 
 #include "esp_log.h"
-#include "esp_spi_flash.h"
 #include "nvs_flash.h"
 
 #include "display/display.h"
+#include "buses.h"
+#include "drivers/ezo_ec.h"
+#include "humidity_pressure.h"
 
 typedef enum {
     LED_STATE_OFF = 0,
@@ -19,8 +21,6 @@ typedef enum {
 } led_state_t;
 
 #define BLINK_TASK_PRIO      10
-
-static const char *TAG = "main";
 
 static led_state_t led_state = LED_STATE_BLINK;
 
@@ -47,7 +47,11 @@ void app_main() {
     }
     ESP_ERROR_CHECK(ret);
 
+    buses_init();
     ESP_ERROR_CHECK(display_init());
+    buses_scan();
+    ESP_ERROR_CHECK(humidity_pressure_init());
+    ESP_ERROR_CHECK(ezo_ec_init());
     ESP_ERROR_CHECK(temperature_init());
 
     xTaskCreatePinnedToCore(blink_task, "blink", 1024, NULL, BLINK_TASK_PRIO, NULL, tskNO_AFFINITY);
