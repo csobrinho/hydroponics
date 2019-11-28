@@ -17,11 +17,11 @@ int8_t hal_bme280_i2c_read(uint8_t dev_id, uint8_t reg_addr, uint8_t *data, uint
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 
     i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (dev_id << 1) | I2C_MASTER_WRITE, I2C_ACK_CHECK);
-    i2c_master_write_byte(cmd, reg_addr, I2C_ACK_CHECK);
+    i2c_master_write_byte(cmd, (dev_id << 1) | I2C_MASTER_WRITE, I2C_WRITE_ACK_CHECK);
+    i2c_master_write_byte(cmd, reg_addr, I2C_WRITE_ACK_CHECK);
 
     i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (dev_id << 1) | I2C_MASTER_READ, I2C_ACK_CHECK);
+    i2c_master_write_byte(cmd, (dev_id << 1) | I2C_MASTER_READ, I2C_WRITE_ACK_CHECK);
 
     if (len > 1) {
         i2c_master_read(cmd, data, len - 1, I2C_MASTER_ACK);
@@ -39,10 +39,10 @@ int8_t hal_bme280_i2c_write(uint8_t dev_id, uint8_t reg_addr, uint8_t *data, uin
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 
     i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (dev_id << 1) | I2C_MASTER_WRITE, I2C_ACK_CHECK);
+    i2c_master_write_byte(cmd, (dev_id << 1) | I2C_MASTER_WRITE, I2C_WRITE_ACK_CHECK);
 
-    i2c_master_write_byte(cmd, reg_addr, I2C_ACK_CHECK);
-    i2c_master_write(cmd, data, len, I2C_ACK_CHECK);
+    i2c_master_write_byte(cmd, reg_addr, I2C_WRITE_ACK_CHECK);
+    i2c_master_write(cmd, data, len, I2C_WRITE_ACK_CHECK);
     i2c_master_stop(cmd);
 
     esp_err_t err = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, pdMS_TO_TICKS(I2C_TIMEOUT_MS));
