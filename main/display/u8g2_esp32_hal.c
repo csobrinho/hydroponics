@@ -6,10 +6,10 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#include "buses.h"
 #include "u8g2_esp32_hal.h"
 
 static const char *TAG = "u8g2_hal";
-static const unsigned int I2C_TIMEOUT_MS = 1000;
 
 static i2c_cmd_handle_t handle_i2c;      // I2C handle.
 static u8g2_esp32_hal_t u8g2_esp32_hal;  // HAL state data.
@@ -27,36 +27,12 @@ uint8_t u8g2_esp32_i2c_byte_cb(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void 
     ESP_LOGD(TAG, "i2c_cb: Received a msg: %d, arg_int: %d, arg_ptr: %p", msg, arg_int, arg_ptr);
 
     switch (msg) {
-        case U8X8_MSG_BYTE_INIT: {
-            if (u8g2_esp32_hal.sda == U8G2_ESP32_HAL_UNDEFINED ||
-                u8g2_esp32_hal.scl == U8G2_ESP32_HAL_UNDEFINED) {
-                break;
-            }
-
-            i2c_config_t conf;
-            conf.mode = I2C_MODE_MASTER;
-            ESP_LOGI(TAG, "sda_io_num %d", u8g2_esp32_hal.sda);
-            conf.sda_io_num = u8g2_esp32_hal.sda;
-            conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
-            ESP_LOGI(TAG, "scl_io_num %d", u8g2_esp32_hal.scl);
-            conf.scl_io_num = u8g2_esp32_hal.scl;
-            conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
-            ESP_LOGI(TAG, "clk_speed %d", I2C_MASTER_FREQ_HZ);
-            conf.master.clk_speed = I2C_MASTER_FREQ_HZ;
-            ESP_LOGI(TAG, "i2c_param_config %d", conf.mode);
-            ESP_ERROR_CHECK(i2c_param_config(I2C_MASTER_NUM, &conf));
-            ESP_LOGI(TAG, "i2c_driver_install %d", I2C_MASTER_NUM);
-            ESP_ERROR_CHECK(i2c_driver_install(I2C_MASTER_NUM, conf.mode, I2C_MASTER_RX_BUF_DISABLE,
-                                               I2C_MASTER_TX_BUF_DISABLE, 0));
-            break;
-        }
-
         case U8X8_MSG_BYTE_SEND: {
             uint8_t *data_ptr = (uint8_t *) arg_ptr;
             ESP_LOG_BUFFER_HEXDUMP(TAG, data_ptr, arg_int, ESP_LOG_VERBOSE);
 
             while (arg_int > 0) {
-                ESP_ERROR_CHECK(i2c_master_write_byte(handle_i2c, *data_ptr, ACK_CHECK_EN));
+                ESP_ERROR_CHECK(i2c_master_write_byte(handle_i2c, *data_ptr, I2C_WRITE_ACK_CHECK));
                 data_ptr++;
                 arg_int--;
             }
@@ -68,15 +44,20 @@ uint8_t u8g2_esp32_i2c_byte_cb(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void 
             handle_i2c = i2c_cmd_link_create();
             ESP_LOGD(TAG, "Start I2C transfer to %02X.", i2c_address >> 1);
             ESP_ERROR_CHECK(i2c_master_start(handle_i2c));
-            ESP_ERROR_CHECK(i2c_master_write_byte(handle_i2c, i2c_address | I2C_MASTER_WRITE, ACK_CHECK_EN));
+            ESP_ERROR_CHECK(i2c_master_write_byte(handle_i2c, i2c_address | I2C_MASTER_WRITE, I2C_WRITE_ACK_CHECK));
             break;
         }
 
         case U8X8_MSG_BYTE_END_TRANSFER: {
             ESP_LOGD(TAG, "End I2C transfer.");
             ESP_ERROR_CHECK(i2c_master_stop(handle_i2c));
-            ESP_ERROR_CHECK(i2c_master_cmd_begin(I2C_MASTER_NUM, handle_i2c, I2C_TIMEOUT_MS / portTICK_RATE_MS));
+            ESP_ERROR_CHECK(i2c_master_cmd_begin(I2C_MASTER_NUM, handle_i2c, pdMS_TO_TICKS(I2C_TIMEOUT_MS)));
             i2c_cmd_link_delete(handle_i2c);
+            break;
+        }
+
+        case U8X8_MSG_BYTE_INIT: {
+            // Initialization is done by the buses_init.
             break;
         }
 
@@ -104,12 +85,13 @@ uint8_t u8g2_esp32_gpio_and_delay_cb(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int,
             if (bitmask == 0) {
                 break;
             }
-            gpio_config_t gpioConfig;
-            gpioConfig.pin_bit_mask = bitmask;
-            gpioConfig.mode = GPIO_MODE_OUTPUT;
-            gpioConfig.pull_up_en = GPIO_PULLUP_DISABLE;
-            gpioConfig.pull_down_en = GPIO_PULLDOWN_ENABLE;
-            gpioConfig.intr_type = GPIO_INTR_DISABLE;
+            gpio_config_t gpioConfig = {
+                    .pin_bit_mask = bitmask,
+                    .mode = GPIO_MODE_OUTPUT,
+                    .pull_up_en = GPIO_PULLUP_DISABLE,
+                    .pull_down_en = GPIO_PULLDOWN_ENABLE,
+                    .intr_type = GPIO_INTR_DISABLE,
+            };
             gpio_config(&gpioConfig);
             break;
         }
