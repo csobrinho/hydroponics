@@ -5,7 +5,7 @@
 #include "esp_log.h"
 #include "esp_err.h"
 
-#include "ezo.h"
+#include "driver/ezo.h"
 #include "temperature.h"
 
 static const char *TAG = "ezo_ec";
@@ -14,19 +14,6 @@ float ec_value = 0.0f;
 #define EZO_EC_ADDR 0x64                /*!< Slave address for Atlas EZO EC module. */
 #define SAMPLE_PERIOD 1000              /*!< Reading sample period. */
 
-#if 0
-#define ESP_ERROR_CHECK(x) do {                                                    \
-        esp_err_t __err_rc = (x);                                                  \
-        if (__err_rc != ESP_OK) {                                                  \
-            _esp_error_check_failed_without_abort(__err_rc, __FILE__, __LINE__,    \
-                                                  __ASSERT_FUNC, #x);              \
-        }                                                                          \
-        return __err_rc;                                                           \
-    } while(0)
-#endif
-
-const ezo_cmd_t cmd_temperature = {.cmd = "T", .delay_ms=300, .has_read= true};
-
 ezo_sensor_t ec = {
         .type = "EC",
         .probe = "CS150",
@@ -34,6 +21,8 @@ ezo_sensor_t ec = {
         .cmd_device_info = {.cmd = "I", .delay_ms = 300, .has_read = true},
         .cmd_read = {.cmd="R", .delay_ms=600, .has_read = true},
 };
+
+const ezo_cmd_t cmd_temperature = {.cmd = "T", .delay_ms=300, .has_read= true};
 
 esp_err_t ezo_ec_set_temperature(float temp) {
     char args[20] = {0};

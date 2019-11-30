@@ -3,16 +3,16 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#include "temperature.h"
-
 #include "esp_log.h"
 
 #include "owb.h"
 #include "owb_rmt.h"
 #include "ds18b20.h"
 
+#include "temperature.h"
+
 #define GPIO_DS18B20       CONFIG_ESP_ONE_WIRE_GPIO
-#define MAX_DEVICES        5
+#define MAX_DEVICES        2
 #define DS18B20_RESOLUTION DS18B20_RESOLUTION_12_BIT
 
 static const char *TAG = "temperature";

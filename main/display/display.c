@@ -1,4 +1,4 @@
-#include "drivers/ezo_ec.h"
+#include "sensors/ezo_ec.h"
 #include "sensors/temperature.h"
 #include "buses.h"
 #include "display.h"

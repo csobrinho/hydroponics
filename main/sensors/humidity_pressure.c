@@ -1,4 +1,3 @@
-#include <display/display.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -8,7 +7,9 @@
 #include "esp_log.h"
 
 #include "bme280.h"
+
 #include "buses.h"
+#include "display/display.h"
 
 static const char *TAG = "bme280";
 static struct bme280_dev dev;

@@ -9,10 +9,10 @@
 #include "esp_log.h"
 #include "nvs_flash.h"
 
-#include "display/display.h"
 #include "buses.h"
-#include "drivers/ezo_ec.h"
-#include "humidity_pressure.h"
+#include "display/display.h"
+#include "sensors/ezo_ec.h"
+#include "sensors/humidity_pressure.h"
 
 typedef enum {
     LED_STATE_OFF = 0,
