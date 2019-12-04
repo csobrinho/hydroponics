@@ -6,30 +6,15 @@
 #include "esp_err.h"
 
 #include "buses.h"
+#include "error.h"
 #include "ezo.h"
 
 static const char *TAG = "ezo";
-static const char *EZO_ERR_SENSOR_NULL = "sensor == null";
-static const char *EZO_ERR_VALUE_NULL = "value == null";
 
 #define LOG(args...) ESP_LOGD(args)
-#define EZO_CHECK(a, str, ret)  if(!(a)) {                                         \
-        ESP_LOGE(TAG,"%s:%d (%s):%s", __FILE__, __LINE__, __FUNCTION__, str);      \
-        return (ret);                                                              \
-        }
-#if 0
-#define ESP_ERROR_CHECK(x) do {                                                    \
-        esp_err_t __err_rc = (x);                                                  \
-        if (__err_rc != ESP_OK) {                                                  \
-            _esp_error_check_failed_without_abort(__err_rc, __FILE__, __LINE__,    \
-                                                  __ASSERT_FUNC, #x);              \
-        }                                                                          \
-        return __err_rc;                                                           \
-    } while(0)
-#endif
 
 esp_err_t ezo_read_version(ezo_sensor_t *sensor) {
-    EZO_CHECK(sensor != NULL, EZO_ERR_SENSOR_NULL, ESP_ERR_INVALID_ARG);
+    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
 
     ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->cmd_device_info, NULL));
     if (sensor->status != EZO_SENSOR_RESPONSE_SUCCESS) {
@@ -55,7 +40,7 @@ esp_err_t ezo_read_version(ezo_sensor_t *sensor) {
 }
 
 esp_err_t ezo_init(ezo_sensor_t *sensor) {
-    EZO_CHECK(sensor != NULL, EZO_ERR_SENSOR_NULL, ESP_ERR_INVALID_ARG);
+    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
 
     // Allow the device to sleep a little bit just in case we were in the middle of a read operation before the reset.
     // If we don't, then sometimes we read the probe value instead of what was requested.
@@ -70,7 +55,7 @@ esp_err_t ezo_init(ezo_sensor_t *sensor) {
 }
 
 esp_err_t ezo_free(ezo_sensor_t *sensor) {
-    EZO_CHECK(sensor != NULL, EZO_ERR_SENSOR_NULL, ESP_ERR_INVALID_ARG);
+    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
     if (sensor->version != NULL) {
         free(sensor->version);
         sensor->version = NULL;
@@ -79,7 +64,7 @@ esp_err_t ezo_free(ezo_sensor_t *sensor) {
 }
 
 esp_err_t ezo_send_command(ezo_sensor_t *sensor, const ezo_cmd_t cmd, const char *args) {
-    EZO_CHECK(sensor != NULL, EZO_ERR_SENSOR_NULL, ESP_ERR_INVALID_ARG);
+    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
     LOG(TAG, "[0x%.2x] send_command '%s' and wait %dms", sensor->address, cmd.cmd, cmd.delay_ms);
 
     sensor->status = EZO_SENSOR_RESPONSE_UNKNOWN;
@@ -146,8 +131,8 @@ esp_err_t ezo_send_command(ezo_sensor_t *sensor, const ezo_cmd_t cmd, const char
 }
 
 esp_err_t ezo_read_command(ezo_sensor_t *sensor, float *value) {
-    EZO_CHECK(sensor != NULL, EZO_ERR_SENSOR_NULL, ESP_ERR_INVALID_ARG);
-    EZO_CHECK(value != NULL, EZO_ERR_VALUE_NULL, ESP_ERR_INVALID_ARG);
+    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
+    ARG_CHECK(value != NULL, ERR_PARAM_NULL);
 
     ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->cmd_read, NULL));
     if (sensor->status != EZO_SENSOR_RESPONSE_SUCCESS || sensor->bytes_read < 1) {

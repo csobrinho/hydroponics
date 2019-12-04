@@ -9,9 +9,9 @@
 #include "owb_rmt.h"
 #include "ds18b20.h"
 
+#include "buses.h"
 #include "temperature.h"
 
-#define GPIO_DS18B20       CONFIG_ESP_ONE_WIRE_GPIO
 #define MAX_DEVICES        2
 #define DS18B20_RESOLUTION DS18B20_RESOLUTION_12_BIT
 
@@ -63,16 +63,16 @@ void temperature_task(void *arg) {
 
 esp_err_t temperature_init(void) {
     // Setup the GPIOs.
-    gpio_set_direction(GPIO_DS18B20, GPIO_MODE_INPUT_OUTPUT);
+    gpio_set_direction(ONE_WRITE_GPIO, GPIO_MODE_INPUT_OUTPUT);
 
-    owb = owb_rmt_initialize(&rmt_driver_info, GPIO_DS18B20, RMT_CHANNEL_1, RMT_CHANNEL_0);
+    owb = owb_rmt_initialize(&rmt_driver_info, ONE_WRITE_GPIO, RMT_CHANNEL_1, RMT_CHANNEL_0);
     OWB_STATUS_CHECK(owb_use_crc(owb, true), ESP_ERR_NOT_SUPPORTED);  // enable CRC check for ROM code.
 
     // Find all connected devices
     ESP_LOGI(TAG, "1-Wire scanner:");
-    OneWireBus_ROMCode device_rom_codes[MAX_DEVICES] = {0};
+    OneWireBus_ROMCode device_rom_codes[MAX_DEVICES] = {};
     int num_devices = 0;
-    OneWireBus_SearchState search_state = {0};
+    OneWireBus_SearchState search_state = {};
     bool found = false;
     OWB_STATUS_CHECK(owb_search_first(owb, &search_state, &found), ESP_ERR_NOT_FOUND);
     while (found) {

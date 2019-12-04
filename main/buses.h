@@ -14,9 +14,13 @@ typedef enum {
     I2C_WRITE_ACK_IGNORE = false,                  /*!< I2C ignore ack check for a master write. */
 } i2c_ack_t;
 
-#define I2C_MASTER_SCL GPIO_NUM_15
-#define I2C_MASTER_SDA GPIO_NUM_4
-#define OLED_RESET     GPIO_NUM_16
+#define I2C_MASTER_SCL  GPIO_NUM_15
+#define I2C_MASTER_SDA  GPIO_NUM_4
+#define OLED_RESET      GPIO_NUM_16
+#define ONE_WRITE_GPIO  CONFIG_ESP_ONE_WIRE_GPIO
+#define ROTARY_DT_GPIO  GPIO_NUM_19
+#define ROTARY_CLK_GPIO GPIO_NUM_23
+#define ROTARY_SW_GPIO  -1
 
 typedef enum {
     BUSES_I2C_NO_STOP = 0x0,                 /*!< I2C don't send stop command. */

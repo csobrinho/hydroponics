@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <sensors/temperature.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -13,6 +12,7 @@
 #include "display/display.h"
 #include "sensors/ezo_ec.h"
 #include "sensors/humidity_pressure.h"
+#include "sensors/temperature.h"
 
 typedef enum {
     LED_STATE_OFF = 0,
