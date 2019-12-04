@@ -10,8 +10,8 @@
 #define I2C_TIMEOUT_MS 500                   /*!< I2C max timeout in ms. */
 
 typedef enum {
-    I2C_WRITE_ACK_CHECK = true,                    /*!< I2C enable ack check for a master write. */
-    I2C_WRITE_ACK_IGNORE = false,                  /*!< I2C ignore ack check for a master write. */
+    I2C_WRITE_ACK_CHECK = true,              /*!< I2C enable ack check for a master write. */
+    I2C_WRITE_ACK_IGNORE = false,            /*!< I2C ignore ack check for a master write. */
 } i2c_ack_t;
 
 #define I2C_MASTER_SCL  GPIO_NUM_15
