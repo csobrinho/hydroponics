@@ -4,12 +4,13 @@
 #include "freertos/task.h"
 
 #include "driver/gpio.h"
-
+#include "driver/pcnt.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
 
 #include "buses.h"
 #include "display/display.h"
+#include "driver/rotary.h"
 #include "sensors/ezo_ec.h"
 #include "sensors/humidity_pressure.h"
 #include "sensors/temperature.h"
@@ -23,14 +24,28 @@ typedef enum {
 #define BLINK_TASK_PRIO      10
 
 static led_state_t led_state = LED_STATE_BLINK;
+static rotary_config_t rotary_config = {
+        .unit = PCNT_UNIT_0,
+        .dt = ROTARY_DT_GPIO,
+        .clk = ROTARY_CLK_GPIO,
+        .sw = ROTARY_SW_GPIO,
+};
+
+static const char *TAG = "main";
 
 void blink_task(void *arg) {
     gpio_set_direction(CONFIG_BLINK_GPIO, GPIO_MODE_OUTPUT);
     led_state_t level = LED_STATE_ON;
+    rotary_evt_t evt;
+
     while (led_state == LED_STATE_BLINK) {
         gpio_set_level(CONFIG_BLINK_GPIO, level);
         level = !level;
-        vTaskDelay(pdMS_TO_TICKS(300));
+        if (xQueueReceive(rotary_config.queue, &evt, pdMS_TO_TICKS(300))) {
+            ESP_LOGW(TAG, "rotary unit: %d status: %d", evt.unit, evt.status);
+        }
+        ESP_ERROR_CHECK(rotary_value(&rotary_config, &evt.value));
+        ESP_LOGW(TAG, "rotary value: %d", evt.value);
     }
     gpio_set_level(CONFIG_BLINK_GPIO, led_state);
     vTaskDelete(NULL);
@@ -54,5 +69,8 @@ void app_main() {
     ESP_ERROR_CHECK(ezo_ec_init());
     ESP_ERROR_CHECK(temperature_init());
 
-    xTaskCreatePinnedToCore(blink_task, "blink", 1024, NULL, BLINK_TASK_PRIO, NULL, tskNO_AFFINITY);
+    rotary_config.queue = xQueueCreate(10, sizeof(rotary_evt_t));
+    ESP_ERROR_CHECK(rotary_init(&rotary_config));
+
+    xTaskCreatePinnedToCore(blink_task, "blink", 2048, NULL, BLINK_TASK_PRIO, NULL, tskNO_AFFINITY);
 }
