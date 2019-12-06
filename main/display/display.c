@@ -1,3 +1,5 @@
+#include "driver/pcnt.h"
+
 #include "sensors/ezo_ec.h"
 #include "sensors/temperature.h"
 #include "buses.h"
@@ -33,13 +35,17 @@ esp_err_t display_init() {
 
 void display_draw_temp_humidity(float temp, float humidity) {
     u8g2_ClearBuffer(&u8g2);
-    u8g2_SetFont(&u8g2, u8g2_font_6x10_tf);
+    u8g2_SetFont(&u8g2, u8g2_font_5x7_tf);
     char buf[128] = {0};
     snprintf(buf, 128, "Tmp: %.1f | %.1f \260C", temp, temperature);
-    u8g2_DrawStr(&u8g2, 0, 10, buf);
+    u8g2_DrawStr(&u8g2, 0, 7, buf);
     snprintf(buf, 128, "Hum: %.1f %%", humidity);
-    u8g2_DrawStr(&u8g2, 0, 20, buf);
+    u8g2_DrawStr(&u8g2, 0, 15, buf);
     snprintf(buf, 128, "EC:  %.1f uS/cm", ec_value);
-    u8g2_DrawStr(&u8g2, 0, 30, buf);
+    u8g2_DrawStr(&u8g2, 0, 23, buf);
+    int16_t count;
+    pcnt_get_counter_value(PCNT_UNIT_0, &count);
+    snprintf(buf, 128, "Rot: %d", count);
+    u8g2_DrawStr(&u8g2, 0, 31, buf);
     u8g2_SendBuffer(&u8g2);
 }

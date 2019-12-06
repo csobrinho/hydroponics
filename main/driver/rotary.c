@@ -82,53 +82,35 @@ esp_err_t rotary_init(const rotary_config_t *config) {
             .intr_type = GPIO_INTR_DISABLE,
     };
     gpio_config(&clk);
-//    gpio_config_t sw = {
-//            .pin_bit_mask = BIT(config->sw),
-//            .mode = GPIO_MODE_INPUT,
-//            .pull_up_en = GPIO_PULLUP_DISABLE,
-//            .pull_down_en = GPIO_PULLDOWN_DISABLE,
-//            .intr_type = GPIO_INTR_DISABLE,
-//    };
-//    gpio_config(&sw);
 
-    pcnt_config_t config_a = {
+    pcnt_config_t pcnt_config = {
             .pulse_gpio_num = config->dt,
-            .ctrl_gpio_num = PCNT_PIN_NOT_USED,
+            .ctrl_gpio_num = config->clk,
             .channel = PCNT_CHANNEL_0,
             .unit = config->unit,
-            .pos_mode = PCNT_COUNT_INC,
-            .neg_mode = PCNT_COUNT_INC,
-            .lctrl_mode = PCNT_MODE_KEEP,
-            .hctrl_mode = PCNT_MODE_KEEP,
+            // What to do on the positive / negative edge of pulse input?
+            .pos_mode = PCNT_COUNT_INC,      // Count up on the positive edge.
+            .neg_mode = PCNT_COUNT_DIS,      // Keep the counter value on the negative edge.
+            // What to do when control input is low or high?
+            .lctrl_mode = PCNT_MODE_REVERSE, // Reverse counting direction if low
+            .hctrl_mode = PCNT_MODE_KEEP,    // Keep the primary counter mode if high
+            // Set the maximum and minimum limit values to watch.
             .counter_h_lim = INT16_MAX,
             .counter_l_lim = INT16_MIN,
     };
-    pcnt_config_t config_b = {
-            .pulse_gpio_num = config->clk,
-            .ctrl_gpio_num = PCNT_PIN_NOT_USED,
-            .channel = PCNT_CHANNEL_1,
-            .unit = config->unit,
-            .pos_mode = PCNT_COUNT_INC,
-            .neg_mode = PCNT_COUNT_INC,
-            .lctrl_mode = PCNT_MODE_KEEP,
-            .hctrl_mode = PCNT_MODE_KEEP,
-            .counter_h_lim = INT16_MAX,
-            .counter_l_lim = INT16_MIN,
-    };
-    ESP_ERROR_CHECK(pcnt_unit_config(&config_a));
-    ESP_ERROR_CHECK(pcnt_unit_config(&config_b));
-    ESP_ERROR_CHECK(pcnt_set_filter_value(config->unit, 1023));
+    ESP_ERROR_CHECK(pcnt_unit_config(&pcnt_config));
+    ESP_ERROR_CHECK(pcnt_set_filter_value(pcnt_config.unit, 100));
 
     /* Set threshold 0 and 1 values and enable events to watch */
-    ESP_ERROR_CHECK(pcnt_set_event_value(config->unit, PCNT_EVT_THRES_1, 1));
-    ESP_ERROR_CHECK(pcnt_event_enable(config->unit, PCNT_EVT_THRES_1));
-    ESP_ERROR_CHECK(pcnt_set_event_value(config->unit, PCNT_EVT_THRES_0, -1));
-    ESP_ERROR_CHECK(pcnt_event_enable(config->unit, PCNT_EVT_THRES_0));
+    ESP_ERROR_CHECK(pcnt_set_event_value(pcnt_config.unit, PCNT_EVT_THRES_1, 1));
+    ESP_ERROR_CHECK(pcnt_event_enable(pcnt_config.unit, PCNT_EVT_THRES_1));
+    ESP_ERROR_CHECK(pcnt_set_event_value(pcnt_config.unit, PCNT_EVT_THRES_0, -1));
+    ESP_ERROR_CHECK(pcnt_event_enable(pcnt_config.unit, PCNT_EVT_THRES_0));
 
     /* Enable events on zero, maximum and minimum limit values */
-    ESP_ERROR_CHECK(pcnt_event_enable(config->unit, PCNT_EVT_ZERO));
-    ESP_ERROR_CHECK(pcnt_event_enable(config->unit, PCNT_EVT_H_LIM));
-    ESP_ERROR_CHECK(pcnt_event_enable(config->unit, PCNT_EVT_L_LIM));
+    ESP_ERROR_CHECK(pcnt_event_enable(pcnt_config.unit, PCNT_EVT_ZERO));
+    ESP_ERROR_CHECK(pcnt_event_enable(pcnt_config.unit, PCNT_EVT_H_LIM));
+    ESP_ERROR_CHECK(pcnt_event_enable(pcnt_config.unit, PCNT_EVT_L_LIM));
 
     /* Initialize PCNT's counter */
     ESP_ERROR_CHECK(rotary_pause(config));
@@ -136,9 +118,9 @@ esp_err_t rotary_init(const rotary_config_t *config) {
 
     /* Register ISR handler and enable interrupts for PCNT unit */
     // ESP_ERROR_CHECK(pcnt_isr_service_install(0));
-    // ESP_ERROR_CHECK(pcnt_isr_handler_add(config->unit, pcnt_intr_handler2, (void *) config->unit));
+    // ESP_ERROR_CHECK(pcnt_isr_handler_add(pcnt_config.unit, pcnt_intr_handler2, (void *) pcnt_config.unit));
     ESP_ERROR_CHECK(pcnt_isr_register(pcnt_intr_handler2, (void *) config, 0, &user_isr_handle));
-    ESP_ERROR_CHECK(pcnt_intr_enable(config->unit));
+    ESP_ERROR_CHECK(pcnt_intr_enable(pcnt_config.unit));
 
     /* Everything is set up, now go to counting */
     ESP_ERROR_CHECK(rotary_resume(config));
