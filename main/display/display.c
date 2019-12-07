@@ -43,9 +43,7 @@ void display_draw_temp_humidity(float temp, float humidity) {
     u8g2_DrawStr(&u8g2, 0, 15, buf);
     snprintf(buf, 128, "EC:  %.1f uS/cm", ec_value);
     u8g2_DrawStr(&u8g2, 0, 23, buf);
-    int16_t count;
-    pcnt_get_counter_value(PCNT_UNIT_0, &count);
-    snprintf(buf, 128, "Rot: %d", count);
+    snprintf(buf, 128, "Rot: %d", rotary_current);
     u8g2_DrawStr(&u8g2, 0, 31, buf);
     u8g2_SendBuffer(&u8g2);
 }

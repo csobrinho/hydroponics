@@ -4,13 +4,13 @@
 #include "freertos/task.h"
 
 #include "driver/gpio.h"
-#include "driver/pcnt.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
 
+#include "rotary_encoder.h"
+
 #include "buses.h"
 #include "display/display.h"
-#include "driver/rotary.h"
 #include "sensors/ezo_ec.h"
 #include "sensors/humidity_pressure.h"
 #include "sensors/temperature.h"
@@ -23,32 +23,51 @@ typedef enum {
 
 #define BLINK_TASK_PRIO      10
 
-static led_state_t led_state = LED_STATE_BLINK;
-static rotary_config_t rotary_config = {
-        .unit = PCNT_UNIT_0,
-        .dt = ROTARY_DT_GPIO,
-        .clk = ROTARY_CLK_GPIO,
-        .sw = ROTARY_SW_GPIO,
-};
-
 static const char *TAG = "main";
+static led_state_t led_state = LED_STATE_BLINK;
+int16_t rotary_current;
 
 void blink_task(void *arg) {
     gpio_set_direction(CONFIG_BLINK_GPIO, GPIO_MODE_OUTPUT);
     led_state_t level = LED_STATE_ON;
-    rotary_evt_t evt;
-
     while (led_state == LED_STATE_BLINK) {
         gpio_set_level(CONFIG_BLINK_GPIO, level);
         level = !level;
-        if (xQueueReceive(rotary_config.queue, &evt, pdMS_TO_TICKS(300))) {
-            ESP_LOGW(TAG, "rotary unit: %d status: %d", evt.unit, evt.status);
-        }
-        ESP_ERROR_CHECK(rotary_value(&rotary_config, &evt.value));
-        ESP_LOGW(TAG, "rotary value: %d", evt.value);
+        vTaskDelay(pdMS_TO_TICKS(333));
     }
     gpio_set_level(CONFIG_BLINK_GPIO, led_state);
     vTaskDelete(NULL);
+}
+
+static void test_task(void *arg) {
+    rotary_encoder_info_t info = {0};
+    ESP_ERROR_CHECK(rotary_encoder_init(&info, ROTARY_DT_GPIO, ROTARY_CLK_GPIO));
+
+    // Create a queue for events from the rotary encoder driver.
+    // Tasks can read from this queue to receive up to date position information.
+    QueueHandle_t event_queue = rotary_encoder_create_queue();
+    ESP_ERROR_CHECK(rotary_encoder_set_queue(&info, event_queue));
+
+    while (1) {
+        // Wait for incoming events on the event queue.
+        rotary_encoder_event_t event = {0};
+        if (xQueueReceive(event_queue, &event, pdMS_TO_TICKS(500)) == pdTRUE) {
+            rotary_current = event.state.position;
+            ESP_LOGI(TAG, "Event: position %d, direction %s", event.state.position,
+                     event.state.direction
+                     ? (event.state.direction == ROTARY_ENCODER_DIRECTION_CLOCKWISE ? "CW" : "CCW")
+                     : "NOT_SET");
+        } else {
+            // Poll current position and direction
+            rotary_encoder_state_t state = {0};
+            ESP_ERROR_CHECK(rotary_encoder_get_state(&info, &state));
+            rotary_current = state.position;
+            ESP_LOGI(TAG, "Poll: position %d, direction %s", state.position,
+                     state.direction
+                     ? (state.direction == ROTARY_ENCODER_DIRECTION_CLOCKWISE ? "CW" : "CCW")
+                     : "NOT_SET");
+        }
+    }
 }
 
 void app_main() {
@@ -69,8 +88,6 @@ void app_main() {
     ESP_ERROR_CHECK(ezo_ec_init());
     ESP_ERROR_CHECK(temperature_init());
 
-    rotary_config.queue = xQueueCreate(10, sizeof(rotary_evt_t));
-    ESP_ERROR_CHECK(rotary_init(&rotary_config));
-
     xTaskCreatePinnedToCore(blink_task, "blink", 2048, NULL, BLINK_TASK_PRIO, NULL, tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(test_task, "test", 2048, NULL, BLINK_TASK_PRIO, NULL, tskNO_AFFINITY);
 }

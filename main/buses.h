@@ -18,8 +18,8 @@ typedef enum {
 #define I2C_MASTER_SDA  GPIO_NUM_4
 #define OLED_RESET      GPIO_NUM_16
 #define ONE_WRITE_GPIO  CONFIG_ESP_ONE_WIRE_GPIO
-#define ROTARY_DT_GPIO  GPIO_NUM_19
-#define ROTARY_CLK_GPIO GPIO_NUM_23
+#define ROTARY_DT_GPIO  GPIO_NUM_37
+#define ROTARY_CLK_GPIO GPIO_NUM_36
 #define ROTARY_SW_GPIO  -1
 
 typedef enum {

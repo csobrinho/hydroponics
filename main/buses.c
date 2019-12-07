@@ -23,6 +23,8 @@ void buses_init(void) {
     ESP_LOGI(TAG, "i2c_driver_install %d", I2C_MASTER_NUM);
     ESP_ERROR_CHECK(i2c_driver_install(I2C_MASTER_NUM, conf.mode, I2C_MASTER_RX_BUF_DISABLE,
                                        I2C_MASTER_TX_BUF_DISABLE, 0));
+
+    ESP_ERROR_CHECK(gpio_install_isr_service(0));
 }
 
 void buses_scan(void) {
