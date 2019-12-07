@@ -22,7 +22,7 @@
 typedef struct {
     gpio_num_t gpio;
     uint8_t history;
-    QueueHandle_t *queue;
+    QueueHandle_t queue;
 } gpio_debounce_gpio_t;
 
 typedef struct {
@@ -97,7 +97,7 @@ esp_err_t gpio_debounce_init(TickType_t debounce_ticks) {
     return ESP_OK;
 }
 
-esp_err_t gpio_debounce_register(gpio_num_t gpio, QueueHandle_t *queue) {
+esp_err_t gpio_debounce_register(gpio_num_t gpio, QueueHandle_t queue) {
     ARG_CHECK(GPIO_IS_VALID_GPIO(gpio), "gpio is invalid");
     ARG_CHECK(queue != NULL, ERR_PARAM_NULL);
 
@@ -150,7 +150,7 @@ esp_err_t gpio_debounce_get(gpio_num_t gpio, gpio_debounce_type_t *value) {
     return ESP_ERR_NOT_FOUND;
 }
 
-QueueHandle_t *gpio_debounce_create_queue(void) {
+QueueHandle_t gpio_debounce_create_queue(void) {
     return xQueueCreate(DEBOUNCE_EVENT_QUEUE_LENGTH, sizeof(gpio_debounce_evt_t));
 }
 

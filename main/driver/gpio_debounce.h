@@ -20,11 +20,11 @@ typedef struct {
 
 esp_err_t gpio_debounce_init(TickType_t debounce_ticks);
 
-esp_err_t gpio_debounce_register(gpio_num_t gpio, QueueHandle_t *queue);
+esp_err_t gpio_debounce_register(gpio_num_t gpio, QueueHandle_t queue);
 
 esp_err_t gpio_debounce_get(gpio_num_t gpio, gpio_debounce_type_t *value);
 
-QueueHandle_t *gpio_debounce_create_queue(void);
+QueueHandle_t gpio_debounce_create_queue(void);
 
 esp_err_t gpio_debounce_deregister(gpio_num_t gpio);
 
