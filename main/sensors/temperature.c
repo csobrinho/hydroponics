@@ -70,9 +70,9 @@ esp_err_t temperature_init(void) {
 
     // Find all connected devices
     ESP_LOGI(TAG, "1-Wire scanner:");
-    OneWireBus_ROMCode device_rom_codes[MAX_DEVICES] = {};
+    OneWireBus_ROMCode device_rom_codes[MAX_DEVICES] = {0};
     int num_devices = 0;
-    OneWireBus_SearchState search_state = {};
+    OneWireBus_SearchState search_state = {0};
     bool found = false;
     OWB_STATUS_CHECK(owb_search_first(owb, &search_state, &found), ESP_ERR_NOT_FOUND);
     while (found) {
