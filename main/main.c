@@ -52,24 +52,11 @@ static void test_task(void *arg) {
     while (1) {
         // Wait for incoming events on the event queue.
         rotary_encoder_event_t event = {0};
-        rotary_encoder_position_t position = context->inputs.rotary.state.position;
-
-        if (xQueueReceive(event_queue, &event, pdMS_TO_TICKS(500)) == pdTRUE) {
-            context->inputs.rotary.state = event.state;
+        if (xQueueReceive(event_queue, &event, portMAX_DELAY) == pdTRUE) {
+            ESP_ERROR_CHECK(context_set_rotary(context, event.state));
             ESP_LOGI(TAG, "Event: position %d, direction %s", event.state.position,
                      event.state.direction
-                     ? (event.state.direction == ROTARY_ENCODER_DIRECTION_CLOCKWISE ? "CW" : "CCW")
-                     : "NOT_SET");
-        } else {
-            // Poll current position and direction
-            ESP_ERROR_CHECK(rotary_encoder_get_state(&info, (rotary_encoder_state_t *) &context->inputs.rotary.state));
-            ESP_LOGI(TAG, "Poll: position %d, direction %s", context->inputs.rotary.state.position,
-                     context->inputs.rotary.state.direction
-                     ? (context->inputs.rotary.state.direction == ROTARY_ENCODER_DIRECTION_CLOCKWISE ? "CW" : "CCW")
-                     : "NOT_SET");
-        }
-        if (position != context->inputs.rotary.state.position) {
-            display_draw_temp_humidity(context);
+                     ? (event.state.direction == ROTARY_ENCODER_DIRECTION_CLOCKWISE ? "CW" : "CCW") : "NOT_SET");
         }
     }
 }
@@ -86,7 +73,7 @@ void app_main() {
     ESP_ERROR_CHECK(ret);
 
     buses_init();
-    ESP_ERROR_CHECK(display_init());
+    ESP_ERROR_CHECK(display_init(context));
     buses_scan();
     ESP_ERROR_CHECK(humidity_pressure_init(context));
     ESP_ERROR_CHECK(ezo_ec_init(context));

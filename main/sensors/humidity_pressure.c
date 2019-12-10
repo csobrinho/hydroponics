@@ -11,7 +11,6 @@
 #include "buses.h"
 #include "context.h"
 #include "error.h"
-#include "display/display.h"
 
 static const char *TAG = "bme280";
 static struct bme280_dev dev;
@@ -60,19 +59,16 @@ static void hal_bme280_delay_ms(uint32_t period) {
 
 static void publish(context_t *context, struct bme280_data *comp_data) {
 #ifdef BME280_FLOAT_ENABLE
-    context->sensors.temp.indoor = comp_data->temperature;
-    context->sensors.humidity = comp_data->humidity;
-    context->sensors.pressure = comp_data->pressure;
+    float indoor = comp_data->temperature;
+    float pressure = comp_data->pressure;
+    float humidity = comp_data->humidity;
 #else
-    context->sensors.temp.indoor = comp_data->temperature / 100.f;
-    context->sensors.humidity = comp_data->humidity / 1024.f;
-    context->sensors.pressure = comp_data->pressure / 100.f;
+    float indoor = comp_data->temperature / 100.f;
+    float pressure = comp_data->pressure / 100.f;
+    float humidity = comp_data->humidity / 1024.f;
 #endif
-    ESP_LOGI(TAG, "Temp: %0.2f Pressure: %0.2f  Humidity: %0.2f", context->sensors.temp.indoor,
-             context->sensors.pressure, context->sensors.humidity);
-
-    // FIXME: Add event group dispatch.
-    display_draw_temp_humidity(context);
+    ESP_LOGI(TAG, "Temp: %0.2f Pressure: %0.2f  Humidity: %0.2f", indoor, pressure, humidity);
+    ESP_ERROR_CHECK(context_set_temp_indoor_humidity_pressure(context, indoor, humidity, pressure));
 }
 
 static void humidity_pressure_task(void *arg) {

@@ -77,4 +77,20 @@ typedef struct {
 
 context_t *context_create(void);
 
+esp_err_t context_set_temp_indoor_humidity_pressure(context_t *context, float temp, float humidity, float pressure);
+
+esp_err_t context_set_temp_water(context_t *context, float temp);
+
+esp_err_t context_set_ec(context_t *context, float value);
+
+esp_err_t context_set_ec_target(context_t *context, float target_min, float target_max);
+
+esp_err_t context_set_ph(context_t *context, float value);
+
+esp_err_t context_set_ph_target(context_t *context, float target_min, float target_max);
+
+esp_err_t context_set_rotary(context_t *context, rotary_encoder_state_t state);
+
+esp_err_t context_set_rotary_pressed(context_t *context, bool pressed);
+
 #endif //HYDROPONICS_CONTEXT_H

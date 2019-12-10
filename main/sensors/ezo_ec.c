@@ -7,7 +7,6 @@
 
 #include "context.h"
 #include "error.h"
-#include "display/display.h"
 #include "driver/ezo.h"
 
 #define EZO_EC_ADDR 0x64                /*!< Slave address for Atlas EZO EC module. */
@@ -49,14 +48,13 @@ static void ezo_ec_task(void *arg) {
             ESP_ERROR_CHECK(ezo_ec_set_temperature(temperature));
             last_temperature = temperature;
         }
-        ESP_ERROR_CHECK(ezo_read_command(&ec, (float *) (&context->sensors.ec.value)));
+        float value;
+        ESP_ERROR_CHECK(ezo_read_command(&ec, &value));
         ESP_LOGI(TAG, "EC %.2f uS/cm", context->sensors.ec.value);
-
-        display_draw_temp_humidity(context);
+        ESP_ERROR_CHECK(context_set_ec(context, value));
 
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(SAMPLE_PERIOD));
     }
-    vTaskDelete(NULL);
 }
 
 esp_err_t ezo_ec_init(context_t *context) {

@@ -1,17 +1,86 @@
+#include <string.h>
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
 #include "driver/pcnt.h"
+
+#include "u8g2.h"
 
 #include "buses.h"
 #include "error.h"
 #include "context.h"
-#include "u8g2.h"
 #include "u8g2_esp32_hal.h"
 
 #define I2C_ADDRESS_OLED 0x78  /*!< Slave address for OLED display. */
 
 static const char *TAG = "display";
-u8g2_t u8g2;
+static u8g2_t u8g2;
+static const EventBits_t display_bits = CONTEXT_EVENT_TEMP_INDOOR | CONTEXT_EVENT_TEMP_WATER | CONTEXT_EVENT_PRESSURE
+                                        | CONTEXT_EVENT_HUMIDITY | CONTEXT_EVENT_EC;
 
-esp_err_t display_init(void) {
+static size_t snprintf_append(char *buf, size_t len, size_t max_size, float value) {
+    if (value != CONTEXT_UNKNOWN_VALUE) {
+        return snprintf(buf + len, max_size - len, " %.1f", value);
+    }
+    return snprintf(buf + len, max_size - len, " ??");
+}
+
+static void snprintf_value(char *buf, size_t max_size, const char *format, const char *format_off, float value) {
+    if (value != CONTEXT_UNKNOWN_VALUE) {
+        snprintf(buf, max_size, format, value);
+    } else {
+        strncpy(buf, format_off, max_size);
+    }
+}
+
+static esp_err_t display_draw(context_t *context) {
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
+
+    u8g2_ClearBuffer(&u8g2);
+    u8g2_SetFont(&u8g2, u8g2_font_5x7_tf);
+    char buf[128] = {0};
+
+    portENTER_CRITICAL(&context->spinlock);
+    float indoor = context->sensors.temp.indoor;
+    float water = context->sensors.temp.water;
+    float humidity = context->sensors.humidity;
+    float ec = context->sensors.ec.value;
+    rotary_encoder_position_t rotary = context->inputs.rotary.state.position;
+    portEXIT_CRITICAL(&context->spinlock);
+
+    size_t len = strlcpy(buf, "Tmp:", sizeof(buf));
+    len += snprintf_append(buf, len, sizeof(buf), indoor);
+    len += snprintf(buf + len, sizeof(buf) - len, " |");
+    len += snprintf_append(buf, len, sizeof(buf), water);
+    snprintf(buf + len, sizeof(buf) - len, " \260C");
+    u8g2_DrawStr(&u8g2, 0, 7, buf);
+
+    snprintf_value(buf, sizeof(buf), "Hum: %.1f %%", "Hum: ?? %%", humidity);
+    u8g2_DrawStr(&u8g2, 0, 15, buf);
+
+    snprintf_value(buf, sizeof(buf), "EC: %.1f uS/cm", "EC: ?? uS/cm", ec);
+    u8g2_DrawStr(&u8g2, 0, 23, buf);
+
+    snprintf(buf, sizeof(buf), "Rot: %d", rotary);
+    u8g2_DrawStr(&u8g2, 0, 31, buf);
+    u8g2_SendBuffer(&u8g2);
+
+    return ESP_OK;
+}
+
+static void display_task(void *arg) {
+    context_t *context = (context_t *) arg;
+    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
+
+    while (1) {
+        xEventGroupWaitBits(context->event_group, display_bits, pdTRUE, pdFALSE, portMAX_DELAY);
+        ESP_ERROR_CHECK(display_draw(context));
+        vTaskDelay(pdMS_TO_TICKS(250));
+    }
+}
+
+esp_err_t display_init(context_t *context) {
     u8g2_esp32_hal_t u8g2_esp32_hal = U8G2_ESP32_HAL_DEFAULT;
     u8g2_esp32_hal.sda = I2C_MASTER_SDA;
     u8g2_esp32_hal.scl = I2C_MASTER_SCL;
@@ -30,24 +99,6 @@ esp_err_t display_init(void) {
     u8g2_ClearBuffer(&u8g2);
     u8g2_SendBuffer(&u8g2);
 
-    return ESP_OK;
-}
-
-esp_err_t display_draw_temp_humidity(context_t *context) {
-    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
-
-    u8g2_ClearBuffer(&u8g2);
-    u8g2_SetFont(&u8g2, u8g2_font_5x7_tf);
-    char buf[128] = {0};
-    snprintf(buf, 128, "Tmp: %.1f | %.1f \260C", context->sensors.temp.indoor, context->sensors.temp.water);
-    u8g2_DrawStr(&u8g2, 0, 7, buf);
-    snprintf(buf, 128, "Hum: %.1f %%", context->sensors.humidity);
-    u8g2_DrawStr(&u8g2, 0, 15, buf);
-    snprintf(buf, 128, "EC:  %.1f uS/cm", context->sensors.ec.value);
-    u8g2_DrawStr(&u8g2, 0, 23, buf);
-    snprintf(buf, 128, "Rot: %d", context->inputs.rotary.state.position);
-    u8g2_DrawStr(&u8g2, 0, 31, buf);
-    u8g2_SendBuffer(&u8g2);
-
+    xTaskCreatePinnedToCore(display_task, "display", 2048, context, 15, NULL, tskNO_AFFINITY);
     return ESP_OK;
 }

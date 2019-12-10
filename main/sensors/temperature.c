@@ -12,7 +12,6 @@
 #include "buses.h"
 #include "context.h"
 #include "error.h"
-#include "temperature.h"
 
 #define MAX_DEVICES        2
 #define DS18B20_RESOLUTION DS18B20_RESOLUTION_12_BIT
@@ -51,7 +50,7 @@ static void temperature_task(void *arg) {
 
         for (int i = 0; i < num_devices; i++) {
             errors[i] = ds18b20_read_temp(devices[i], &readings[i]);
-            context->sensors.temp.water = readings[i];
+            ESP_ERROR_CHECK(context_set_temp_water(context, readings[i]));
         }
         ESP_LOGI(TAG, "Temperature readings (degrees C): sample %d", ++sample_count);
         for (int i = 0; i < num_devices; i++) {
