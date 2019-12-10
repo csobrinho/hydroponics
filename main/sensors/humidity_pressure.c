@@ -9,12 +9,14 @@
 #include "bme280.h"
 
 #include "buses.h"
+#include "context.h"
+#include "error.h"
 #include "display/display.h"
 
 static const char *TAG = "bme280";
 static struct bme280_dev dev;
 
-int8_t hal_bme280_i2c_read(uint8_t dev_id, uint8_t reg_addr, uint8_t *data, uint16_t len) {
+static int8_t hal_bme280_i2c_read(uint8_t dev_id, uint8_t reg_addr, uint8_t *data, uint16_t len) {
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 
     i2c_master_start(cmd);
@@ -36,7 +38,7 @@ int8_t hal_bme280_i2c_read(uint8_t dev_id, uint8_t reg_addr, uint8_t *data, uint
     return (err == ESP_OK) ? BME280_OK : BME280_E_COMM_FAIL;
 }
 
-int8_t hal_bme280_i2c_write(uint8_t dev_id, uint8_t reg_addr, uint8_t *data, uint16_t len) {
+static int8_t hal_bme280_i2c_write(uint8_t dev_id, uint8_t reg_addr, uint8_t *data, uint16_t len) {
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 
     i2c_master_start(cmd);
@@ -52,28 +54,31 @@ int8_t hal_bme280_i2c_write(uint8_t dev_id, uint8_t reg_addr, uint8_t *data, uin
     return (err == ESP_OK) ? BME280_OK : BME280_E_COMM_FAIL;
 }
 
-void hal_bme280_delay_ms(uint32_t period) {
+static void hal_bme280_delay_ms(uint32_t period) {
     vTaskDelay(pdMS_TO_TICKS(period));
 }
 
-void print_sensor_data(struct bme280_data *comp_data) {
-    float temperature;
-    float humidity;
-    float pressure;
+static void publish(context_t *context, struct bme280_data *comp_data) {
 #ifdef BME280_FLOAT_ENABLE
-    temperature = comp_data->temperature;
-    humidity = comp_data->humidity;
-    pressure = comp_data->pressure;
+    context->sensors.temp.indoor = comp_data->temperature;
+    context->sensors.humidity = comp_data->humidity;
+    context->sensors.pressure = comp_data->pressure;
 #else
-    temperature = comp_data->temperature / 100.f;
-    humidity = comp_data->humidity / 1024.f;
-    pressure = comp_data->pressure / 100.f;
+    context->sensors.temp.indoor = comp_data->temperature / 100.f;
+    context->sensors.humidity = comp_data->humidity / 1024.f;
+    context->sensors.pressure = comp_data->pressure / 100.f;
 #endif
-    ESP_LOGI(TAG, "Temp: %0.2f Pressure: %0.2f  Humidity: %0.2f", temperature, pressure, humidity);
-    display_draw_temp_humidity(comp_data->temperature / 100.f, comp_data->humidity / 1024.f);
+    ESP_LOGI(TAG, "Temp: %0.2f Pressure: %0.2f  Humidity: %0.2f", context->sensors.temp.indoor,
+             context->sensors.pressure, context->sensors.humidity);
+
+    // FIXME: Add event group dispatch.
+    display_draw_temp_humidity(context);
 }
 
-void humidity_pressure_task(void *arg) {
+static void humidity_pressure_task(void *arg) {
+    context_t *context = (context_t *) arg;
+    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
+
     struct bme280_data comp_data;
     while (1) {
         TickType_t last_wake_time = xTaskGetTickCount();
@@ -94,13 +99,13 @@ void humidity_pressure_task(void *arg) {
             break;
         }
 
-        print_sensor_data(&comp_data);
+        publish(context, &comp_data);
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_HUMIDITY_MS));
     }
     vTaskDelete(NULL);
 }
 
-esp_err_t humidity_pressure_init(void) {
+esp_err_t humidity_pressure_init(context_t *context) {
     dev.dev_id = BME280_I2C_ADDR_PRIM;
     dev.intf = BME280_I2C_INTF;
     dev.read = hal_bme280_i2c_read;
@@ -129,6 +134,6 @@ esp_err_t humidity_pressure_init(void) {
         ESP_LOGE(TAG, "error initializing BME280 err: %d", ret);
     }
 
-    xTaskCreatePinnedToCore(humidity_pressure_task, TAG, 2048, NULL, 20, NULL, tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(humidity_pressure_task, TAG, 2048, context, 20, NULL, tskNO_AFFINITY);
     return ESP_OK;
 }

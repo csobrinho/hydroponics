@@ -10,17 +10,19 @@
 #include "ds18b20.h"
 
 #include "buses.h"
+#include "context.h"
+#include "error.h"
 #include "temperature.h"
 
 #define MAX_DEVICES        2
 #define DS18B20_RESOLUTION DS18B20_RESOLUTION_12_BIT
 
 static const char *TAG = "temperature";
-float temperature = 0.0f;
 
-owb_rmt_driver_info rmt_driver_info;
-OneWireBus *owb;
-DS18B20_Info *devices[MAX_DEVICES] = {0};
+static owb_rmt_driver_info rmt_driver_info;
+static OneWireBus *owb;
+static DS18B20_Info *devices[MAX_DEVICES] = {0};
+static int num_devices;
 
 #define OWB_STATUS_CHECK(x, reason) do {            \
         owb_status __err_rc = (x);                  \
@@ -29,9 +31,10 @@ DS18B20_Info *devices[MAX_DEVICES] = {0};
         }                                           \
     } while(0)
 
-void temperature_task(void *arg) {
-    // Read temperatures more efficiently by starting conversions on all devices at the same time
-    int num_devices = (int) arg;
+static void temperature_task(void *arg) {
+    context_t *context = (context_t *) arg;
+    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
+
     int errors_count[MAX_DEVICES] = {0};
     int sample_count = 0;
 
@@ -48,7 +51,7 @@ void temperature_task(void *arg) {
 
         for (int i = 0; i < num_devices; i++) {
             errors[i] = ds18b20_read_temp(devices[i], &readings[i]);
-            temperature = readings[i];
+            context->sensors.temp.water = readings[i];
         }
         ESP_LOGI(TAG, "Temperature readings (degrees C): sample %d", ++sample_count);
         for (int i = 0; i < num_devices; i++) {
@@ -61,7 +64,7 @@ void temperature_task(void *arg) {
     }
 }
 
-esp_err_t temperature_init(void) {
+esp_err_t temperature_init(context_t *context) {
     // Setup the GPIOs.
     gpio_set_direction(ONE_WRITE_GPIO, GPIO_MODE_INPUT_OUTPUT);
 
@@ -71,7 +74,6 @@ esp_err_t temperature_init(void) {
     // Find all connected devices
     ESP_LOGI(TAG, "1-Wire scanner:");
     OneWireBus_ROMCode device_rom_codes[MAX_DEVICES] = {0};
-    int num_devices = 0;
     OneWireBus_SearchState search_state = {0};
     bool found = false;
     OWB_STATUS_CHECK(owb_search_first(owb, &search_state, &found), ESP_ERR_NOT_FOUND);
@@ -87,7 +89,7 @@ esp_err_t temperature_init(void) {
 
     // Create DS18B20 devices on the 1-Wire bus.
     for (int i = 0; i < num_devices; ++i) {
-        DS18B20_Info *ds18b20_info = ds18b20_malloc();                // heap allocation.
+        DS18B20_Info *ds18b20_info = ds18b20_malloc();               // heap allocation.
         devices[i] = ds18b20_info;
 
         if (num_devices == 1) {
@@ -100,6 +102,6 @@ esp_err_t temperature_init(void) {
         ds18b20_set_resolution(ds18b20_info, DS18B20_RESOLUTION);
     }
 
-    xTaskCreatePinnedToCore(temperature_task, "temperature", 4096, (void *) num_devices, 15, NULL, tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(temperature_task, "temperature", 4096, context, 15, NULL, tskNO_AFFINITY);
     return ESP_OK;
 }

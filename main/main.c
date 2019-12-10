@@ -10,6 +10,7 @@
 #include "rotary_encoder.h"
 
 #include "buses.h"
+#include "context.h"
 #include "display/display.h"
 #include "sensors/ezo_ec.h"
 #include "sensors/humidity_pressure.h"
@@ -25,9 +26,9 @@ typedef enum {
 
 static const char *TAG = "main";
 static led_state_t led_state = LED_STATE_BLINK;
-int16_t rotary_current;
+static context_t *context;
 
-void blink_task(void *arg) {
+static void blink_task(void *arg) {
     gpio_set_direction(CONFIG_BLINK_GPIO, GPIO_MODE_OUTPUT);
     led_state_t level = LED_STATE_ON;
     while (led_state == LED_STATE_BLINK) {
@@ -51,27 +52,30 @@ static void test_task(void *arg) {
     while (1) {
         // Wait for incoming events on the event queue.
         rotary_encoder_event_t event = {0};
+        rotary_encoder_position_t position = context->inputs.rotary.state.position;
+
         if (xQueueReceive(event_queue, &event, pdMS_TO_TICKS(500)) == pdTRUE) {
-            rotary_current = event.state.position;
+            context->inputs.rotary.state = event.state;
             ESP_LOGI(TAG, "Event: position %d, direction %s", event.state.position,
                      event.state.direction
                      ? (event.state.direction == ROTARY_ENCODER_DIRECTION_CLOCKWISE ? "CW" : "CCW")
                      : "NOT_SET");
         } else {
             // Poll current position and direction
-            rotary_encoder_state_t state = {0};
-            ESP_ERROR_CHECK(rotary_encoder_get_state(&info, &state));
-            rotary_current = state.position;
-            ESP_LOGI(TAG, "Poll: position %d, direction %s", state.position,
-                     state.direction
-                     ? (state.direction == ROTARY_ENCODER_DIRECTION_CLOCKWISE ? "CW" : "CCW")
+            ESP_ERROR_CHECK(rotary_encoder_get_state(&info, (rotary_encoder_state_t *) &context->inputs.rotary.state));
+            ESP_LOGI(TAG, "Poll: position %d, direction %s", context->inputs.rotary.state.position,
+                     context->inputs.rotary.state.direction
+                     ? (context->inputs.rotary.state.direction == ROTARY_ENCODER_DIRECTION_CLOCKWISE ? "CW" : "CCW")
                      : "NOT_SET");
+        }
+        if (position != context->inputs.rotary.state.position) {
+            display_draw_temp_humidity(context);
         }
     }
 }
 
 void app_main() {
-    printf("Hello world!\n");
+    context = context_create();
 
     //Initialize NVS
     esp_err_t ret = nvs_flash_init();
@@ -84,9 +88,9 @@ void app_main() {
     buses_init();
     ESP_ERROR_CHECK(display_init());
     buses_scan();
-    ESP_ERROR_CHECK(humidity_pressure_init());
-    ESP_ERROR_CHECK(ezo_ec_init());
-    ESP_ERROR_CHECK(temperature_init());
+    ESP_ERROR_CHECK(humidity_pressure_init(context));
+    ESP_ERROR_CHECK(ezo_ec_init(context));
+    ESP_ERROR_CHECK(temperature_init(context));
 
     xTaskCreatePinnedToCore(blink_task, "blink", 2048, NULL, BLINK_TASK_PRIO, NULL, tskNO_AFFINITY);
     xTaskCreatePinnedToCore(test_task, "test", 2048, NULL, BLINK_TASK_PRIO, NULL, tskNO_AFFINITY);

@@ -3,8 +3,8 @@
 
 #include "esp_err.h"
 
-extern float temperature;
+#include "context.h"
 
-esp_err_t temperature_init(void);
+esp_err_t temperature_init(context_t *context);
 
 #endif //HYDROPONICS_SENSORS_TEMPERATURE_H

@@ -3,10 +3,10 @@
 
 #include "driver/gpio.h"
 
+#include "context.h"
+
 esp_err_t display_init(void);
 
-extern int16_t rotary_current;
-
-void display_draw_temp_humidity(float temp, float humidity);
+esp_err_t display_draw_temp_humidity(context_t *context);
 
 #endif //HYDROPONICS_DISPLAY_DISPLAY_H

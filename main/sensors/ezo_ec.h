@@ -3,8 +3,8 @@
 
 #include "esp_err.h"
 
-extern float ec_value;
+#include "context.h"
 
-esp_err_t ezo_ec_init(void);
+esp_err_t ezo_ec_init(context_t *context);
 
 #endif //HYDROPONICS_DRIVERS_EZO_EC_H

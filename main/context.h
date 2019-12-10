@@ -1,0 +1,80 @@
+#ifndef HYDROPONICS_CONTEXT_H
+#define HYDROPONICS_CONTEXT_H
+
+#include "freertos/event_groups.h"
+#include "freertos/portmacro.h"
+
+#include "esp_bit_defs.h"
+
+#include "rotary_encoder.h"
+
+#define CONTEXT_UNKNOWN_VALUE INT16_MIN
+
+typedef enum {
+    CONTEXT_EVENT_TEMP_INDOOR = BIT0,    /*!< Updated indoor temperature from BME280 sensor. */
+    CONTEXT_EVENT_TEMP_WATER = BIT1,     /*!< Updated water temperature from DS18B20 sensor. */
+    CONTEXT_EVENT_HUMIDITY = BIT0,       /*!< Updated humidity value from BME280 sensor. */
+    CONTEXT_EVENT_PRESSURE = BIT0,       /*!< Updated pressure value from BME280 sensor. */
+    CONTEXT_EVENT_EC = BIT2,             /*!< Updated EC value or parameters. */
+    CONTEXT_EVENT_PH = BIT3,             /*!< Updated PH value or parameters. */
+    CONTEXT_EVENT_ROTARY = BIT4,         /*!< Updated rotary value or state. */
+    CONTEXT_EVENT_PUMP_PH_UP = BIT5,     /*!< Updated PH up pump state. */
+    CONTEXT_EVENT_PUMP_PH_DOWN = BIT6,   /*!< Updated PH down pump state. */
+    CONTEXT_EVENT_PUMP_EC_A = BIT7,      /*!< Updated EC A nutrient solution pump state. */
+    CONTEXT_EVENT_PUMP_EC_B = BIT8,      /*!< Updated EC B nutrient solution pump state. */
+    CONTEXT_EVENT_PUMP_MAIN = BIT9,      /*!< Updated main pump state. */
+    CONTEXT_EVENT_NETWORK = BIT10,       /*!< Updated network state. */
+} context_event_t;
+
+typedef struct {
+    portMUX_TYPE spinlock;
+    EventGroupHandle_t event_group;
+
+    struct {
+        struct {
+            volatile float indoor;
+            volatile float water;
+        } temp;
+        volatile float humidity;
+        volatile float pressure;
+        struct {
+            volatile float value;
+            volatile float target_min;
+            volatile float target_max;
+        } ec;
+        struct {
+            volatile float value;
+            volatile float target_min;
+            volatile float target_max;
+        } ph;
+    } sensors;
+
+    struct {
+        struct {
+            volatile rotary_encoder_state_t state;
+            volatile bool pressed;
+        } rotary;
+    } inputs;
+
+    struct {
+        struct {
+            struct {
+            } ph_up;
+            struct {
+            } ph_down;
+            struct {
+            } ec_a;
+            struct {
+            } ec_b;
+            struct {
+            } main;
+        } pumps;
+    } outputs;
+
+    struct {
+    } network;
+} context_t;
+
+context_t *context_create(void);
+
+#endif //HYDROPONICS_CONTEXT_H
