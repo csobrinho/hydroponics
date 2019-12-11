@@ -20,14 +20,14 @@ static const EventBits_t display_bits = CONTEXT_EVENT_TEMP_INDOOR | CONTEXT_EVEN
                                         | CONTEXT_EVENT_HUMIDITY | CONTEXT_EVENT_EC;
 
 static size_t snprintf_append(char *buf, size_t len, size_t max_size, float value) {
-    if (value != CONTEXT_UNKNOWN_VALUE) {
+    if (CONTEXT_VALUE_IS_VALID(value)) {
         return snprintf(buf + len, max_size - len, " %.1f", value);
     }
     return snprintf(buf + len, max_size - len, " ??");
 }
 
 static void snprintf_value(char *buf, size_t max_size, const char *format, const char *format_off, float value) {
-    if (value != CONTEXT_UNKNOWN_VALUE) {
+    if (CONTEXT_VALUE_IS_VALID(value)) {
         snprintf(buf, max_size, format, value);
     } else {
         strncpy(buf, format_off, max_size);

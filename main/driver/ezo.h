@@ -24,6 +24,8 @@ typedef struct {
     const uint8_t address;
     const ezo_cmd_t cmd_device_info;
     const ezo_cmd_t cmd_read;
+    const ezo_cmd_t cmd_read_temperature;
+    const ezo_cmd_t cmd_status;
     char *version;
     char buf[EZO_MAX_BUFFER_LEN];
     size_t bytes_read;
@@ -34,8 +36,12 @@ esp_err_t ezo_init(ezo_sensor_t *sensor);
 
 esp_err_t ezo_free(ezo_sensor_t *sensor);
 
-esp_err_t ezo_send_command(ezo_sensor_t *sensor, ezo_cmd_t cmd, const char *args);
+esp_err_t ezo_send_command(ezo_sensor_t *sensor, ezo_cmd_t cmd, const char *fmt, ...);
+
+esp_err_t ezo_send_command_float(ezo_sensor_t *sensor, ezo_cmd_t cmd, float value);
 
 esp_err_t ezo_read_command(ezo_sensor_t *sensor, float *value);
+
+esp_err_t ezo_read_temperature_command(ezo_sensor_t *sensor, float *value, float temp);
 
 #endif //HYDROPONICS_DRIVERS_EZO_H

@@ -1,5 +1,6 @@
-#include <string.h>
 #include <errno.h>
+#include <string.h>
+#include <stdarg.h>
 
 #include "driver/i2c.h"
 #include "esp_log.h"
@@ -9,9 +10,8 @@
 #include "error.h"
 #include "ezo.h"
 
-static const char *TAG = "ezo";
-
 #define LOG(args...) ESP_LOGD(args)
+static const char *TAG = "ezo";
 
 esp_err_t ezo_read_version(ezo_sensor_t *sensor) {
     ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
@@ -28,11 +28,16 @@ esp_err_t ezo_read_version(ezo_sensor_t *sensor) {
     int ret = sscanf(sensor->buf, "?I,%m[^,],%ms", &type, &sensor->version);
     if (ret != 2) {
         ESP_LOGW(TAG, "[0x%.2x] Unexpected response: %d '%s'", ret, sensor->address, sensor->buf);
+        if (type != NULL) {
+            free(type);
+        }
         return ESP_ERR_INVALID_RESPONSE;
     }
     if (strcmp(type, sensor->type) != 0) {
         ESP_LOGW(TAG, "[0x%.2x] Unexpected probe type. Expected: %s got: %s", sensor->address, sensor->type, type);
-        free(type);
+        if (type != NULL) {
+            free(type);
+        }
         return ESP_ERR_INVALID_RESPONSE;
     }
     free(type);
@@ -63,15 +68,22 @@ esp_err_t ezo_free(ezo_sensor_t *sensor) {
     return ESP_OK;
 }
 
-esp_err_t ezo_send_command(ezo_sensor_t *sensor, const ezo_cmd_t cmd, const char *args) {
+esp_err_t ezo_send_command_float(ezo_sensor_t *sensor, const ezo_cmd_t cmd, float value) {
+    return ezo_send_command(sensor, cmd, ",%.2f", value);
+}
+
+esp_err_t ezo_send_command(ezo_sensor_t *sensor, const ezo_cmd_t cmd, const char *fmt, ...) {
     ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
-    LOG(TAG, "[0x%.2x] send_command '%s' and wait %dms", sensor->address, cmd.cmd, cmd.delay_ms);
+    LOG(TAG, "[0x%.2x] send_command '%s%s' wait %dms", sensor->address, cmd.cmd, fmt != NULL ? fmt : "", cmd.delay_ms);
 
     sensor->status = EZO_SENSOR_RESPONSE_UNKNOWN;
     sensor->bytes_read = 0;
-    strlcpy(sensor->buf, cmd.cmd, EZO_MAX_BUFFER_LEN);
-    if (args != NULL) {
-        strlcat(sensor->buf, args, EZO_MAX_BUFFER_LEN);
+    size_t written = strlcpy(sensor->buf, cmd.cmd, EZO_MAX_BUFFER_LEN);
+    if (fmt != NULL) {
+        va_list va;
+        va_start(va, fmt);
+        vsnprintf(&sensor->buf[written], EZO_MAX_BUFFER_LEN - written, fmt, va);
+        va_end(va);
     }
 
     // Write I2C address and send command.
@@ -83,18 +95,16 @@ esp_err_t ezo_send_command(ezo_sensor_t *sensor, const ezo_cmd_t cmd, const char
     ESP_ERROR_CHECK(i2c_master_cmd_begin(I2C_MASTER_NUM, handle, pdMS_TO_TICKS(I2C_TIMEOUT_MS)));
     i2c_cmd_link_delete(handle);
 
-    memset(sensor->buf, 0, EZO_MAX_BUFFER_LEN);
     if (cmd.delay_ms > 0) {
         vTaskDelay(pdMS_TO_TICKS(cmd.delay_ms));
     }
     if (!cmd.has_read) {
         sensor->status = EZO_SENSOR_RESPONSE_SUCCESS;
-        sensor->bytes_read = 0;
+        memset(sensor->buf, 0, EZO_MAX_BUFFER_LEN);
         return ESP_OK;
     }
     for (int retry = 0; retry < EZO_MAX_RETRIES; retry++) {
         sensor->status = EZO_SENSOR_RESPONSE_UNKNOWN;
-        sensor->bytes_read = 0;
         memset(sensor->buf, 0, EZO_MAX_BUFFER_LEN);
 
         handle = i2c_cmd_link_create();
@@ -130,19 +140,32 @@ esp_err_t ezo_send_command(ezo_sensor_t *sensor, const ezo_cmd_t cmd, const char
     return ESP_FAIL;
 }
 
-esp_err_t ezo_read_command(ezo_sensor_t *sensor, float *value) {
-    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
-    ARG_CHECK(value != NULL, ERR_PARAM_NULL);
-
-    ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->cmd_read, NULL));
+static esp_err_t ezo_parse_float(ezo_sensor_t *sensor, float *value) {
     if (sensor->status != EZO_SENSOR_RESPONSE_SUCCESS || sensor->bytes_read < 1) {
         return ESP_ERR_INVALID_RESPONSE;
     }
     errno = 0; // To distinguish success/failure after call.
     *value = strtof(sensor->buf, NULL);
     if (errno != 0) {
+        LOG(TAG, "[0x%.2x] parse error: '%s'", sensor->address, sensor->buf);
         return ESP_ERR_INVALID_RESPONSE;
     }
-    LOG(TAG, "[0x%.2x] read value: %f", sensor->address, *value);
+    LOG(TAG, "[0x%.2x] parse: %f", sensor->address, *value);
     return ESP_OK;
+}
+
+esp_err_t ezo_read_command(ezo_sensor_t *sensor, float *value) {
+    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
+    ARG_CHECK(value != NULL, ERR_PARAM_NULL);
+
+    ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->cmd_read, NULL));
+    return ezo_parse_float(sensor, value);
+}
+
+esp_err_t ezo_read_temperature_command(ezo_sensor_t *sensor, float *value, float temp) {
+    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
+    ARG_CHECK(value != NULL, ERR_PARAM_NULL);
+
+    ESP_ERROR_CHECK(ezo_send_command_float(sensor, sensor->cmd_read_temperature, temp));
+    return ezo_parse_float(sensor, value);
 }

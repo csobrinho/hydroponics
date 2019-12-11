@@ -18,38 +18,28 @@ static ezo_sensor_t ec = {
         .probe = "CS150",
         .address = EZO_EC_ADDR,
         .cmd_device_info = {.cmd = "I", .delay_ms = 300, .has_read = true},
-        .cmd_read = {.cmd="R", .delay_ms=600, .has_read = true},
+        .cmd_read = {.cmd = "R", .delay_ms = 600, .has_read = true},
+        .cmd_read_temperature = {.cmd = "RT", .delay_ms = 600, .has_read = true},
+        .cmd_status = {.cmd = "S", .delay_ms = 600, .has_read = true},
 };
-
-static const ezo_cmd_t cmd_temperature = {.cmd = "T", .delay_ms=300, .has_read= true};
-
-static esp_err_t ezo_ec_set_temperature(float temp) {
-    char args[20] = {0};
-    snprintf(args, sizeof(args), ",%.2f", temp);
-
-    ESP_ERROR_CHECK(ezo_send_command(&ec, cmd_temperature, args));
-    if (ec.status != EZO_SENSOR_RESPONSE_SUCCESS) {
-        return ESP_ERR_INVALID_RESPONSE;
-    }
-    return ESP_OK;
-}
 
 static void ezo_ec_task(void *arg) {
     context_t *context = (context_t *) arg;
     ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
     ESP_ERROR_CHECK(ezo_init(&ec));
 
-    float last_temperature = 25.0f;
+    float last_temp_water = 25.0f;
+    float value;
     while (1) {
         TickType_t last_wake_time = xTaskGetTickCount();
 
-        float temperature = context->sensors.temp.water;
-        if (last_temperature != temperature && temperature != CONTEXT_UNKNOWN_VALUE) {
-            ESP_ERROR_CHECK(ezo_ec_set_temperature(temperature));
-            last_temperature = temperature;
+        float temp_water = context->sensors.temp.water;
+        if (last_temp_water != temp_water && CONTEXT_VALUE_IS_VALID(temp_water)) {
+            last_temp_water = temp_water;
+            ESP_ERROR_CHECK(ezo_read_temperature_command(&ec, &value, last_temp_water));
+        } else {
+            ESP_ERROR_CHECK(ezo_read_command(&ec, &value));
         }
-        float value;
-        ESP_ERROR_CHECK(ezo_read_command(&ec, &value));
         ESP_LOGI(TAG, "EC %.2f uS/cm", context->sensors.ec.value);
         ESP_ERROR_CHECK(context_set_ec(context, value));
 

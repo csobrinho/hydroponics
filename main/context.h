@@ -9,6 +9,7 @@
 #include "rotary_encoder.h"
 
 #define CONTEXT_UNKNOWN_VALUE INT16_MIN
+#define CONTEXT_VALUE_IS_VALID(x) (x != CONTEXT_UNKNOWN_VALUE)
 
 typedef enum {
     CONTEXT_EVENT_TEMP_INDOOR = BIT0,    /*!< Updated indoor temperature from BME280 sensor. */
