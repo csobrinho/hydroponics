@@ -1,6 +1,7 @@
 #include <string.h>
 
-#include "driver/i2c.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 #include "esp_log.h"
 #include "esp_err.h"
@@ -9,18 +10,17 @@
 #include "error.h"
 #include "driver/ezo.h"
 
-#define EZO_EC_ADDR 0x64                /*!< Slave address for Atlas EZO EC module. */
-#define SAMPLE_PERIOD 1000              /*!< Reading sample period. */
+#define EZO_EC_ADDR 0x64    /*!< Slave address for Atlas EZO EC module. */
+#define SAMPLE_PERIOD 1000  /*!< Reading sample period. */
 
 static const char *TAG = "ezo_ec";
 static ezo_sensor_t ec = {
         .type = "EC",
         .probe = "CS150",
         .address = EZO_EC_ADDR,
-        .cmd_device_info = {.cmd = "I", .delay_ms = 300, .has_read = true},
-        .cmd_read = {.cmd = "R", .delay_ms = 600, .has_read = true},
-        .cmd_read_temperature = {.cmd = "RT", .delay_ms = 600, .has_read = true},
-        .cmd_status = {.cmd = "S", .delay_ms = 600, .has_read = true},
+        .delay_read_ms = EZO_DELAY_MS_SLOW,
+        .delay_calibration_ms = EZO_DELAY_MS_SLOWEST,
+        .calibration = EZO_CALIBRATION_LOW | EZO_CALIBRATION_HIGH,
 };
 
 static void ezo_ec_task(void *arg) {

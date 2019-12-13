@@ -13,6 +13,7 @@
 #include "context.h"
 #include "display/display.h"
 #include "sensors/ezo_ec.h"
+#include "sensors/ezo_ph.h"
 #include "sensors/humidity_pressure.h"
 #include "sensors/temperature.h"
 
@@ -77,6 +78,7 @@ void app_main() {
     buses_scan();
     ESP_ERROR_CHECK(humidity_pressure_init(context));
     ESP_ERROR_CHECK(ezo_ec_init(context));
+    ESP_ERROR_CHECK(ezo_ph_init(context));
     ESP_ERROR_CHECK(temperature_init(context));
 
     xTaskCreatePinnedToCore(blink_task, "blink", 2048, NULL, BLINK_TASK_PRIO, NULL, tskNO_AFFINITY);

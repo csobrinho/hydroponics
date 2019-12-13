@@ -13,10 +13,21 @@
 #define LOG(args...) ESP_LOGD(args)
 static const char *TAG = "ezo";
 
-esp_err_t ezo_read_version(ezo_sensor_t *sensor) {
-    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
+const ezo_cmd_t ezo_cmd_read = {.cmd = "R"};
+const ezo_cmd_t ezo_cmd_read_temperature = {.cmd = "RT"};
+const ezo_cmd_t ezo_cmd_device_info = {.cmd = "I", .cmd_response = "?I,%m[^,],%ms"};
+const ezo_cmd_t ezo_cmd_status = {.cmd = "Status", .cmd_response = "?Status,%c,%f"};
+const ezo_cmd_t ezo_cmd_export = {.cmd = "Export", .cmd_response = "%d,%d"};
+const ezo_cmd_t ezo_cmd_calibration = {.cmd = "Cal,?", .cmd_response = "?Cal,%d"};
+const ezo_cmd_t ezo_cmd_calibration_low = {.cmd = "Cal,low"};
+const ezo_cmd_t ezo_cmd_calibration_high = {.cmd = "Cal,high"};
+const ezo_cmd_t ezo_cmd_calibration_mid = {.cmd = "Cal,mid"};
 
-    ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->cmd_device_info, NULL));
+static esp_err_t ezo_read_version(ezo_sensor_t *sensor) {
+    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
+    ARG_CHECK(sensor->cmd_device_info != NULL, ERR_PARAM_NULL);
+
+    ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->cmd_device_info, sensor->delay_ms, NULL));
     if (sensor->status != EZO_SENSOR_RESPONSE_SUCCESS) {
         return ESP_ERR_INVALID_RESPONSE;
     }
@@ -24,8 +35,8 @@ esp_err_t ezo_read_version(ezo_sensor_t *sensor) {
     if (sensor->bytes_read < 3) {
         return ESP_ERR_INVALID_RESPONSE;
     }
-    char *type = NULL; // Will be dynamically allocated by "%m".
-    int ret = sscanf(sensor->buf, "?I,%m[^,],%ms", &type, &sensor->version);
+    char *type = NULL; // It should be dynamically allocated due to the "%m" inside 'cmd_response'.
+    int ret = sscanf(sensor->buf, sensor->cmd_device_info->cmd_response, &type, &sensor->version);
     if (ret != 2) {
         ESP_LOGW(TAG, "[0x%.2x] Unexpected response: %d '%s'", ret, sensor->address, sensor->buf);
         if (type != NULL) {
@@ -47,9 +58,28 @@ esp_err_t ezo_read_version(ezo_sensor_t *sensor) {
 esp_err_t ezo_init(ezo_sensor_t *sensor) {
     ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
 
+    if (sensor->cmd_read == NULL) {
+        sensor->cmd_read = &ezo_cmd_read;
+    }
+    if (sensor->cmd_read_temperature == NULL) {
+        sensor->cmd_read_temperature = &ezo_cmd_read_temperature;
+    }
+    if (sensor->cmd_device_info == NULL) {
+        sensor->cmd_device_info = &ezo_cmd_device_info;
+    }
+    if (sensor->cmd_status == NULL) {
+        sensor->cmd_status = &ezo_cmd_status;
+    }
+    if (sensor->cmd_export == NULL) {
+        sensor->cmd_export = &ezo_cmd_export;
+    }
+    if (sensor->cmd_calibration == NULL) {
+        sensor->cmd_calibration = &ezo_cmd_calibration;
+    }
+
     // Allow the device to sleep a little bit just in case we were in the middle of a read operation before the reset.
     // If we don't, then sometimes we read the probe value instead of what was requested.
-    vTaskDelay(pdMS_TO_TICKS(sensor->cmd_read.delay_ms));
+    vTaskDelay(pdMS_TO_TICKS(sensor->delay_read_ms));
 
     // Read version and device information.
     ESP_ERROR_CHECK(ezo_read_version(sensor));
@@ -68,17 +98,17 @@ esp_err_t ezo_free(ezo_sensor_t *sensor) {
     return ESP_OK;
 }
 
-esp_err_t ezo_send_command_float(ezo_sensor_t *sensor, const ezo_cmd_t cmd, float value) {
-    return ezo_send_command(sensor, cmd, ",%.2f", value);
+esp_err_t ezo_send_command_float(ezo_sensor_t *sensor, const ezo_cmd_t *cmd, uint16_t delay_ms, float value) {
+    return ezo_send_command(sensor, cmd, delay_ms, ",%.2f", value);
 }
 
-esp_err_t ezo_send_command(ezo_sensor_t *sensor, const ezo_cmd_t cmd, const char *fmt, ...) {
+esp_err_t ezo_send_command(ezo_sensor_t *sensor, const ezo_cmd_t *cmd, uint16_t delay_ms, const char *fmt, ...) {
     ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
-    LOG(TAG, "[0x%.2x] send_command '%s%s' wait %dms", sensor->address, cmd.cmd, fmt != NULL ? fmt : "", cmd.delay_ms);
+    LOG(TAG, "[0x%.2x] send_command '%s%s' wait %dms", sensor->address, cmd->cmd, fmt != NULL ? fmt : "", delay_ms);
 
     sensor->status = EZO_SENSOR_RESPONSE_UNKNOWN;
     sensor->bytes_read = 0;
-    size_t written = strlcpy(sensor->buf, cmd.cmd, EZO_MAX_BUFFER_LEN);
+    size_t written = strlcpy(sensor->buf, cmd->cmd, EZO_MAX_BUFFER_LEN);
     if (fmt != NULL) {
         va_list va;
         va_start(va, fmt);
@@ -95,13 +125,8 @@ esp_err_t ezo_send_command(ezo_sensor_t *sensor, const ezo_cmd_t cmd, const char
     ESP_ERROR_CHECK(i2c_master_cmd_begin(I2C_MASTER_NUM, handle, pdMS_TO_TICKS(I2C_TIMEOUT_MS)));
     i2c_cmd_link_delete(handle);
 
-    if (cmd.delay_ms > 0) {
-        vTaskDelay(pdMS_TO_TICKS(cmd.delay_ms));
-    }
-    if (!cmd.has_read) {
-        sensor->status = EZO_SENSOR_RESPONSE_SUCCESS;
-        memset(sensor->buf, 0, EZO_MAX_BUFFER_LEN);
-        return ESP_OK;
+    if (delay_ms > 0) {
+        vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }
     for (int retry = 0; retry < EZO_MAX_RETRIES; retry++) {
         sensor->status = EZO_SENSOR_RESPONSE_UNKNOWN;
@@ -158,7 +183,7 @@ esp_err_t ezo_read_command(ezo_sensor_t *sensor, float *value) {
     ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
     ARG_CHECK(value != NULL, ERR_PARAM_NULL);
 
-    ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->cmd_read, NULL));
+    ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->cmd_read, sensor->delay_read_ms, NULL));
     return ezo_parse_float(sensor, value);
 }
 
@@ -166,6 +191,39 @@ esp_err_t ezo_read_temperature_command(ezo_sensor_t *sensor, float *value, float
     ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
     ARG_CHECK(value != NULL, ERR_PARAM_NULL);
 
-    ESP_ERROR_CHECK(ezo_send_command_float(sensor, sensor->cmd_read_temperature, temp));
+    ESP_ERROR_CHECK(ezo_send_command_float(sensor, sensor->cmd_read_temperature, sensor->delay_read_ms, temp));
     return ezo_parse_float(sensor, value);
+}
+
+esp_err_t ezo_export_calibration(ezo_sensor_t *sensor, char **buffer, size_t *size) {
+    ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->cmd_export, sensor->delay_ms, ",?"));
+
+    int rows;
+    int bytes;
+    int ret = sscanf(sensor->buf, sensor->cmd_export->cmd_response, &rows, &bytes);
+    if (ret != 2) {
+        ESP_LOGW(TAG, "[0x%.2x] Unexpected response: %d '%s'", ret, sensor->address, sensor->buf);
+        return ESP_ERR_INVALID_RESPONSE;
+    }
+    size_t max_size = bytes + rows + 1;
+    if (*buffer == NULL || *size != max_size) {
+        *buffer = calloc(1, bytes + rows);
+    }
+    *size = 0;
+    for (int i = 0; i < rows; ++i) {
+        ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->cmd_export, sensor->delay_ms, NULL));
+        *size += strlcat(*buffer, sensor->buf, max_size - *size);
+        *size += strlcat(*buffer, "\n", max_size - *size);
+    }
+    return ESP_OK;
+}
+
+esp_err_t ezo_calibration_status(ezo_sensor_t *sensor, uint8_t *value) {
+    ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->cmd_calibration, sensor->delay_ms, NULL));
+    int ret = sscanf(sensor->buf, sensor->cmd_export->cmd_response, &value);
+    if (ret != 1) {
+        ESP_LOGW(TAG, "[0x%.2x] Unexpected response: %d '%s'", ret, sensor->address, sensor->buf);
+        return ESP_ERR_INVALID_RESPONSE;
+    }
+    return ESP_OK;
 }
