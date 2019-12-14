@@ -1,5 +1,3 @@
-#include <string.h>
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -15,14 +13,13 @@
 
 static const char *TAG = "ezo_ph";
 static ezo_sensor_t ph = {
-        .type = "pH",
         .probe = "PH2000",
         .address = EZO_PH_ADDR,
+        .delay_ms = EZO_DELAY_MS_SHORT,
         .delay_read_ms = EZO_DELAY_MS_SLOWEST,
         .delay_calibration_ms = EZO_DELAY_MS_SLOWEST,
-        .calibration = EZO_CALIBRATION_LOW | EZO_CALIBRATION_MID | EZO_CALIBRATION_HIGH,
+        .calibration = EZO_CALIBRATION_STEP_LOW | EZO_CALIBRATION_STEP_MID | EZO_CALIBRATION_STEP_HIGH,
 };
-static const ezo_cmd_t cmd_slope = {.cmd = "Slope,?"};
 
 static void ezo_ph_task(void *arg) {
     context_t *context = (context_t *) arg;
@@ -37,9 +34,9 @@ static void ezo_ph_task(void *arg) {
         float temp_water = context->sensors.temp.water;
         if (last_temp_water != temp_water && CONTEXT_VALUE_IS_VALID(temp_water)) {
             last_temp_water = temp_water;
-            ESP_ERROR_CHECK(ezo_read_temperature_command(&ph, &value, last_temp_water));
+            ESP_ERROR_CHECK(ezo_read_temperature(&ph, &value, last_temp_water));
         } else {
-            ESP_ERROR_CHECK(ezo_read_command(&ph, &value));
+            ESP_ERROR_CHECK(ezo_read(&ph, &value));
         }
         ESP_LOGI(TAG, "PH %.2f", context->sensors.ph.value);
         ESP_ERROR_CHECK(context_set_ph(context, value));
@@ -54,12 +51,7 @@ esp_err_t ezo_ph_init(context_t *context) {
 }
 
 esp_err_t ezo_ph_slope(float *acidPercentage, float *basePercentage) {
-    ESP_ERROR_CHECK(ezo_send_command(&ph, &cmd_slope, ph.delay_ms, NULL));
-
-    int ret = sscanf(ph.buf, "?Slope,%f,%f", acidPercentage, basePercentage);
-    if (ret != 2) {
-        ESP_LOGW(TAG, "[0x%.2x] Unexpected response: %d '%s'", ret, ph.address, ph.buf);
-        return ESP_ERR_INVALID_RESPONSE;
-    }
+    ESP_ERROR_CHECK(ezo_send_command(&ph, ph.delay_ms, "Slope,?"));
+    ESP_ERROR_CHECK(ezo_parse_response(&ph, 2, "?Slope,%f,%f", acidPercentage, basePercentage));
     return ESP_OK;
 }

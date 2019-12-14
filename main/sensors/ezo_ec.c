@@ -1,5 +1,3 @@
-#include <string.h>
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -15,12 +13,12 @@
 
 static const char *TAG = "ezo_ec";
 static ezo_sensor_t ec = {
-        .type = "EC",
         .probe = "CS150",
         .address = EZO_EC_ADDR,
+        .delay_ms = EZO_DELAY_MS_SHORT,
         .delay_read_ms = EZO_DELAY_MS_SLOW,
         .delay_calibration_ms = EZO_DELAY_MS_SLOWEST,
-        .calibration = EZO_CALIBRATION_LOW | EZO_CALIBRATION_HIGH,
+        .calibration = EZO_CALIBRATION_STEP_LOW | EZO_CALIBRATION_STEP_HIGH,
 };
 
 static void ezo_ec_task(void *arg) {
@@ -36,9 +34,9 @@ static void ezo_ec_task(void *arg) {
         float temp_water = context->sensors.temp.water;
         if (last_temp_water != temp_water && CONTEXT_VALUE_IS_VALID(temp_water)) {
             last_temp_water = temp_water;
-            ESP_ERROR_CHECK(ezo_read_temperature_command(&ec, &value, last_temp_water));
+            ESP_ERROR_CHECK(ezo_read_temperature(&ec, &value, last_temp_water));
         } else {
-            ESP_ERROR_CHECK(ezo_read_command(&ec, &value));
+            ESP_ERROR_CHECK(ezo_read(&ec, &value));
         }
         ESP_LOGI(TAG, "EC %.2f uS/cm", context->sensors.ec.value);
         ESP_ERROR_CHECK(context_set_ec(context, value));
