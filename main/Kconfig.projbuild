@@ -63,4 +63,12 @@ menu "Project config"
 
     endmenu
 
+    menu "Simulate"
+        config ESP_SIMULATE_SENSORS
+            bool "Sensors"
+            default n
+            help
+                Simulate a real sensor instead of reading their data.
+    endmenu
+
 endmenu

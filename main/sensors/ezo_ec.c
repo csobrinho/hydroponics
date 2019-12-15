@@ -19,11 +19,15 @@ static ezo_sensor_t ec = {
         .delay_read_ms = EZO_DELAY_MS_SLOW,
         .delay_calibration_ms = EZO_DELAY_MS_SLOWEST,
         .calibration = EZO_CALIBRATION_STEP_LOW | EZO_CALIBRATION_STEP_HIGH,
+#ifdef CONFIG_ESP_SIMULATE_SENSORS
+        .simulate = 1900.f,
+        .threshold = 15.f,
+#endif
 };
 
 static void ezo_ec_task(void *arg) {
     context_t *context = (context_t *) arg;
-    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
+    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL)
     ESP_ERROR_CHECK(ezo_init(&ec));
 
     float last_temp_water = 25.0f;

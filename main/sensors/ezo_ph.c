@@ -19,6 +19,10 @@ static ezo_sensor_t ph = {
         .delay_read_ms = EZO_DELAY_MS_SLOWEST,
         .delay_calibration_ms = EZO_DELAY_MS_SLOWEST,
         .calibration = EZO_CALIBRATION_STEP_LOW | EZO_CALIBRATION_STEP_MID | EZO_CALIBRATION_STEP_HIGH,
+#ifdef CONFIG_ESP_SIMULATE_SENSORS
+        .simulate = 6.3f,
+        .threshold = 0.1f,
+#endif
 };
 
 static void ezo_ph_task(void *arg) {

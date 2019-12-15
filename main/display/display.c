@@ -71,7 +71,7 @@ static esp_err_t display_draw(context_t *context) {
 
 static void display_task(void *arg) {
     context_t *context = (context_t *) arg;
-    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
+    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL)
 
     while (1) {
         xEventGroupWaitBits(context->event_group, display_bits, pdTRUE, pdFALSE, portMAX_DELAY);

@@ -59,6 +59,10 @@ typedef struct {
     char buf[EZO_MAX_BUFFER_LEN];
     size_t bytes_read;
     ezo_sensor_response_t status;
+#ifdef CONFIG_ESP_SIMULATE_SENSORS
+    float simulate;
+    float threshold;
+#endif
 } ezo_sensor_t;
 
 esp_err_t ezo_init(ezo_sensor_t *sensor);
