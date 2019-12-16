@@ -11,6 +11,7 @@
 #include "context.h"
 #include "display/display.h"
 #include "driver/status.h"
+#include "driver/storage.h"
 #include "sensors/ezo_ec.h"
 #include "sensors/ezo_ph.h"
 #include "sensors/humidity_pressure.h"
@@ -43,14 +44,7 @@ static void test_task(void *arg) {
 void app_main() {
     context = context_create();
 
-    //Initialize NVS
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(ret);
-
+    ESP_ERROR_CHECK(storage_init(context));
     buses_init();
     ESP_ERROR_CHECK(status_init(context));
     ESP_ERROR_CHECK(display_init(context));
