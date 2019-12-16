@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -12,34 +10,14 @@
 #include "buses.h"
 #include "context.h"
 #include "display/display.h"
+#include "driver/status.h"
 #include "sensors/ezo_ec.h"
 #include "sensors/ezo_ph.h"
 #include "sensors/humidity_pressure.h"
 #include "sensors/temperature.h"
 
-typedef enum {
-    LED_STATE_OFF = 0,
-    LED_STATE_ON = 1,
-    LED_STATE_BLINK = 2
-} led_state_t;
-
-#define BLINK_TASK_PRIO      10
-
 static const char *TAG = "main";
-static led_state_t led_state = LED_STATE_BLINK;
 static context_t *context;
-
-static void blink_task(void *arg) {
-    gpio_set_direction(CONFIG_BLINK_GPIO, GPIO_MODE_OUTPUT);
-    led_state_t level = LED_STATE_ON;
-    while (led_state == LED_STATE_BLINK) {
-        gpio_set_level(CONFIG_BLINK_GPIO, level);
-        level = !level;
-        vTaskDelay(pdMS_TO_TICKS(333));
-    }
-    gpio_set_level(CONFIG_BLINK_GPIO, led_state);
-    vTaskDelete(NULL);
-}
 
 static void test_task(void *arg) {
     rotary_encoder_info_t info = {0};
@@ -74,6 +52,7 @@ void app_main() {
     ESP_ERROR_CHECK(ret);
 
     buses_init();
+    ESP_ERROR_CHECK(status_init(context));
     ESP_ERROR_CHECK(display_init(context));
     buses_scan();
     ESP_ERROR_CHECK(humidity_pressure_init(context));
@@ -81,6 +60,5 @@ void app_main() {
     ESP_ERROR_CHECK(ezo_ph_init(context));
     ESP_ERROR_CHECK(temperature_init(context));
 
-    xTaskCreatePinnedToCore(blink_task, "blink", 2048, NULL, BLINK_TASK_PRIO, NULL, tskNO_AFFINITY);
-    xTaskCreatePinnedToCore(test_task, "test", 2048, NULL, BLINK_TASK_PRIO, NULL, tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(test_task, "test", 2048, NULL, 15, NULL, tskNO_AFFINITY);
 }
