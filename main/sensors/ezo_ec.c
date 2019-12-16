@@ -8,8 +8,7 @@
 #include "error.h"
 #include "driver/ezo.h"
 
-#define EZO_EC_ADDR 0x64    /*!< Slave address for Atlas EZO EC module. */
-#define SAMPLE_PERIOD 1000  /*!< Reading sample period. */
+#define EZO_EC_ADDR 0x64  /*!< Slave address for Atlas EZO EC module. */
 
 static const char *TAG = "ezo_ec";
 static ezo_sensor_t ec = {
@@ -45,7 +44,7 @@ static void ezo_ec_task(void *arg) {
         ESP_LOGI(TAG, "EC %.2f uS/cm", context->sensors.ec.value);
         ESP_ERROR_CHECK(context_set_ec(context, value));
 
-        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(SAMPLE_PERIOD));
+        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_EC_MS));
     }
 }
 

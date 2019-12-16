@@ -8,8 +8,7 @@
 #include "error.h"
 #include "driver/ezo.h"
 
-#define EZO_PH_ADDR 0x63                /*!< Slave address for Atlas EZO PH module. */
-#define SAMPLE_PERIOD 1000              /*!< Reading sample period. */
+#define EZO_PH_ADDR 0x63  /*!< Slave address for Atlas EZO PH module. */
 
 static const char *TAG = "ezo_ph";
 static ezo_sensor_t ph = {
@@ -45,7 +44,7 @@ static void ezo_ph_task(void *arg) {
         ESP_LOGI(TAG, "PH %.2f", context->sensors.ph.value);
         ESP_ERROR_CHECK(context_set_ph(context, value));
 
-        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(SAMPLE_PERIOD));
+        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_PH_MS));
     }
 }
 
