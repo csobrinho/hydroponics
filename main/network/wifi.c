@@ -18,7 +18,7 @@ static EventGroupHandle_t s_wifi_event_group;
 
 static int s_retry_num = 0;
 
-void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
+static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         ESP_LOGI(TAG, "WIFI_EVENT_STA_START");
         esp_wifi_connect();
@@ -43,10 +43,10 @@ void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, voi
     }
 }
 
-void wifi_init(void) {
+esp_err_t wifi_init(const char *ssid, const char *password) {
     s_wifi_event_group = xEventGroupCreate();
 
-    esp_netif_init();
+    ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
@@ -62,10 +62,16 @@ void wifi_init(void) {
                     .threshold = {.authmode = WIFI_AUTH_WPA2_PSK}
             }
     };
+    if (ssid != NULL && password != NULL) {
+        strlcpy((char *) wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid));
+        strlcpy((char *) wifi_config.sta.password, ssid, sizeof(wifi_config.sta.password));
+    }
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    ESP_LOGI(TAG, "Connected to SSID:%s password:%s", CONFIG_ESP_WIFI_SSID, CONFIG_ESP_WIFI_PASSWORD);
+    ESP_LOGI(TAG, "Connecting to SSID:%s password:%s", wifi_config.sta.ssid, wifi_config.sta.password);
+
+    return ESP_OK;
 }
