@@ -5,6 +5,9 @@
 
 #include "context.h"
 
+#define STORAGE_KEY_WIFI_SSID     "wifi_ssid"
+#define STORAGE_KEY_WIFI_PASSWORD "wifi_password"
+
 esp_err_t storage_init(context_t *context);
 
 esp_err_t storage_get_string(const char *key, char **buf, size_t *length);

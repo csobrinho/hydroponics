@@ -6,9 +6,7 @@
 #include "context.h"
 #include "error.h"
 
-#define LEDC_INITIAL_DUTY 3
-
-static const char *TAG = "status";
+#define LEDC_INITIAL_DUTY 2
 
 esp_err_t status_init(context_t *context) {
     gpio_set_direction(CONFIG_BLINK_GPIO, GPIO_MODE_OUTPUT);
