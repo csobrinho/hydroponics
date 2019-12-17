@@ -45,10 +45,8 @@ void app_main() {
 
     buses_init();
     ESP_ERROR_CHECK(storage_init(context));
-    buses_init();
     ESP_ERROR_CHECK(status_init(context));
     ESP_ERROR_CHECK(display_init(context));
-    buses_scan();
     ESP_ERROR_CHECK(humidity_pressure_init(context));
     ESP_ERROR_CHECK(ezo_ec_init(context));
     ESP_ERROR_CHECK(ezo_ph_init(context));
