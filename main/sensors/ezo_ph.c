@@ -41,7 +41,7 @@ static void ezo_ph_task(void *arg) {
         } else {
             ESP_ERROR_CHECK(ezo_read(&ph, &value));
         }
-        ESP_LOGI(TAG, "PH %.2f", context->sensors.ph.value);
+        ESP_LOGD(TAG, "PH %.2f", context->sensors.ph.value);
         ESP_ERROR_CHECK(context_set_ph(context, value));
 
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_PH_MS));

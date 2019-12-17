@@ -21,13 +21,13 @@ static void temperature_task(void *arg) {
     while (1) {
         TickType_t last_wake_time = xTaskGetTickCount();
         temperature_hal_read(&dev);
-        ESP_LOGI(TAG, "Temperature readings (degrees C): sample %d", ++sample_count);
+        ESP_LOGD(TAG, "Temperature readings (degrees C): sample %d", ++sample_count);
         if (dev.num_devices > 0) {
             for (int i = 0; i < dev.num_devices; i++) {
                 if (dev.errors[i] != DS18B20_OK) {
                     ++errors_count[i];
                 }
-                ESP_LOGI(TAG, "  %d: %.1f    %d errors", i, dev.readings[i], errors_count[i]);
+                ESP_LOGD(TAG, "  %d: %.1f    %d errors", i, dev.readings[i], errors_count[i]);
             }
             ESP_ERROR_CHECK(context_set_temp_water(context, dev.readings[0]));
         }

@@ -23,7 +23,7 @@ static void humidity_pressure_publish(context_t *context, struct bme280_data *co
     float pressure = comp_data->pressure / 100.f;
     float humidity = comp_data->humidity / 1024.f;
 #endif
-    ESP_LOGI(TAG, "Temp: %0.2f Pressure: %0.2f  Humidity: %0.2f", indoor, pressure, humidity);
+    ESP_LOGD(TAG, "Temp: %0.2f Pressure: %0.2f  Humidity: %0.2f", indoor, pressure, humidity);
     ESP_ERROR_CHECK(context_set_temp_indoor_humidity_pressure(context, indoor, humidity, pressure));
 }
 

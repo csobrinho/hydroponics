@@ -41,7 +41,7 @@ static void ezo_ec_task(void *arg) {
         } else {
             ESP_ERROR_CHECK(ezo_read(&ec, &value));
         }
-        ESP_LOGI(TAG, "EC %.2f uS/cm", context->sensors.ec.value);
+        ESP_LOGD(TAG, "EC %.2f uS/cm", context->sensors.ec.value);
         ESP_ERROR_CHECK(context_set_ec(context, value));
 
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_EC_MS));

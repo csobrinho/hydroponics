@@ -33,7 +33,7 @@ static void test_task(void *arg) {
         rotary_encoder_event_t event = {0};
         if (xQueueReceive(event_queue, &event, portMAX_DELAY) == pdTRUE) {
             ESP_ERROR_CHECK(context_set_rotary(context, event.state));
-            ESP_LOGI(TAG, "Event: position %d, direction %s", event.state.position,
+            ESP_LOGD(TAG, "Event: position %d, direction %s", event.state.position,
                      event.state.direction
                      ? (event.state.direction == ROTARY_ENCODER_DIRECTION_CLOCKWISE ? "CW" : "CCW") : "NOT_SET");
         }
@@ -43,6 +43,7 @@ static void test_task(void *arg) {
 void app_main() {
     context = context_create();
 
+    buses_init();
     ESP_ERROR_CHECK(storage_init(context));
     buses_init();
     ESP_ERROR_CHECK(status_init(context));

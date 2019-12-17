@@ -15,15 +15,10 @@ void buses_init(void) {
     conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
     conf.master.clk_speed = I2C_MASTER_FREQ_HZ;
 
-    ESP_LOGI(TAG, "sda_io_num %d", I2C_MASTER_SDA);
-    ESP_LOGI(TAG, "scl_io_num %d", I2C_MASTER_SCL);
-    ESP_LOGI(TAG, "clk_speed %d", I2C_MASTER_FREQ_HZ);
-    ESP_LOGI(TAG, "i2c_param_config %d", conf.mode);
+    ESP_LOGI(TAG, "I2C clock: %d kHz", I2C_MASTER_FREQ_HZ / 1000);
     ESP_ERROR_CHECK(i2c_param_config(I2C_MASTER_NUM, &conf));
-    ESP_LOGI(TAG, "i2c_driver_install %d", I2C_MASTER_NUM);
     ESP_ERROR_CHECK(i2c_driver_install(I2C_MASTER_NUM, conf.mode, I2C_MASTER_RX_BUF_DISABLE,
                                        I2C_MASTER_TX_BUF_DISABLE, 0));
-
     ESP_ERROR_CHECK(gpio_install_isr_service(0));
 }
 
