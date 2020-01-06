@@ -138,6 +138,18 @@ CONFIG_ESP_SIMULATE_SENSORS=y
 # end of Project config
 
 #
+# IoT Solution settings
+#
+
+#
+# I2S devices
+#
+# CONFIG_BIT_MODE_16BIT is not set
+CONFIG_BIT_MODE_8BIT=y
+# end of I2S devices
+# end of IoT Solution settings
+
+#
 # Compiler options
 #
 CONFIG_COMPILER_OPTIMIZATION_DEFAULT=y

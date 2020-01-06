@@ -70,5 +70,20 @@ menu "Project config"
             help
                 Simulate a real sensor instead of reading their data.
     endmenu
+endmenu
 
+menu "IoT Solution settings"
+    # Copied from the esp-iot-solution main kconfig file.
+        menu "I2S devices"
+            choice LCD_BITEMODE_CHOOSE
+                bool "Choose Bit Mode"
+                    default BIT_MODE_16BIT
+
+                config BIT_MODE_16BIT
+                    bool "16_BIT_MODE"
+                config BIT_MODE_8BIT
+                    bool "8_BIT_MODE"
+
+            endchoice
+        endmenu
 endmenu
