@@ -23,6 +23,7 @@ static ezo_sensor_t ec = {
         .threshold = 15.f,
 #endif
 };
+ezo_sensor_t *ezo_ec = &ec;
 
 static void ezo_ec_task(void *arg) {
     context_t *context = (context_t *) arg;

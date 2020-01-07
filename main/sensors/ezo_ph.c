@@ -23,6 +23,7 @@ static ezo_sensor_t ph = {
         .threshold = 0.1f,
 #endif
 };
+ezo_sensor_t *ezo_ph = &ph;
 
 static void ezo_ph_task(void *arg) {
     context_t *context = (context_t *) arg;

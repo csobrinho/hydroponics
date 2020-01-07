@@ -13,6 +13,6 @@ else ()
 endif ()
 
 idf_component_register(
-        SRC_DIRS "." "display" "driver" "network" "sensors"
+        SRC_DIRS "." "console" "display" "driver" "network" "sensors"
         EXCLUDE_SRCS "${exclude_srcs}"
-        INCLUDE_DIRS "." "display" "driver" "network" "sensors")
+        INCLUDE_DIRS "." "console" "display" "driver" "network" "sensors")

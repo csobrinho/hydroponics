@@ -4,6 +4,9 @@
 #include "esp_err.h"
 
 #include "context.h"
+#include "driver/ezo.h"
+
+extern ezo_sensor_t *ezo_ec;
 
 esp_err_t ezo_ec_init(context_t *context);
 
