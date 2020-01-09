@@ -3,7 +3,9 @@
 
 #include "esp_err.h"
 
-esp_err_t lcd_init(void);
+#include "context.h"
+
+esp_err_t lcd_init(context_t *context);
 
 void lcd_clear(uint16_t color);
 

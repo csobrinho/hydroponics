@@ -1,12 +1,17 @@
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
 #include "esp_err.h"
 #include "esp_log.h"
 
 #include "buses.h"
+#include "error.h"
+#include "context.h"
 #include "rm68090.h"
 
-// static const char *TAG = "lcd";
 // #define LOG(args...) ESP_LOGD(args)
 #define LOG(args...) do {} while (0)
+static const char *TAG = "lcd";
 
 static i2s_lcd8_dev_t dev = {
         .base = {
@@ -21,11 +26,22 @@ static i2s_lcd8_dev_t dev = {
                 },
                 .i2s_port = I2S_NUM_1,
         },
-        .rst_io_num = GPIO_NUM_16,
+        .rst_io_num = OLED_RESET,
 };
 
-esp_err_t lcd_init() {
+static void lcd_task(void *arg) {
+    context_t *context = (context_t *) arg;
+    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL)
+
     ESP_ERROR_CHECK(rm68090_init(&dev));
+
+    while (1) {
+        vTaskDelay(portMAX_DELAY);
+    }
+}
+
+esp_err_t lcd_init(context_t *context) {
+    xTaskCreatePinnedToCore(lcd_task, "lcd", 4096, context, 15, NULL, tskNO_AFFINITY);
     return ESP_OK;
 }
 

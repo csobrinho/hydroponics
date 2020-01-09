@@ -10,6 +10,7 @@
 #include "context.h"
 #include "console/console.h"
 #include "display/display.h"
+#include "display/lcd.h"
 #include "driver/status.h"
 #include "driver/storage.h"
 #include "sensors/ezo_ec.h"
@@ -47,6 +48,7 @@ void app_main() {
     buses_init();
     ESP_ERROR_CHECK(storage_init(context));
     ESP_ERROR_CHECK(status_init(context));
+    ESP_ERROR_CHECK(lcd_init(context));
     ESP_ERROR_CHECK(display_init(context));
     ESP_ERROR_CHECK(humidity_pressure_init(context));
     ESP_ERROR_CHECK(ezo_ec_init(context));

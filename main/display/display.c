@@ -73,18 +73,13 @@ static void display_task(void *arg) {
     context_t *context = (context_t *) arg;
     ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL)
 
-    while (1) {
-        xEventGroupWaitBits(context->event_group, display_bits, pdTRUE, pdFALSE, portMAX_DELAY);
-        ESP_ERROR_CHECK(display_draw(context));
-        vTaskDelay(pdMS_TO_TICKS(250));
-    }
-}
+    // Let the reset settle.
+    vTaskDelay(pdMS_TO_TICKS(100));
 
-esp_err_t display_init(context_t *context) {
     u8g2_esp32_hal_t u8g2_esp32_hal = U8G2_ESP32_HAL_DEFAULT;
     u8g2_esp32_hal.sda = I2C_MASTER_SDA;
     u8g2_esp32_hal.scl = I2C_MASTER_SCL;
-    u8g2_esp32_hal.reset = OLED_RESET;
+    u8g2_esp32_hal.reset = GPIO_NUM_NC;     // The reset is done by the lcd module.
     u8g2_esp32_hal_init(u8g2_esp32_hal);
 
     u8g2_Setup_ssd1306_i2c_128x32_univision_f(
@@ -99,6 +94,14 @@ esp_err_t display_init(context_t *context) {
     u8g2_ClearBuffer(&u8g2);
     u8g2_SendBuffer(&u8g2);
 
-    xTaskCreatePinnedToCore(display_task, "display", 2048, context, 15, NULL, tskNO_AFFINITY);
+    while (1) {
+        xEventGroupWaitBits(context->event_group, display_bits, pdTRUE, pdFALSE, portMAX_DELAY);
+        ESP_ERROR_CHECK(display_draw(context));
+        vTaskDelay(pdMS_TO_TICKS(250));
+    }
+}
+
+esp_err_t display_init(context_t *context) {
+    xTaskCreatePinnedToCore(display_task, "display", 4096, context, 15, NULL, tskNO_AFFINITY);
     return ESP_OK;
 }
