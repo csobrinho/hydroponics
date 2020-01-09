@@ -16,6 +16,9 @@
 #define RST_ON  GPIO.out_w1ts = (1 << dev->rst_io_num)
 #define RST_OFF GPIO.out_w1tc = (1 << dev->rst_io_num)
 
+// #define LOG(args...) ESP_LOGD(args)
+#define LOG(args...) do {} while (0)
+
 static const char *TAG = "i2s_lcd8";
 static i2s_dev_t *I2S[I2S_NUM_MAX] = {&I2S0, &I2S1};
 
@@ -31,6 +34,7 @@ esp_err_t i2s_lcd8_init(i2s_lcd8_dev_t *dev) {
     ARG_CHECK(dev != NULL, ERR_PARAM_NULL)
     ARG_CHECK(dev->rst_io_num != GPIO_NUM_NC, "rst is GPIO_NUM_NC")
     ARG_CHECK(dev->base.i2s_lcd_conf.data_width == 8, "data_width must be 8")
+    LOG(TAG, "[%s]", __FUNCTION__);
 
     // Setup the GPIOs as general purpose outputs.
     gpio_pad_select_gpio(dev->rst_io_num);
@@ -56,9 +60,9 @@ esp_err_t i2s_lcd8_init(i2s_lcd8_dev_t *dev) {
         return ESP_ERR_NO_MEM;
     }
 
-    // Fix the clock. It needs to be at least 4 for 8 bits to work properly.
+    // Fix the clock. It needs to be at least 3 for 8 bits to work properly.
     I2S[dev->base.i2s_port]->clkm_conf.clk_en = 0;
-    I2S[dev->base.i2s_port]->clkm_conf.clkm_div_num = 4;
+    I2S[dev->base.i2s_port]->clkm_conf.clkm_div_num = 3;
     I2S[dev->base.i2s_port]->clkm_conf.clk_en = 1;
 
     return ESP_OK;
@@ -70,11 +74,11 @@ void i2s_lcd8_reset(const i2s_lcd8_dev_t *dev) {
     WS_ON;
     RS_ON;
     RST_ON;
-    i2s_lcd8_delay_ms(5);
+    i2s_lcd8_delay_ms(10);
     RST_OFF;
-    i2s_lcd8_delay_ms(15);
+    i2s_lcd8_delay_ms(30);
     RST_ON;
-    i2s_lcd8_delay_ms(15);
+    i2s_lcd8_delay_ms(30);
 }
 
 void i2s_lcd8_write_data(const i2s_lcd8_dev_t *dev, uint16_t data) {
@@ -87,6 +91,7 @@ void i2s_lcd8_write_datan(const i2s_lcd8_dev_t *dev, const uint16_t *buf, size_t
     ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL)
     ARG_ERROR_CHECK(buf != NULL, ERR_PARAM_NULL)
     ARG_ERROR_CHECK(len > 0, ERR_PARAM_LE_ZERO)
+    LOG(TAG, "[%s] buf: %p len: %2d", __FUNCTION__, buf, len);
 
     iot_i2s_lcd_write(dev->handle, (uint16_t *) buf, len);
 }
@@ -101,6 +106,7 @@ void i2s_lcd8_write_cmd(const i2s_lcd8_dev_t *dev, uint16_t cmd) {
 
 void i2s_lcd8_write_reg(const i2s_lcd8_dev_t *dev, uint16_t cmd, uint16_t data) {
     ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL)
+    LOG(TAG, "[%s] cmd: 0x%04x data: 0x%04x", __FUNCTION__, cmd, data);
 
     i2s_lcd8_write_cmd(dev, cmd);
     i2s_lcd8_write_data(dev, data);
@@ -110,6 +116,7 @@ esp_err_t i2s_lcd8_init_registers(const i2s_lcd8_dev_t *dev, const uint16_t *tab
     ARG_CHECK(dev != NULL, ERR_PARAM_NULL)
     ARG_CHECK(table != NULL, ERR_PARAM_NULL)
     ARG_CHECK(size > 0, ERR_PARAM_LE_ZERO)
+    LOG(TAG, "[%s] count: %d", __FUNCTION__, size / sizeof(uint16_t));
 
     while (size > 0) {
         uint16_t cmd = *table++;
@@ -117,7 +124,7 @@ esp_err_t i2s_lcd8_init_registers(const i2s_lcd8_dev_t *dev, const uint16_t *tab
         if (cmd == I2S_LCD8_DELAY)
             i2s_lcd8_delay_ms(d);
         else {
-            i2s_lcd8_write_reg(dev->handle, cmd, d);
+            i2s_lcd8_write_reg(dev, cmd, d);
         }
         size -= 2 * sizeof(int16_t);
     }

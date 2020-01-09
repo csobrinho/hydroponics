@@ -1,14 +1,19 @@
+#include <math.h>
+
 #include "esp_err.h"
 
 #include "error.h"
 
-#include "i2s_lcd8.h"
+#include "driver/i2s_lcd8.h"
 #include "rm68090.h"
 #include "rm68090_regs.h"
 
+// #define LOG(args...) ESP_LOGD(args)
+#define LOG(args...) do {} while (0)
+
 static const char *TAG = "rm68090";
 
-// Adapted from
+// Init registers adapted from https://github.com/prenticedavid/MCUFRIEND_kbv/blob/master/MCUFRIEND_kbv.cpp
 static const uint16_t RM68090_REG_VALUES[] = {
         0x00e5, 0x78f0,                                               // Set SRAM internal timing
         RM68090_REG_DRIVER_OUTPUT_CONTROL, 0x0100,                    // Set Driver Output Control
@@ -71,71 +76,178 @@ static const uint16_t RM68090_REG_VALUES[] = {
 esp_err_t rm68090_init(i2s_lcd8_dev_t *dev) {
     ESP_ERROR_CHECK(i2s_lcd8_init(dev));
     ESP_ERROR_CHECK(i2s_lcd8_init_registers(dev, RM68090_REG_VALUES, sizeof(RM68090_REG_VALUES)));
-    ESP_ERROR_CHECK(rm68090_set_rotation(dev, ROTATION_LANDSCAPE_REV));
-    rm68090_clear(dev, LCD_COLOR_GREEN);
+
+    dev->registers.reverse = 0x1;
+    dev->rotation = -1;
+    ESP_ERROR_CHECK(rm68090_set_rotation(dev, ROTATION_LANDSCAPE));
+    ESP_ERROR_CHECK(rm68090_invert_display(dev, false));
+
+    rm68090_clear(dev, LCD_COLOR_BLACK);
     return ESP_OK;
 }
 
 void rm68090_address_set(i2s_lcd8_dev_t *dev, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) {
     ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL)
 
-    i2s_lcd8_write_cmd(dev, RM68090_REG_RAM_ADDRESS_SET_HORIZONTAL_ADDRESS);
-    i2s_lcd8_write_data(dev, x1);
-    i2s_lcd8_write_data(dev, x2);
+    i2s_lcd8_write_reg(dev, dev->registers.mc, x1);
+    i2s_lcd8_write_reg(dev, dev->registers.mp, y1);
 
-    i2s_lcd8_write_cmd(dev, RM68090_REG_RAM_ADDRESS_SET_VERTICAL_ADDRESS);
-    i2s_lcd8_write_data(dev, y1);
-    i2s_lcd8_write_data(dev, y2);
+    if (!(x1 == x2 && y1 == y2)) {  // Only need MC,MP for drawPixel.
+        i2s_lcd8_write_reg(dev, dev->registers.sc, x1);
+        i2s_lcd8_write_reg(dev, dev->registers.sp, y1);
+        i2s_lcd8_write_reg(dev, dev->registers.ec, x2);
+        i2s_lcd8_write_reg(dev, dev->registers.ep, y2);
+    }
+}
 
-    i2s_lcd8_write_cmd(dev, RM68090_REG_WRITE_DATA_TO_GRAM);
+void rm68090_draw_pixel(i2s_lcd8_dev_t *dev, uint16_t color, uint16_t x, uint16_t y) {
+    LOG(TAG, "[%s] color: 0x%04x (%d, %d)", __FUNCTION__, color, x, y);
+
+    rm68090_address_set(dev, x, y, x, y);
+    i2s_lcd8_write_reg(dev, dev->registers.mw, color);
+}
+
+static uint16_t clamp(uint16_t value, uint16_t min, uint16_t max) {
+    if (value < min) return min;
+    if (value > max) return max;
+    return value;
+}
+
+void rm68090_fill(i2s_lcd8_dev_t *dev, uint16_t color, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) {
+    ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL)
+    x1 = clamp(x1, 0, dev->width - 1);
+    x2 = clamp(x2, 0, dev->width - 1);
+    y1 = clamp(y1, 0, dev->height - 1);
+    y2 = clamp(y2, 0, dev->height - 1);
+    ARG_ERROR_CHECK(x1 <= x2, "x1 > x2")
+    ARG_ERROR_CHECK(y1 <= y2, "y1 > y2")
+    LOG(TAG, "[%s] color: 0x%04x (%d, %d) -> (%d, %d)", __FUNCTION__, color, x1, y1, x2, y2);
+
+    rm68090_address_set(dev, x1, y1, x2, y2);
+    i2s_lcd8_write_cmd(dev, dev->registers.mw);
+
+    uint16_t *tmp = dev->buffer;
+    size_t size_remain = (((x2 - x1) + 1) * ((y2 - y1) + 1)) * sizeof(uint16_t);
+    bool filled = false;
+    while (size_remain > 0) {
+        size_t to_write = size_remain >= dev->buffer_len ? dev->buffer_len : size_remain;
+        if (!filled) {
+            for (int i = 0; i < to_write; i += sizeof(uint16_t)) {
+                *tmp++ = color;
+            }
+            filled = true;
+        }
+        LOG(TAG, "  remaining %d bytes", size_remain);
+        i2s_lcd8_write_datan(dev, dev->buffer, to_write);
+        size_remain -= to_write;
+    }
 }
 
 void rm68090_clear(i2s_lcd8_dev_t *dev, uint16_t color) {
     ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL)
+    LOG(TAG, "[%s] color: 0x%04x", __FUNCTION__, color);
 
-    rm68090_address_set(dev, 0, 0, RM68090_MAX_HEIGHT - 1, RM68090_MAX_WIDTH - 1);
-
-    uint16_t *tmp = dev->buffer;
-    for (int i = 0; i < RM68090_MAX_WIDTH; ++i) {
-        *tmp++ = color;
-    }
-    int max = color == LCD_COLOR_WHITE ? RM68090_MAX_WIDTH : RM68090_MAX_WIDTH / 2;
-    for (int w = 0; w < max; w++) {
-        i2s_lcd8_write_datan(dev, dev->buffer, RM68090_MAX_HEIGHT * sizeof(uint16_t));
-    }
-
-    rm68090_address_set(dev, 10, 30, 10, 30);
-    i2s_lcd8_write_data(dev, LCD_COLOR_WHITE);
+    rm68090_fill(dev, color, 0, 0, dev->width - 1, dev->height - 1);
 }
 
+#define BGR_ON  BIT(12)
+#define MV_ON   BIT(3)
+#define MX_ON   BIT(8)
+#define GS_ON   BIT(15)
+#define I_D1_ON BIT(5)
+#define I_D0_ON BIT(4)
+#define VLE_ON  BIT(1)
+#define REV_ON  BIT(0)
+
 esp_err_t rm68090_set_rotation(i2s_lcd8_dev_t *dev, rotation_t rotation) {
+    ARG_CHECK(dev != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(rotation >= 0 && rotation <= ROTATION_LANDSCAPE_MAX, "rotation is invalid")
+    LOG(TAG, "[%s] rotation: %d", __FUNCTION__, rotation);
+
     if (rotation == dev->rotation) {
         return ESP_OK;
     }
-    dev->width = (rotation & 1) ? RM68090_MAX_HEIGHT : RM68090_MAX_WIDTH;
-    dev->height = (rotation & 1) ? RM68090_MAX_WIDTH : RM68090_MAX_HEIGHT;
+    bool is_landscape = rotation == ROTATION_LANDSCAPE || rotation == ROTATION_LANDSCAPE_REV;
+    dev->width = is_landscape ? RM68090_MAX_HEIGHT : RM68090_MAX_WIDTH;
+    dev->height = is_landscape ? RM68090_MAX_WIDTH : RM68090_MAX_HEIGHT;
 
     uint16_t val;
     switch (rotation) {
-        case ROTATION_PORTRAIT:       // PORTRAIT:
-            val = 0x48;               // MY=0, MX=1, MV=0, ML=0, BGR=1
+        case ROTATION_PORTRAIT:           // PORTRAIT:
+            val = GS_ON | MX_ON | BGR_ON; // MY=0, MX=1, MV=0, ML=0, BGR=1
             break;
-        case ROTATION_LANDSCAPE:      // LANDSCAPE: 90 degrees
-            val = 0x28;               // MY=0, MX=0, MV=1, ML=0, BGR=1
+        case ROTATION_LANDSCAPE:          // LANDSCAPE: 90 degrees
+            val = GS_ON | MV_ON | BGR_ON; // MY=0, MX=0, MV=1, ML=0, BGR=1
             break;
-        case ROTATION_PORTRAIT_REV:   // PORTRAIT_REV: 180 degrees
-            val = 0x98;               // MY=1, MX=0, MV=0, ML=1, BGR=1
+        case ROTATION_PORTRAIT_REV:       // PORTRAIT_REV: 180 degrees
+            val = BGR_ON;                 // MY=1, MX=0, MV=0, ML=1, BGR=1
             break;
-        case ROTATION_LANDSCAPE_REV:  // LANDSCAPE_REV: 270 degrees
-            val = 0xF8;               // MY=1, MX=1, MV=1, ML=1, BGR=1
+        case ROTATION_LANDSCAPE_REV:      // LANDSCAPE_REV: 270 degrees
+            val = MX_ON | MV_ON | BGR_ON; // MY=1, MX=1, MV=1, ML=1, BGR=1
             break;
         default:
             return ESP_ERR_INVALID_ARG;
     }
-    val ^= 0x80;
+    dev->registers.mw = RM68090_REG_WRITE_DATA_TO_GRAM;
+    if (is_landscape) {
+        // Switch the horizontal<->vertical registers.
+        dev->registers.mp = RM68090_REG_RAM_ADDRESS_SET_HORIZONTAL_ADDRESS;
+        dev->registers.mc = RM68090_REG_RAM_ADDRESS_SET_VERTICAL_ADDRESS;
+        dev->registers.sp = RM68090_REG_WINDOW_ADDRESS_WRITE_CONTROL_INSTRUCTION_0;
+        dev->registers.sc = RM68090_REG_WINDOW_ADDRESS_WRITE_CONTROL_INSTRUCTION_2;
+        dev->registers.ep = RM68090_REG_WINDOW_ADDRESS_WRITE_CONTROL_INSTRUCTION_1;
+        dev->registers.ec = RM68090_REG_WINDOW_ADDRESS_WRITE_CONTROL_INSTRUCTION_3;
+    } else {
+        dev->registers.mc = RM68090_REG_RAM_ADDRESS_SET_HORIZONTAL_ADDRESS;
+        dev->registers.mp = RM68090_REG_RAM_ADDRESS_SET_VERTICAL_ADDRESS;
+        dev->registers.sc = RM68090_REG_WINDOW_ADDRESS_WRITE_CONTROL_INSTRUCTION_0;
+        dev->registers.sp = RM68090_REG_WINDOW_ADDRESS_WRITE_CONTROL_INSTRUCTION_2;
+        dev->registers.ec = RM68090_REG_WINDOW_ADDRESS_WRITE_CONTROL_INSTRUCTION_1;
+        dev->registers.ep = RM68090_REG_WINDOW_ADDRESS_WRITE_CONTROL_INSTRUCTION_3;
+    }
 
-//    config->width = RM68090_MAX_WIDTH;
-//    config->height = RM68090_MAX_HEIGHT;
-//    config->rotation = ROTATION_PORTRAIT;
+    // Gate Scan Line (0xa700)
+    uint16_t gs = 0x2700 | (val & GS_ON);                         // GS:1. Gate Line No = G320.
+    i2s_lcd8_write_reg(dev, RM68090_REG_BASE_IMAGE_DISPLAY_CONTROL_INSTRUCTION_0, gs);
+
+    // Set Driver Output Control
+    uint16_t ss = val & MX_ON;                                    // SS:1. Source driver output shift from S720 to S1.
+    i2s_lcd8_write_reg(dev, RM68090_REG_DRIVER_OUTPUT_CONTROL, ss);
+
+    // set GRAM write direction and BGR=1.
+    uint16_t org = val & (MV_ON | BGR_ON | I_D1_ON | I_D0_ON);    // Sets the vertical direction.
+    i2s_lcd8_write_reg(dev, RM68090_REG_ENTRY_MODE, org);         // I/D1-0: 1. Horizontal and Vertical increment.
+
+    rm68090_address_set(dev, 0, 0, dev->width - 1, dev->height - 1);
+    rm68090_vertical_scroll(dev, 0, dev->height, 0);
+    return ESP_OK;
+}
+
+esp_err_t rm68090_vertical_scroll(const i2s_lcd8_dev_t *dev, int16_t top, int16_t scroll_lines, int16_t offset) {
+    ARG_CHECK(dev != NULL, ERR_PARAM_NULL)
+    LOG(TAG, "[%s] top: %d scroll_lines: %d offset: %d", __FUNCTION__, top, scroll_lines, offset);
+
+    if (offset <= -scroll_lines || offset >= scroll_lines) {
+        offset = 0; // Valid scroll.
+    }
+    int16_t vsp = top + offset; // Vertical start position.
+    if (offset < 0) {
+        vsp += scroll_lines;      // Keep in unsigned range.
+    }
+    // !NDL, VLE, REV
+    i2s_lcd8_write_reg(dev, RM68090_REG_BASE_IMAGE_DISPLAY_CONTROL_INSTRUCTION_1, dev->registers.reverse | VLE_ON);
+    // VL#
+    i2s_lcd8_write_reg(dev, RM68090_REG_BASE_IMAGE_DISPLAY_CONTROL_INSTRUCTION_A, vsp);
+
+    return ESP_OK;
+}
+
+esp_err_t rm68090_invert_display(i2s_lcd8_dev_t *dev, bool reverse) {
+    ARG_CHECK(dev != NULL, ERR_PARAM_NULL)
+    LOG(TAG, "[%s] reverse: %d", __FUNCTION__, reverse);
+
+    dev->registers.reverse = reverse ? 0x0 : REV_ON;
+    i2s_lcd8_write_reg(dev, RM68090_REG_BASE_IMAGE_DISPLAY_CONTROL_INSTRUCTION_1, dev->registers.reverse);
+
     return ESP_OK;
 }

@@ -21,6 +21,7 @@ typedef enum {
     ROTATION_LANDSCAPE = 1,
     ROTATION_PORTRAIT_REV = 2,
     ROTATION_LANDSCAPE_REV = 3,
+    ROTATION_LANDSCAPE_MAX = 3,
 } rotation_t;
 
 typedef struct {
@@ -32,6 +33,17 @@ typedef struct {
     uint16_t width;
     uint16_t height;
     rotation_t rotation;
+    struct {
+        uint16_t mc;
+        uint16_t mp;
+        uint16_t mw;
+        uint16_t sc;
+        uint16_t ec;
+        uint16_t sp;
+        uint16_t ep;
+        uint16_t reverse;
+    } registers;
+
 } i2s_lcd8_dev_t;
 
 esp_err_t i2s_lcd8_init(i2s_lcd8_dev_t *dev);
