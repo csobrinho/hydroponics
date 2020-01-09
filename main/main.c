@@ -8,6 +8,7 @@
 
 #include "buses.h"
 #include "context.h"
+#include "console/console.h"
 #include "display/display.h"
 #include "driver/status.h"
 #include "driver/storage.h"
@@ -53,4 +54,6 @@ void app_main() {
     ESP_ERROR_CHECK(temperature_init(context));
 
     xTaskCreatePinnedToCore(test_task, "test", 2048, NULL, 15, NULL, tskNO_AFFINITY);
+
+    ESP_ERROR_CHECK(console_init());
 }

@@ -4,10 +4,10 @@
 #include "buses.h"
 #include "rm68090.h"
 
+// static const char *TAG = "lcd";
 // #define LOG(args...) ESP_LOGD(args)
 #define LOG(args...) do {} while (0)
 
-static const char *TAG = "lcd";
 static i2s_lcd8_dev_t dev = {
         .base = {
                 .i2s_lcd_conf = {
