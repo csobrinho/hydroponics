@@ -15,4 +15,5 @@ endif ()
 idf_component_register(
         SRC_DIRS "." "console" "display" "driver" "network" "sensors"
         EXCLUDE_SRCS "${exclude_srcs}"
-        INCLUDE_DIRS "." "console" "display" "driver" "network" "sensors")
+        INCLUDE_DIRS "." "console" "display" "driver" "network" "sensors"
+        EMBED_FILES "embed/hydroponics_logo.bin")
