@@ -8,6 +8,7 @@
 #include "error.h"
 #include "context.h"
 #include "rm68090.h"
+#include "lcd.h"
 
 // #define LOG(args...) ESP_LOGD(args)
 #define LOG(args...) do {} while (0)
