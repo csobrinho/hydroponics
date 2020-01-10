@@ -74,11 +74,11 @@ void i2s_lcd8_reset(const i2s_lcd8_dev_t *dev) {
     WS_ON;
     RS_ON;
     RST_ON;
-    i2s_lcd8_delay_ms(10);
+    i2s_lcd8_delay_ms(5);
     RST_OFF;
-    i2s_lcd8_delay_ms(30);
+    i2s_lcd8_delay_ms(15);
     RST_ON;
-    i2s_lcd8_delay_ms(30);
+    i2s_lcd8_delay_ms(15);
 }
 
 void i2s_lcd8_write_data(const i2s_lcd8_dev_t *dev, uint16_t data) {
