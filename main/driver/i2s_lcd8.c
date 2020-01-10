@@ -62,7 +62,7 @@ esp_err_t i2s_lcd8_init(i2s_lcd8_dev_t *dev) {
 
     // Fix the clock. It needs to be at least 3 for 8 bits to work properly.
     I2S[dev->base.i2s_port]->clkm_conf.clk_en = 0;
-    I2S[dev->base.i2s_port]->clkm_conf.clkm_div_num = 3;
+    I2S[dev->base.i2s_port]->clkm_conf.clkm_div_num = 4;
     I2S[dev->base.i2s_port]->clkm_conf.clk_en = 1;
 
     return ESP_OK;
