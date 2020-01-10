@@ -19,6 +19,8 @@ void lcd_line(uint16_t color, int32_t x1, int32_t y1, int32_t x2, int32_t y2);
 
 void lcd_rect(uint16_t color, uint16_t x, uint16_t y, uint16_t width, uint16_t height);
 
+void lcd_draw(const uint16_t *img, uint16_t x, uint16_t y, uint16_t width, uint16_t height);
+
 uint16_t lcd_width();
 
 uint16_t lcd_height();

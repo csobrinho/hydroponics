@@ -1,12 +1,14 @@
 #include <math.h>
 
 #include "esp_err.h"
+#include "esp_log.h"
 
 #include "error.h"
 
 #include "driver/i2s_lcd8.h"
 #include "rm68090.h"
 #include "rm68090_regs.h"
+#include "utils.h"
 
 // #define LOG(args...) ESP_LOGD(args)
 #define LOG(args...) do {} while (0)
@@ -107,24 +109,22 @@ void rm68090_draw_pixel(i2s_lcd8_dev_t *dev, uint16_t color, uint16_t x, uint16_
     i2s_lcd8_write_reg(dev, dev->registers.mw, color);
 }
 
-static uint16_t clamp(uint16_t value, uint16_t min, uint16_t max) {
-    if (value < min) return min;
-    if (value > max) return max;
-    return value;
+void rm68090_prepare_draw(i2s_lcd8_dev_t *dev) {
+    i2s_lcd8_write_cmd(dev, dev->registers.mw);
 }
 
 void rm68090_fill(i2s_lcd8_dev_t *dev, uint16_t color, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) {
     ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL)
+    LOG(TAG, "[%s] color: 0x%04x (%d, %d) -> (%d, %d)", __FUNCTION__, color, x1, y1, x2, y2);
     x1 = clamp(x1, 0, dev->width - 1);
     x2 = clamp(x2, 0, dev->width - 1);
     y1 = clamp(y1, 0, dev->height - 1);
     y2 = clamp(y2, 0, dev->height - 1);
     ARG_ERROR_CHECK(x1 <= x2, "x1 > x2")
     ARG_ERROR_CHECK(y1 <= y2, "y1 > y2")
-    LOG(TAG, "[%s] color: 0x%04x (%d, %d) -> (%d, %d)", __FUNCTION__, color, x1, y1, x2, y2);
 
     rm68090_address_set(dev, x1, y1, x2, y2);
-    i2s_lcd8_write_cmd(dev, dev->registers.mw);
+    rm68090_prepare_draw(dev);
 
     uint16_t *tmp = dev->buffer;
     size_t size_remain = (((x2 - x1) + 1) * ((y2 - y1) + 1)) * sizeof(uint16_t);
@@ -139,6 +139,23 @@ void rm68090_fill(i2s_lcd8_dev_t *dev, uint16_t color, uint16_t x1, uint16_t y1,
         }
         LOG(TAG, "  remaining %d bytes", size_remain);
         i2s_lcd8_write_datan(dev, dev->buffer, to_write);
+        size_remain -= to_write;
+    }
+}
+
+void rm68090_draw(i2s_lcd8_dev_t *dev, const uint16_t *buf, uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
+    ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL)
+    LOG(TAG, "[%s] (%d, %d) -> (%d, %d)", __FUNCTION__, x, y, width, height);
+
+    rm68090_address_set(dev, x, y, x + width - 1, y + width - 1);
+    rm68090_prepare_draw(dev);
+
+    size_t size_remain = width * height * sizeof(uint16_t);
+    while (size_remain > 0) {
+        size_t to_write = size_remain >= dev->buffer_len ? dev->buffer_len : size_remain;
+        LOG(TAG, "  remaining %d bytes", size_remain);
+        i2s_lcd8_write_datan(dev, buf, to_write);
+        buf += to_write / sizeof(uint16_t);
         size_remain -= to_write;
     }
 }

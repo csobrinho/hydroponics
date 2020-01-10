@@ -7,6 +7,7 @@
 #include "buses.h"
 #include "error.h"
 #include "context.h"
+#include "embedded.h"
 #include "rm68090.h"
 #include "lcd.h"
 
@@ -37,12 +38,18 @@ static void lcd_task(void *arg) {
     ESP_ERROR_CHECK(rm68090_init(&dev));
 
     while (1) {
+        uint16_t width = HYDROPONICS_LOGO_BIN_WIDTH;
+        uint16_t height = HYDROPONICS_LOGO_BIN_HEIGHT;
+        uint16_t x = 0;
+        uint16_t y = 0;
+
+        lcd_draw((const uint16_t *) HYDROPONICS_LOGO_BIN_START, x, y, width, height);
         vTaskDelay(portMAX_DELAY);
     }
 }
 
 esp_err_t lcd_init(context_t *context) {
-    xTaskCreatePinnedToCore(lcd_task, "lcd", 4096, context, 15, NULL, tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(lcd_task, "lcd", 6 * 1024, context, 15, NULL, tskNO_AFFINITY);
     return ESP_OK;
 }
 
@@ -139,6 +146,10 @@ void lcd_rect(uint16_t color, uint16_t x, uint16_t y, uint16_t width, uint16_t h
     lcd_hline(color, x, y + height, width);
     lcd_vline(color, x, y + 1, height - 2);
     lcd_vline(color, x + width, y + 1, height - 2);
+}
+
+void lcd_draw(const uint16_t *img, uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
+    rm68090_draw(&dev, img, x, y, width, height);
 }
 
 uint16_t lcd_width() {
