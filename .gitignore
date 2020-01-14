@@ -56,3 +56,4 @@ dkms.conf
 build/*
 sdkconfig
 sdkconfig.old
+main/certs/*private*

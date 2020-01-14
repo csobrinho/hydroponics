@@ -940,6 +940,16 @@ CONFIG_WIFI_PROV_SCAN_MAX_ENTRIES=16
 #
 CONFIG_WPA_MBEDTLS_CRYPTO=y
 # end of Supplicant
+
+#
+# Google IoT Core Configuration
+#
+CONFIG_GIOT_PROJECT_ID="iot-hydroponics"
+CONFIG_GIOT_LOCATION="us-central1"
+CONFIG_GIOT_REGISTRY_ID="registry"
+CONFIG_GIOT_DEVICE_ID="GreenMeanMachine"
+CONFIG_GIOT_DEBUG_OUTPUT=y
+# end of Google IoT Core Configuration
 # end of Component config
 
 #

@@ -18,3 +18,7 @@
 	path = components/esp32-rotary-encoder
 	url = https://github.com/DavidAntliff/esp32-rotary-encoder
 	update = merge
+[submodule "components/esp-google-iot"]
+	path = components/esp-google-iot
+	url = https://github.com/espressif/esp-google-iot
+	update = merge
