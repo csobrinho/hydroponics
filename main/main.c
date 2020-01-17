@@ -2,17 +2,22 @@
 #include "freertos/task.h"
 
 #include "driver/gpio.h"
+#include "esp_event.h"
 #include "esp_log.h"
 
 #include "rotary_encoder.h"
 
 #include "buses.h"
-#include "context.h"
+#include "config.h"
 #include "console/console.h"
+#include "context.h"
+#include "error.h"
 #include "display/display.h"
 #include "display/lcd.h"
 #include "driver/status.h"
 #include "driver/storage.h"
+#include "network/wifi.h"
+#include "network/ntp.h"
 #include "sensors/ezo_ec.h"
 #include "sensors/ezo_ph.h"
 #include "sensors/humidity_pressure.h"
@@ -22,6 +27,8 @@ static const char *TAG = "main";
 static context_t *context;
 
 static void test_task(void *arg) {
+    ARG_UNUSED(arg);
+
     rotary_encoder_info_t info = {0};
     ESP_ERROR_CHECK(rotary_encoder_init(&info, ROTARY_DT_GPIO, ROTARY_CLK_GPIO));
 
@@ -44,9 +51,11 @@ static void test_task(void *arg) {
 
 void app_main() {
     context = context_create();
-
     buses_init();
     ESP_ERROR_CHECK(storage_init(context));
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    ESP_ERROR_CHECK(config_init(context));
     ESP_ERROR_CHECK(status_init(context));
     ESP_ERROR_CHECK(lcd_init(context));
     ESP_ERROR_CHECK(display_init(context));
@@ -54,6 +63,8 @@ void app_main() {
     ESP_ERROR_CHECK(ezo_ec_init(context));
     ESP_ERROR_CHECK(ezo_ph_init(context));
     ESP_ERROR_CHECK(temperature_init(context));
+    ESP_ERROR_CHECK(wifi_init(context, context->config.ssid, context->config.password));
+    ESP_ERROR_CHECK(ntp_init(context));
 
     xTaskCreatePinnedToCore(test_task, "test", 2048, NULL, 15, NULL, tskNO_AFFINITY);
 
