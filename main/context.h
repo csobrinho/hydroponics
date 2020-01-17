@@ -25,11 +25,19 @@ typedef enum {
     CONTEXT_EVENT_PUMP_EC_B = BIT8,      /*!< Updated EC B nutrient solution pump state. */
     CONTEXT_EVENT_PUMP_MAIN = BIT9,      /*!< Updated main pump state. */
     CONTEXT_EVENT_NETWORK = BIT10,       /*!< Updated network state. */
+    CONTEXT_EVENT_TIME = BIT11,          /*!< Updated network time. */
+    CONTEXT_EVENT_CONFIG = BIT12,        /*!< Updated config. */
 } context_event_t;
 
 typedef struct {
     portMUX_TYPE spinlock;
     EventGroupHandle_t event_group;
+
+    struct {
+        const char *device_id;
+        const char *ssid;
+        const char *password;
+    } config;
 
     struct {
         struct {
@@ -73,6 +81,8 @@ typedef struct {
     } outputs;
 
     struct {
+        bool connected;
+        bool time_updated;
     } network;
 } context_t;
 
@@ -93,5 +103,11 @@ esp_err_t context_set_ph_target(context_t *context, float target_min, float targ
 esp_err_t context_set_rotary(context_t *context, rotary_encoder_state_t state);
 
 esp_err_t context_set_rotary_pressed(context_t *context, bool pressed);
+
+esp_err_t context_set_network_connected(context_t *context, bool connected);
+
+esp_err_t context_set_time_updated(context_t *context);
+
+esp_err_t context_set_config(context_t *context, const char *device_id, const char *ssid, const char *password);
 
 #endif //HYDROPONICS_CONTEXT_H

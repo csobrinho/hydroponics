@@ -128,3 +128,37 @@ esp_err_t context_set_rotary_pressed(context_t *context, bool pressed) {
     if (bitsToSet) xEventGroupSetBits(context->event_group, bitsToSet);
     return ESP_OK;
 }
+
+esp_err_t context_set_network_connected(context_t *context, bool connected) {
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL)
+
+    EventBits_t bitsToSet = 0U;
+    context_set(context->network.connected, connected, CONTEXT_EVENT_NETWORK)
+
+    if (bitsToSet) xEventGroupSetBits(context->event_group, bitsToSet);
+    return ESP_OK;
+}
+
+esp_err_t context_set_time_updated(context_t *context) {
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL)
+
+    EventBits_t bitsToSet = 0U;
+    context_set(context->network.time_updated, true, CONTEXT_EVENT_TIME)
+
+    if (bitsToSet) xEventGroupSetBits(context->event_group, bitsToSet);
+    return ESP_OK;
+}
+
+esp_err_t context_set_config(context_t *context, const char *device_id, const char *ssid, const char *password) {
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL)
+
+    EventBits_t bitsToSet = 0U;
+    portENTER_CRITICAL(&context->spinlock);
+    context_set(context->config.device_id, device_id, CONTEXT_EVENT_CONFIG)
+    context_set(context->config.ssid, ssid, CONTEXT_EVENT_CONFIG)
+    context_set(context->config.password, password, CONTEXT_EVENT_CONFIG)
+    portEXIT_CRITICAL(&context->spinlock);
+
+    if (bitsToSet) xEventGroupSetBits(context->event_group, bitsToSet);
+    return ESP_OK;
+}
