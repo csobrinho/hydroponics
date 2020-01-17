@@ -3,6 +3,10 @@
 
 #include "esp_err.h"
 
-esp_err_t wifi_init(const char *ssid, const char *password);
+#include "context.h"
+
+esp_err_t wifi_init(context_t *context, const char *ssid, const char *password);
+
+esp_err_t wifi_disconnect(void);
 
 #endif //HYDROPONICS_NETWORK_WIFI_H

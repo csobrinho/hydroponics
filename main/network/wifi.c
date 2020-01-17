@@ -1,85 +1,173 @@
+/* Adapted from esp-idf/examples/common_components/protocol_examples_common/connect.c */
 #include <string.h>
 
 #include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "freertos/event_groups.h"
 
+#include "driver/gpio.h"
 #include "esp_event.h"
 #include "esp_log.h"
+#include "esp_netif.h"
 #include "esp_wifi.h"
+#include "esp_wifi_default.h"
+#include "sdkconfig.h"
+
+#include "context.h"
+#include "error.h"
+
+#define GOT_IPV4_BIT BIT(0)
+#define GOT_IPV6_BIT BIT(1)
+
+#define CONNECTED_BITS (GOT_IPV6_BIT | GOT_IPV4_BIT)
 
 static const char *TAG = "wifi";
 
-/* The event group allows multiple bits for each event, but we only care about one event
- * - are we connected to the AP with an IP? */
-const int WIFI_CONNECTED_BIT = BIT0;
+typedef struct {
+    context_t *context;
+    const char *ssid;
+    const char *password;
+} args_t;
 
-/* FreeRTOS event group to signal when we are connected. */
-static EventGroupHandle_t s_wifi_event_group;
+static EventGroupHandle_t connect_event_group;
+static esp_ip4_addr_t ip4_addr;
+static esp_ip6_addr_t ip6_addr;
+static esp_netif_t *netif = NULL;
+static args_t args = {0};
 
-static int s_retry_num = 0;
-
-static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
-    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
-        ESP_LOGD(TAG, "WIFI_EVENT_STA_START");
-        esp_wifi_connect();
-    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        ESP_LOGD(TAG, "WIFI_EVENT_STA_DISCONNECTED");
-        if (s_retry_num < CONFIG_ESP_MAXIMUM_RETRY) {
-            esp_wifi_connect();
-            xEventGroupClearBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
-            s_retry_num++;
-            ESP_LOGI(TAG, "retry to connect to the AP");
-        }
-        ESP_LOGW(TAG, "connect to the AP fail");
-    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
-        ESP_LOGD(TAG, "IP_EVENT_STA_GOT_IP");
-        ip_event_got_ip_t *event = (ip_event_got_ip_t *) event_data;
-        ESP_LOGI(TAG, "received ip: "
-                IPSTR
-                " gw: "
-                IPSTR, IP2STR(&event->ip_info.ip), IP2STR(&event->ip_info.gw));
-        s_retry_num = 0;
-        xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
-    } else {
-        ESP_LOGD(TAG, "EVENT_ID:%d", event_id);
-    }
+static void on_got_ipv4(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
+    ARG_UNUSED(arg);
+    ARG_UNUSED(event_base);
+    ARG_UNUSED(event_id);
+    ip_event_got_ip_t *event = (ip_event_got_ip_t *) event_data;
+    memcpy(&ip4_addr, &event->ip_info.ip, sizeof(ip4_addr));
+    xEventGroupSetBits(connect_event_group, GOT_IPV4_BIT);
 }
 
-esp_err_t wifi_init(const char *ssid, const char *password) {
-    esp_log_level_set("wifi", ESP_LOG_WARN);
-    esp_log_level_set("esp_netif_handlers", ESP_LOG_WARN);
+static void on_got_ipv6(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
+    ARG_UNUSED(arg);
+    ARG_UNUSED(event_base);
+    ARG_UNUSED(event_id);
+    ip_event_got_ip6_t *event = (ip_event_got_ip6_t *) event_data;
+    memcpy(&ip6_addr, &event->ip6_info.ip, sizeof(ip6_addr));
+    xEventGroupSetBits(connect_event_group, GOT_IPV6_BIT);
+}
 
-    ESP_ERROR_CHECK(esp_netif_init());
-    s_wifi_event_group = xEventGroupCreate();
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
+static void on_wifi_disconnect(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
+    ARG_UNUSED(arg);
+    ARG_UNUSED(event_base);
+    ARG_UNUSED(event_id);
+    ARG_UNUSED(event_data);
+    ESP_LOGI(TAG, "Wi-Fi disconnected, trying to reconnect...");
+    ESP_ERROR_CHECK(context_set_network_connected(args.context, false));
+    esp_err_t err = esp_wifi_connect();
+    if (err == ESP_ERR_WIFI_NOT_STARTED) {
+        return;
+    }
+    ESP_ERROR_CHECK(err);
+}
 
-    esp_netif_t *sta_netif = esp_netif_create_default_wifi_sta();
-    assert(sta_netif);
+static void on_wifi_connect(void *esp_netif, esp_event_base_t event_base, int32_t event_id, void *event_data) {
+    ARG_UNUSED(event_base);
+    ARG_UNUSED(event_id);
+    ARG_UNUSED(event_data);
+    esp_netif_create_ip6_linklocal(esp_netif);
 
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(context_set_network_connected(args.context, true));
+}
+
+static void wifi_start() {
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT()
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
-    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_start());
+
+    esp_netif_config_t netif_config = ESP_NETIF_DEFAULT_WIFI_STA();
+
+    netif = esp_netif_new(&netif_config);
+    assert(netif);
+
+    esp_netif_attach_wifi_station(netif);
+    esp_wifi_set_default_wifi_sta_handlers();
+
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, &on_wifi_connect, netif));
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &on_wifi_disconnect, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &on_got_ipv4, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_GOT_IP6, &on_got_ipv6, NULL));
+
+    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_FLASH));
 
     wifi_config_t wifi_config = {
             .sta = {
                     .ssid = CONFIG_ESP_WIFI_SSID,
                     .password = CONFIG_ESP_WIFI_PASSWORD,
-                    .threshold = {.authmode = WIFI_AUTH_WPA2_PSK}
             }
     };
-    if (ssid != NULL && password != NULL) {
-        strlcpy((char *) wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid));
-        strlcpy((char *) wifi_config.sta.password, password, sizeof(wifi_config.sta.password));
+    if (args.ssid != NULL && args.password != NULL) {
+        strlcpy((char *) wifi_config.sta.ssid, args.ssid, sizeof(wifi_config.sta.ssid));
+        strlcpy((char *) wifi_config.sta.password, args.password, sizeof(wifi_config.sta.password));
     }
-
+    ESP_LOGI(TAG, "Connecting to %s...", args.ssid);
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
     ESP_ERROR_CHECK(esp_wifi_connect());
+}
 
-    ESP_LOGI(TAG, "Connecting to SSID: '%s'", wifi_config.sta.ssid);
+static void wifi_stop(void) {
+    ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, &on_wifi_connect));
+    ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &on_wifi_disconnect));
+    ESP_ERROR_CHECK(esp_event_handler_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, &on_got_ipv4));
+    ESP_ERROR_CHECK(esp_event_handler_unregister(IP_EVENT, IP_EVENT_GOT_IP6, &on_got_ipv6));
+    esp_err_t err = esp_wifi_stop();
+    if (err == ESP_ERR_WIFI_NOT_INIT) {
+        return;
+    }
+    ESP_ERROR_CHECK(err);
+    ESP_ERROR_CHECK(esp_wifi_deinit());
+    ESP_ERROR_CHECK(esp_wifi_clear_default_wifi_driver_and_handlers(netif));
+    esp_netif_destroy(netif);
+    netif = NULL;
+}
+
+static esp_err_t wifi_connect(void) {
+    if (connect_event_group != NULL) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    connect_event_group = xEventGroupCreate();
+    wifi_start();
+    ESP_ERROR_CHECK(esp_register_shutdown_handler(&wifi_stop));
+    ESP_LOGI(TAG, "Waiting for IP");
+    xEventGroupWaitBits(connect_event_group, CONNECTED_BITS, true, true, portMAX_DELAY);
+    ESP_LOGI(TAG, "Connected to %s", args.ssid);
+    ESP_LOGI(TAG, "  IPv4 address: "
+            IPSTR, IP2STR(&ip4_addr));
+    ESP_LOGI(TAG, "  IPv6 address: "
+            IPV6STR, IPV62STR(ip6_addr));
+    return ESP_OK;
+}
+
+esp_err_t wifi_disconnect(void) {
+    if (connect_event_group == NULL) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    vEventGroupDelete(connect_event_group);
+    connect_event_group = NULL;
+    wifi_stop();
+    ESP_LOGI(TAG, "Disconnected from %s", args.ssid);
+    return ESP_OK;
+}
+
+static void wifi_task(void *arg) {
+    ARG_UNUSED(arg);
+    ESP_ERROR_CHECK(wifi_connect());
+    vTaskDelete(NULL);
+}
+
+esp_err_t wifi_init(context_t *context, const char *ssid, const char *password) {
+    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL)
+    ARG_ERROR_CHECK(ssid != NULL, ERR_PARAM_NULL)
+    args.context = context;
+    args.ssid = ssid;
+    args.password = password;
+    xTaskCreatePinnedToCore(wifi_task, "wifi", 4096, NULL, 20, NULL, tskNO_AFFINITY);
     return ESP_OK;
 }
