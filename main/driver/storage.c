@@ -5,11 +5,14 @@
 #include "nvs.h"
 
 #include "context.h"
+#include "error.h"
 #include "storage.h"
 
 static nvs_handle_t handle;
 
 esp_err_t storage_init(context_t *context) {
+    ARG_UNUSED(context);
+
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         // NVS partition was truncated and needs to be erased. Retry nvs_flash_init.
@@ -22,14 +25,18 @@ esp_err_t storage_init(context_t *context) {
 }
 
 esp_err_t storage_get_string(const char *key, char **buf, size_t *length) {
-    esp_err_t err = nvs_get_str(handle, key, NULL, length);
+    size_t len;
+    esp_err_t err = nvs_get_str(handle, key, NULL, &len);
     switch (err) {
         case ESP_OK:
-            *buf = malloc(*length);
+            *buf = malloc(len);
             if (*buf == NULL) {
                 return ESP_ERR_NO_MEM;
             }
-            return nvs_get_str(handle, key, *buf, length);
+            if (length != NULL) {
+                *length = len;
+            }
+            return nvs_get_str(handle, key, *buf, &len);
         case ESP_ERR_NVS_NOT_FOUND:
             return ESP_OK;
         default:
