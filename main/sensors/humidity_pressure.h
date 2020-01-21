@@ -2,6 +2,7 @@
 #define HYDROPONICS_SENSORS_HUMIDITY_PRESSURE_H
 
 #include "bme280.h"
+#include "context.h"
 
 esp_err_t humidity_pressure_init(context_t *context);
 

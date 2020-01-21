@@ -9,10 +9,6 @@
 #include "bme280.h"
 
 #include "buses.h"
-#include "error.h"
-#include "humidity_pressure.h"
-
-static const char *TAG = "bme280";
 
 static int8_t humidity_pressure_hal_i2c_read(uint8_t dev_id, uint8_t reg_addr, uint8_t *data, uint16_t len) {
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
@@ -61,29 +57,29 @@ int8_t humidity_pressure_hal_read(uint8_t sensor_comp, struct bme280_data *comp_
 }
 
 int8_t humidity_pressure_hal_init(struct bme280_dev *dev) {
-    dev.dev_id = BME280_I2C_ADDR_PRIM;
-    dev.intf = BME280_I2C_INTF;
-    dev.read = humidity_pressure_hal_i2c_read;
-    dev.write = humidity_pressure_hal_i2c_write;
-    dev.delay_ms = humidity_pressure_hal_delay_ms;
+    dev->dev_id = BME280_I2C_ADDR_PRIM;
+    dev->intf = BME280_I2C_INTF;
+    dev->read = humidity_pressure_hal_i2c_read;
+    dev->write = humidity_pressure_hal_i2c_write;
+    dev->delay_ms = humidity_pressure_hal_delay_ms;
 
-    int8_t ret = bme280_init(&dev);
+    int8_t ret = bme280_init(dev);
     uint8_t settings_sel = BME280_OSR_PRESS_SEL | BME280_OSR_TEMP_SEL | BME280_OSR_HUM_SEL | BME280_FILTER_SEL;
-    dev.settings.osr_h = BME280_OVERSAMPLING_1X;
-    dev.settings.osr_p = BME280_OVERSAMPLING_16X;
-    dev.settings.osr_t = BME280_OVERSAMPLING_2X;
-    dev.settings.filter = BME280_FILTER_COEFF_16;
+    dev->settings.osr_h = BME280_OVERSAMPLING_1X;
+    dev->settings.osr_p = BME280_OVERSAMPLING_16X;
+    dev->settings.osr_t = BME280_OVERSAMPLING_2X;
+    dev->settings.filter = BME280_FILTER_COEFF_16;
 
 #ifdef HUMIDITY_FORCED_MODE
     /* Initialize forced mode. Recommended mode of operation: Indoor navigation */
-    ret += bme280_set_sensor_settings(settings_sel, &dev);
+    ret += bme280_set_sensor_settings(settings_sel, dev);
 #else
     /* Initialize in normal mode. Recommended mode of operation: Indoor navigation */
-    dev.settings.standby_time = BME280_STANDBY_TIME_62_5_MS;
+    dev->settings.standby_time = BME280_STANDBY_TIME_62_5_MS;
 
     settings_sel |= BME280_STANDBY_SEL;
-    ret += bme280_set_sensor_settings(settings_sel, &dev);
-    ret += bme280_set_sensor_mode(BME280_NORMAL_MODE, &dev);
+    ret += bme280_set_sensor_settings(settings_sel, dev);
+    ret += bme280_set_sensor_mode(BME280_NORMAL_MODE, dev);
 #endif
     return ret;
 }
