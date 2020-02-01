@@ -20,6 +20,7 @@
 #include "network/ntp.h"
 #include "sensors/ezo_ec.h"
 #include "sensors/ezo_ph.h"
+#include "sensors/ezo_rtd.h"
 #include "sensors/humidity_pressure.h"
 #include "sensors/temperature.h"
 
@@ -62,6 +63,7 @@ void app_main() {
     ESP_ERROR_CHECK(humidity_pressure_init(context));
     ESP_ERROR_CHECK(ezo_ec_init(context));
     ESP_ERROR_CHECK(ezo_ph_init(context));
+    ESP_ERROR_CHECK(ezo_rtd_init(context));
     ESP_ERROR_CHECK(temperature_init(context));
     ESP_ERROR_CHECK(wifi_init(context, context->config.ssid, context->config.password));
     ESP_ERROR_CHECK(ntp_init(context));
