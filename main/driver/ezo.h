@@ -2,17 +2,14 @@
 #define HYDROPONICS_DRIVERS_EZO_H
 
 #include <sys/cdefs.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 
 #define EZO_MAX_BUFFER_LEN 32
 #define EZO_MAX_RETRIES 5
 #define EZO_DELAY_MS_SHORT 300
 #define EZO_DELAY_MS_SLOW 600
 #define EZO_DELAY_MS_SLOWEST 900
-
-typedef const struct {
-    const char *cmd;
-    const char *cmd_response;
-} ezo_cmd_t;
 
 typedef enum {
     EZO_SENSOR_RESPONSE_UNKNOWN = 0,
@@ -59,6 +56,7 @@ typedef struct {
     char buf[EZO_MAX_BUFFER_LEN];
     size_t bytes_read;
     ezo_sensor_response_t status;
+    xSemaphoreHandle lock;
 #ifdef CONFIG_ESP_SIMULATE_SENSORS
     float simulate;
     float threshold;

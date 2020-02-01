@@ -14,6 +14,7 @@ esp_err_t ezo_init(ezo_sensor_t *sensor) {
 
     memset(sensor->type, 0, sizeof(sensor->type));
     memset(sensor->version, 0, sizeof(sensor->version));
+    sensor->lock = xSemaphoreCreateMutex();
 
     // Allow the device to sleep a little bit just in case we were in the middle of a read operation before the reset.
     // If we don't, then sometimes we read the probe value instead of what was requested.

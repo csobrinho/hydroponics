@@ -22,14 +22,22 @@ esp_err_t ezo_parse_response(ezo_sensor_t *sensor, uint8_t fields, const char *r
 
 esp_err_t ezo_read(ezo_sensor_t *sensor, float *value) {
     ARG_CHECK(sensor != NULL, ERR_PARAM_NULL)
+
+    xSemaphoreTake(sensor->lock, portMAX_DELAY);
     vTaskDelay(pdMS_TO_TICKS(sensor->delay_read_ms));
+    xSemaphoreGive(sensor->lock);
+
     *value = WITH_THRESHOLD(sensor->simulate, sensor->threshold);
     return ESP_OK;
 }
 
 esp_err_t ezo_read_temperature(ezo_sensor_t *sensor, float *value, float temp) {
     ARG_CHECK(sensor != NULL, ERR_PARAM_NULL)
+
+    xSemaphoreTake(sensor->lock, portMAX_DELAY);
     vTaskDelay(pdMS_TO_TICKS(sensor->delay_read_ms));
+    xSemaphoreGive(sensor->lock);
+
     *value = WITH_THRESHOLD(sensor->simulate, sensor->threshold);
     return ESP_OK;
 }

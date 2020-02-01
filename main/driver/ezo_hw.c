@@ -31,6 +31,7 @@ esp_err_t ezo_send_command(ezo_sensor_t *sensor, uint16_t delay_ms, const char *
     ESP_ERROR_CHECK(i2c_master_write_byte(handle, (sensor->address << 1) | I2C_MASTER_WRITE, I2C_WRITE_ACK_CHECK));
     ESP_ERROR_CHECK(i2c_master_write(handle, (uint8_t *) sensor->buf, strlen(sensor->buf), I2C_WRITE_ACK_CHECK));
     ESP_ERROR_CHECK(i2c_master_stop(handle));
+
     ESP_ERROR_CHECK(i2c_master_cmd_begin(I2C_MASTER_NUM, handle, pdMS_TO_TICKS(I2C_TIMEOUT_MS)));
     i2c_cmd_link_delete(handle);
 
@@ -100,32 +101,44 @@ esp_err_t ezo_parse_response(ezo_sensor_t *sensor, uint8_t fields, const char *r
 esp_err_t ezo_read(ezo_sensor_t *sensor, float *value) {
     ARG_CHECK(sensor != NULL, ERR_PARAM_NULL)
 
+    xSemaphoreTake(sensor->lock, portMAX_DELAY);
     ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->delay_read_ms, "R"));
     ESP_ERROR_CHECK(ezo_parse_response(sensor, 1, "%f", value));
+    xSemaphoreGive(sensor->lock);
+
     return ESP_OK;
 }
 
 esp_err_t ezo_read_temperature(ezo_sensor_t *sensor, float *value, float temp) {
     ARG_CHECK(sensor != NULL, ERR_PARAM_NULL)
 
+    xSemaphoreTake(sensor->lock, portMAX_DELAY);
     ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->delay_read_ms, "RT,%.2f", temp));
     ESP_ERROR_CHECK(ezo_parse_response(sensor, 1, "%f", value));
+    xSemaphoreGive(sensor->lock);
+
     return ESP_OK;
 }
 
 esp_err_t ezo_device_info(ezo_sensor_t *sensor) {
     ARG_CHECK(sensor != NULL, ERR_PARAM_NULL)
 
+    xSemaphoreTake(sensor->lock, portMAX_DELAY);
     ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->delay_ms, "I"));
     ESP_ERROR_CHECK(ezo_parse_response(sensor, 2, "?I,%[^,],%s", sensor->type, sensor->version));
+    xSemaphoreGive(sensor->lock);
+
     return ESP_OK;
 }
 
 esp_err_t ezo_status(ezo_sensor_t *sensor, ezo_status_t *status, float *voltage) {
     ARG_CHECK(sensor != NULL, ERR_PARAM_NULL)
 
+    xSemaphoreTake(sensor->lock, portMAX_DELAY);
     ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->delay_ms, "Status"));
     ESP_ERROR_CHECK(ezo_parse_response(sensor, 2, "?Status,%c,%f", (char *) status, voltage));
+    xSemaphoreGive(sensor->lock);
+
     return ESP_OK;
 }
 
@@ -134,6 +147,7 @@ esp_err_t ezo_export_calibration(ezo_sensor_t *sensor, char **buffer, size_t *si
 
     int rows;
     int bytes;
+    xSemaphoreTake(sensor->lock, portMAX_DELAY);
     ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->delay_ms, "Export,?"));
     ESP_ERROR_CHECK(ezo_parse_response(sensor, 2, "%d,%d", &rows, &bytes));
     size_t max_size = bytes + rows + 1;
@@ -147,6 +161,7 @@ esp_err_t ezo_export_calibration(ezo_sensor_t *sensor, char **buffer, size_t *si
     }
     ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->delay_ms, "Export"));
     ESP_ERROR_CHECK(ezo_parse_response(sensor, 0, "*DONE"));
+    xSemaphoreGive(sensor->lock);
 
     // Make sure the buffer ends with a \0 to avoid vsscanf scanning our whole memory.
     *buffer[*size] = '\0';
@@ -156,8 +171,11 @@ esp_err_t ezo_export_calibration(ezo_sensor_t *sensor, char **buffer, size_t *si
 esp_err_t ezo_calibration_mode(ezo_sensor_t *sensor, ezo_calibration_mode_t *mode) {
     ARG_CHECK(sensor != NULL, ERR_PARAM_NULL)
 
+    xSemaphoreTake(sensor->lock, portMAX_DELAY);
     ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->delay_ms, "Cal,?"));
     ESP_ERROR_CHECK(ezo_parse_response(sensor, 1, "?Cal,%d", (int *) mode));
+    xSemaphoreGive(sensor->lock);
+
     return ESP_OK;
 }
 
@@ -174,15 +192,21 @@ esp_err_t ezo_calibration_step(ezo_sensor_t *sensor, ezo_calibration_step_t step
     ARG_CHECK(sensor != NULL, ERR_PARAM_NULL)
     ARG_CHECK(step < EZO_CALIBRATION_STEP_MAX, "parameter >= EZO_CALIBRATION_MAX");
 
+    xSemaphoreTake(sensor->lock, portMAX_DELAY);
     ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->delay_calibration_ms, EZO_CALIBRATION_STEPS[step], value));
     ESP_ERROR_CHECK(ezo_parse_response(sensor, 0, NULL));
+    xSemaphoreGive(sensor->lock);
+
     return ESP_OK;
 }
 
 esp_err_t ezo_protocol_lock(ezo_sensor_t *sensor, bool lock) {
     ARG_CHECK(sensor != NULL, ERR_PARAM_NULL)
 
+    xSemaphoreTake(sensor->lock, portMAX_DELAY);
     ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->delay_ms, "Plock,%d", lock ? 1 : 0));
     ESP_ERROR_CHECK(ezo_parse_response(sensor, 0, NULL));
+    xSemaphoreGive(sensor->lock);
+
     return ESP_OK;
 }
