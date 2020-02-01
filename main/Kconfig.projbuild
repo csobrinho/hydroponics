@@ -55,6 +55,12 @@ menu "Project config"
             help
                 Set the sampling rate for electrical conductivity (EC) probe readings in ms.
 
+        config ESP_SAMPLING_RTD_MS
+            int "EC Probe (temperature)"
+            default 1000
+            help
+                Set the sampling rate for the RTD readings in ms inside the electrical conductivity (EC) probe.
+
         config ESP_SAMPLING_PH_MS
             int "PH Probe"
             default 1500
