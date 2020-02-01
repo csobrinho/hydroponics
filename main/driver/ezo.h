@@ -6,7 +6,6 @@
 #include "freertos/semphr.h"
 
 #define EZO_MAX_BUFFER_LEN 32
-#define EZO_MAX_RETRIES 5
 #define EZO_DELAY_MS_SHORT 300
 #define EZO_DELAY_MS_SLOW 600
 #define EZO_DELAY_MS_SLOWEST 900
@@ -57,6 +56,7 @@ typedef struct {
     size_t bytes_read;
     ezo_sensor_response_t status;
     xSemaphoreHandle lock;
+    bool pause;
 #ifdef CONFIG_ESP_SIMULATE_SENSORS
     float simulate;
     float threshold;
@@ -66,6 +66,8 @@ typedef struct {
 esp_err_t ezo_init(ezo_sensor_t *sensor);
 
 esp_err_t ezo_free(ezo_sensor_t *sensor);
+
+ezo_sensor_t *ezo_find(const char *type);
 
 esp_err_t ezo_send_command(ezo_sensor_t *sensor, uint16_t delay_ms, const char *cmd_fmt, ...)
 __printflike(3, 4);

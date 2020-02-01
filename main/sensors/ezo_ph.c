@@ -19,11 +19,10 @@ static ezo_sensor_t ph = {
         .delay_calibration_ms = EZO_DELAY_MS_SLOWEST,
         .calibration = EZO_CALIBRATION_MODE_THREE_POINTS,
 #ifdef CONFIG_ESP_SIMULATE_SENSORS
-.simulate = 6.3f,
-.threshold = 0.1f,
+        .simulate = 6.3f,
+        .threshold = 0.1f,
 #endif
 };
-ezo_sensor_t *ezo_ph = &ph;
 
 static void ezo_ph_task(void *arg) {
     context_t *context = (context_t *) arg;
@@ -33,6 +32,10 @@ static void ezo_ph_task(void *arg) {
     float last_temp = 25.0f;
     float value;
     while (1) {
+        if (ph.pause) {
+            vTaskDelay(pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_PH_MS));
+            continue;
+        }
         TickType_t last_wake_time = xTaskGetTickCount();
 
         float temp = context->sensors.temp.probe;
@@ -46,7 +49,6 @@ static void ezo_ph_task(void *arg) {
         ESP_ERROR_CHECK(context_set_ph(context, value));
 
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_PH_MS));
-        // vTaskDelay(portMAX_DELAY);
     }
 }
 

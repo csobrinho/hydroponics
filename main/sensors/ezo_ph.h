@@ -5,8 +5,6 @@
 
 #include "context.h"
 
-extern ezo_sensor_t *ezo_ph;
-
 esp_err_t ezo_ph_init(context_t *context);
 
 esp_err_t ezo_ph_slope(float *acidPercentage, float *basePercentage);
