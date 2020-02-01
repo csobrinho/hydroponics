@@ -29,7 +29,7 @@ static void humidity_pressure_publish(context_t *context, struct bme280_data *co
 
 static void humidity_pressure_task(void *arg) {
     context_t *context = (context_t *) arg;
-    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL)
+    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
 
     struct bme280_data comp_data;
     while (1) {

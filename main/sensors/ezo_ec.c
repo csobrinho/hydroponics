@@ -26,7 +26,7 @@ static ezo_sensor_t ec = {
 
 static void ezo_ec_task(void *arg) {
     context_t *context = (context_t *) arg;
-    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL)
+    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
     ESP_ERROR_CHECK(ezo_init(&ec));
 
     float last_temp = 25.0f;

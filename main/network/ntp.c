@@ -10,7 +10,7 @@ static const char *TAG = "ntp";
 
 static void ntp_task(void *arg) {
     context_t *context = (context_t *) arg;
-    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL)
+    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
 
     xEventGroupWaitBits(context->event_group, CONTEXT_EVENT_NETWORK, pdFALSE, pdFALSE, portMAX_DELAY);
 

@@ -13,7 +13,7 @@ static temperature_t dev = {0};
 
 static void temperature_task(void *arg) {
     context_t *context = (context_t *) arg;
-    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL)
+    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
 
     int errors_count[OWB_MAX_DEVICES] = {0};
     int sample_count = 0;

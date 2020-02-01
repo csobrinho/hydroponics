@@ -163,8 +163,8 @@ static void wifi_task(void *arg) {
 }
 
 esp_err_t wifi_init(context_t *context, const char *ssid, const char *password) {
-    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL)
-    ARG_ERROR_CHECK(ssid != NULL, ERR_PARAM_NULL)
+    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
+    ARG_ERROR_CHECK(ssid != NULL, ERR_PARAM_NULL);
     args.context = context;
     args.ssid = ssid;
     args.password = password;

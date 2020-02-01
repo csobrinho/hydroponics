@@ -33,7 +33,7 @@ static i2s_lcd8_dev_t dev = {
 
 static void lcd_task(void *arg) {
     context_t *context = (context_t *) arg;
-    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL)
+    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
 
     ESP_ERROR_CHECK(rm68090_init(&dev));
 

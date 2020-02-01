@@ -167,7 +167,7 @@ esp_err_t ext_gpio_config_intr(bool mirroring, bool openDrain, bool polarity) {
 
 esp_err_t ext_gpio_set_intr_type(ext_gpio_num_t gpio_num, gpio_int_type_t intr_type) {
     ARG_CHECK(intr_type == GPIO_INTR_ANYEDGE || intr_type == GPIO_INTR_NEGEDGE || intr_type == GPIO_INTR_POSEDGE,
-              "intr_type is invalid")
+              "intr_type is invalid");
 
     uint8_t mask = PIN_MASK(gpio_num);
 
@@ -226,7 +226,7 @@ esp_err_t ext_gpio_set(uint16_t value) {
 }
 
 esp_err_t ext_gpio_set_direction(ext_gpio_num_t gpio_num, gpio_mode_t mode) {
-    ARG_CHECK(mode == GPIO_MODE_INPUT || mode == GPIO_MODE_OUTPUT, "mode is not supported")
+    ARG_CHECK(mode == GPIO_MODE_INPUT || mode == GPIO_MODE_OUTPUT, "mode is not supported");
     ext_gpio_reg_t reg = A_OR_B(gpio_num, EXT_GPIO_REG_IODIRA, EXT_GPIO_REG_IODIRB);
     uint8_t *r = A_OR_B(gpio_num, &status.iodir_a, &status.iodir_b);
     uint8_t mask = PIN_MASK(gpio_num);
@@ -234,7 +234,7 @@ esp_err_t ext_gpio_set_direction(ext_gpio_num_t gpio_num, gpio_mode_t mode) {
 }
 
 esp_err_t ext_gpio_set_pull_mode(ext_gpio_num_t gpio_num, gpio_pull_mode_t pull) {
-    ARG_CHECK(pull == GPIO_PULLUP_ONLY || pull == GPIO_FLOATING, "pull is not supported")
+    ARG_CHECK(pull == GPIO_PULLUP_ONLY || pull == GPIO_FLOATING, "pull is not supported");
     ext_gpio_reg_t reg = A_OR_B(gpio_num, EXT_GPIO_REG_GPPUA, EXT_GPIO_REG_GPPUB);
     uint8_t *r = A_OR_B(gpio_num, &status.gppu_a, &status.gppu_b);
     uint8_t mask = PIN_MASK(gpio_num);
@@ -242,8 +242,8 @@ esp_err_t ext_gpio_set_pull_mode(ext_gpio_num_t gpio_num, gpio_pull_mode_t pull)
 }
 
 esp_err_t ext_gpio_config(const gpio_config_t *config) {
-    ARG_CHECK(config != NULL, ERR_PARAM_NULL)
-    ARG_CHECK(config->pin_bit_mask < BIT(EXT_GPIO_MAX), "pin_bit_mask can only contain 0-15")
+    ARG_CHECK(config != NULL, ERR_PARAM_NULL);
+    ARG_CHECK(config->pin_bit_mask < BIT(EXT_GPIO_MAX), "pin_bit_mask can only contain 0-15");
 
     uint32_t io_num = 0;
     uint8_t input_en = 0;

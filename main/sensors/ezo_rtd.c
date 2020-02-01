@@ -26,7 +26,7 @@ static ezo_sensor_t rtd = {
 
 static void ezo_rtd_task(void *arg) {
     context_t *context = (context_t *) arg;
-    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL)
+    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
     ESP_ERROR_CHECK(ezo_init(&rtd));
 
     float value;

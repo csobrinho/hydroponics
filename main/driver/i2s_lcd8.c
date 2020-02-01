@@ -31,9 +31,9 @@ void i2s_lcd8_delay_ms(uint8_t ms) {
 }
 
 esp_err_t i2s_lcd8_init(i2s_lcd8_dev_t *dev) {
-    ARG_CHECK(dev != NULL, ERR_PARAM_NULL)
-    ARG_CHECK(dev->rst_io_num != GPIO_NUM_NC, "rst is GPIO_NUM_NC")
-    ARG_CHECK(dev->base.i2s_lcd_conf.data_width == 8, "data_width must be 8")
+    ARG_CHECK(dev != NULL, ERR_PARAM_NULL);
+    ARG_CHECK(dev->rst_io_num != GPIO_NUM_NC, "rst is GPIO_NUM_NC");
+    ARG_CHECK(dev->base.i2s_lcd_conf.data_width == 8, "data_width must be 8");
     LOG(TAG, "[%s]", __FUNCTION__);
 
     // Setup the GPIOs as general purpose outputs.
@@ -69,7 +69,7 @@ esp_err_t i2s_lcd8_init(i2s_lcd8_dev_t *dev) {
 }
 
 void i2s_lcd8_reset(const i2s_lcd8_dev_t *dev) {
-    ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL)
+    ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL);
 
     WS_ON;
     RS_ON;
@@ -82,22 +82,22 @@ void i2s_lcd8_reset(const i2s_lcd8_dev_t *dev) {
 }
 
 void i2s_lcd8_write_data(const i2s_lcd8_dev_t *dev, uint16_t data) {
-    ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL)
+    ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL);
 
     iot_i2s_lcd_write_data(dev->handle, data);
 }
 
 void i2s_lcd8_write_datan(const i2s_lcd8_dev_t *dev, const uint16_t *buf, size_t len) {
-    ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL)
-    ARG_ERROR_CHECK(buf != NULL, ERR_PARAM_NULL)
-    ARG_ERROR_CHECK(len > 0, ERR_PARAM_LE_ZERO)
+    ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL);
+    ARG_ERROR_CHECK(buf != NULL, ERR_PARAM_NULL);
+    ARG_ERROR_CHECK(len > 0, ERR_PARAM_LE_ZERO);
     LOG(TAG, "[%s] buf: %p len: %2d", __FUNCTION__, buf, len);
 
     iot_i2s_lcd_write(dev->handle, (uint16_t *) buf, len);
 }
 
 void i2s_lcd8_write_cmd(const i2s_lcd8_dev_t *dev, uint16_t cmd) {
-    ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL)
+    ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL);
 
     RS_OFF;
     i2s_lcd8_write_data(dev, cmd);
@@ -105,7 +105,7 @@ void i2s_lcd8_write_cmd(const i2s_lcd8_dev_t *dev, uint16_t cmd) {
 }
 
 void i2s_lcd8_write_reg(const i2s_lcd8_dev_t *dev, uint16_t cmd, uint16_t data) {
-    ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL)
+    ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL);
     LOG(TAG, "[%s] cmd: 0x%04x data: 0x%04x", __FUNCTION__, cmd, data);
 
     i2s_lcd8_write_cmd(dev, cmd);
@@ -113,9 +113,9 @@ void i2s_lcd8_write_reg(const i2s_lcd8_dev_t *dev, uint16_t cmd, uint16_t data) 
 }
 
 esp_err_t i2s_lcd8_init_registers(const i2s_lcd8_dev_t *dev, const uint16_t *table, size_t size) {
-    ARG_CHECK(dev != NULL, ERR_PARAM_NULL)
-    ARG_CHECK(table != NULL, ERR_PARAM_NULL)
-    ARG_CHECK(size > 0, ERR_PARAM_LE_ZERO)
+    ARG_CHECK(dev != NULL, ERR_PARAM_NULL);
+    ARG_CHECK(table != NULL, ERR_PARAM_NULL);
+    ARG_CHECK(size > 0, ERR_PARAM_LE_ZERO);
     LOG(TAG, "[%s] count: %d", __FUNCTION__, size / sizeof(uint16_t));
 
     while (size > 0) {

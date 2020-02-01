@@ -38,7 +38,7 @@ context_t *context_create(void) {
 }
 
 esp_err_t context_set_temp_indoor_humidity_pressure(context_t *context, float temp, float humidity, float pressure) {
-    ARG_CHECK(context != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
     EventBits_t bitsToSet = 0U;
     portENTER_CRITICAL(&context->spinlock);
@@ -52,7 +52,7 @@ esp_err_t context_set_temp_indoor_humidity_pressure(context_t *context, float te
 }
 
 esp_err_t context_set_temp_water(context_t *context, float temp) {
-    ARG_CHECK(context != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
     EventBits_t bitsToSet = 0U;
     context_set(context->sensors.temp.water, temp, CONTEXT_EVENT_TEMP_WATER)
@@ -62,7 +62,7 @@ esp_err_t context_set_temp_water(context_t *context, float temp) {
 }
 
 esp_err_t context_set_temp_probe(context_t *context, float temp) {
-    ARG_CHECK(context != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
     EventBits_t bitsToSet = 0U;
     context_set(context->sensors.temp.probe, temp, CONTEXT_EVENT_TEMP_PROBE)
@@ -72,7 +72,7 @@ esp_err_t context_set_temp_probe(context_t *context, float temp) {
 }
 
 esp_err_t context_set_ec(context_t *context, float value) {
-    ARG_CHECK(context != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
     EventBits_t bitsToSet = 0U;
     context_set(context->sensors.ec.value, value, CONTEXT_EVENT_EC)
@@ -82,7 +82,7 @@ esp_err_t context_set_ec(context_t *context, float value) {
 }
 
 esp_err_t context_set_ec_target(context_t *context, float target_min, float target_max) {
-    ARG_CHECK(context != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
     EventBits_t bitsToSet = 0U;
     portENTER_CRITICAL(&context->spinlock);
@@ -95,7 +95,8 @@ esp_err_t context_set_ec_target(context_t *context, float target_min, float targ
 }
 
 esp_err_t context_set_ph(context_t *context, float value) {
-    ARG_CHECK(context != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
+
     EventBits_t bitsToSet = 0U;
     context_set(context->sensors.ph.value, value, CONTEXT_EVENT_PH)
 
@@ -104,7 +105,7 @@ esp_err_t context_set_ph(context_t *context, float value) {
 }
 
 esp_err_t context_set_ph_target(context_t *context, float target_min, float target_max) {
-    ARG_CHECK(context != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
     EventBits_t bitsToSet = 0U;
     portENTER_CRITICAL(&context->spinlock);
@@ -117,7 +118,7 @@ esp_err_t context_set_ph_target(context_t *context, float target_min, float targ
 }
 
 esp_err_t context_set_rotary(context_t *context, rotary_encoder_state_t state) {
-    ARG_CHECK(context != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
     EventBits_t bitsToSet = 0U;
     portENTER_CRITICAL(&context->spinlock);
@@ -130,7 +131,7 @@ esp_err_t context_set_rotary(context_t *context, rotary_encoder_state_t state) {
 }
 
 esp_err_t context_set_rotary_pressed(context_t *context, bool pressed) {
-    ARG_CHECK(context != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
     EventBits_t bitsToSet = 0U;
     context_set(context->inputs.rotary.pressed, pressed, CONTEXT_EVENT_ROTARY)
@@ -140,7 +141,7 @@ esp_err_t context_set_rotary_pressed(context_t *context, bool pressed) {
 }
 
 esp_err_t context_set_network_connected(context_t *context, bool connected) {
-    ARG_CHECK(context != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
     EventBits_t bitsToSet = 0U;
     context_set(context->network.connected, connected, CONTEXT_EVENT_NETWORK)
@@ -150,7 +151,7 @@ esp_err_t context_set_network_connected(context_t *context, bool connected) {
 }
 
 esp_err_t context_set_time_updated(context_t *context) {
-    ARG_CHECK(context != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
     EventBits_t bitsToSet = 0U;
     context_set(context->network.time_updated, true, CONTEXT_EVENT_TIME)
@@ -160,7 +161,7 @@ esp_err_t context_set_time_updated(context_t *context) {
 }
 
 esp_err_t context_set_config(context_t *context, const char *device_id, const char *ssid, const char *password) {
-    ARG_CHECK(context != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
     EventBits_t bitsToSet = 0U;
     portENTER_CRITICAL(&context->spinlock);
