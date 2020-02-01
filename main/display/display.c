@@ -17,7 +17,7 @@
 static const char *TAG = "display";
 static u8g2_t u8g2;
 static const EventBits_t display_bits = CONTEXT_EVENT_TEMP_INDOOR | CONTEXT_EVENT_TEMP_WATER | CONTEXT_EVENT_PRESSURE
-                                        | CONTEXT_EVENT_HUMIDITY | CONTEXT_EVENT_EC;
+                                        | CONTEXT_EVENT_HUMIDITY | CONTEXT_EVENT_EC | CONTEXT_EVENT_PH;
 
 static size_t snprintf_append(char *buf, size_t len, size_t max_size, float value) {
     if (CONTEXT_VALUE_IS_VALID(value)) {
@@ -43,16 +43,16 @@ static esp_err_t display_draw(context_t *context) {
 
     portENTER_CRITICAL(&context->spinlock);
     float indoor = context->sensors.temp.indoor;
-    float water = context->sensors.temp.water;
+    float probe = context->sensors.temp.probe;
     float humidity = context->sensors.humidity;
     float ec = context->sensors.ec.value;
-    rotary_encoder_position_t rotary = context->inputs.rotary.state.position;
+    float ph = context->sensors.ph.value;
     portEXIT_CRITICAL(&context->spinlock);
 
     size_t len = strlcpy(buf, "Tmp:", sizeof(buf));
     len += snprintf_append(buf, len, sizeof(buf), indoor);
     len += snprintf(buf + len, sizeof(buf) - len, " |");
-    len += snprintf_append(buf, len, sizeof(buf), water);
+    len += snprintf_append(buf, len, sizeof(buf), probe);
     snprintf(buf + len, sizeof(buf) - len, " \260C");
     u8g2_DrawStr(&u8g2, 0, 7, buf);
 
@@ -62,7 +62,7 @@ static esp_err_t display_draw(context_t *context) {
     snprintf_value(buf, sizeof(buf), "EC: %.1f uS/cm", "EC: ?? uS/cm", ec);
     u8g2_DrawStr(&u8g2, 0, 23, buf);
 
-    snprintf(buf, sizeof(buf), "Rot: %d", rotary);
+    snprintf_value(buf, sizeof(buf), "PH: %.1f", "PH: ??", ph);
     u8g2_DrawStr(&u8g2, 0, 31, buf);
     u8g2_SendBuffer(&u8g2);
 
