@@ -17,10 +17,10 @@ static ezo_sensor_t ec = {
         .delay_ms = EZO_DELAY_MS_SHORT,
         .delay_read_ms = EZO_DELAY_MS_SLOW,
         .delay_calibration_ms = EZO_DELAY_MS_SLOWEST,
-        .calibration = EZO_CALIBRATION_STEP_LOW | EZO_CALIBRATION_STEP_HIGH,
+        .calibration = EZO_CALIBRATION_MODE_TWO_POINTS,
 #ifdef CONFIG_ESP_SIMULATE_SENSORS
-        .simulate = 1900.f,
-        .threshold = 15.f,
+.simulate = 1900.f,
+.threshold = 15.f,
 #endif
 };
 ezo_sensor_t *ezo_ec = &ec;
@@ -30,22 +30,23 @@ static void ezo_ec_task(void *arg) {
     ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL)
     ESP_ERROR_CHECK(ezo_init(&ec));
 
-    float last_temp_water = 25.0f;
+    float last_temp = 25.0f;
     float value;
     while (1) {
         TickType_t last_wake_time = xTaskGetTickCount();
 
-        float temp_water = context->sensors.temp.water;
-        if (last_temp_water != temp_water && CONTEXT_VALUE_IS_VALID(temp_water)) {
-            last_temp_water = temp_water;
-            ESP_ERROR_CHECK(ezo_read_temperature(&ec, &value, last_temp_water));
+        float temp = context->sensors.temp.probe;
+        if (last_temp != temp && CONTEXT_VALUE_IS_VALID(temp)) {
+            last_temp = temp;
+            ESP_ERROR_CHECK(ezo_read_temperature(&ec, &value, last_temp));
         } else {
             ESP_ERROR_CHECK(ezo_read(&ec, &value));
         }
-        ESP_LOGD(TAG, "EC %.2f uS/cm", context->sensors.ec.value);
+        ESP_LOGD(TAG, "EC %.2f uS/cm", value);
         ESP_ERROR_CHECK(context_set_ec(context, value));
 
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_EC_MS));
+        // vTaskDelay(portMAX_DELAY);
     }
 }
 
