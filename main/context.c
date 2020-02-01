@@ -6,9 +6,9 @@
 #include "error.h"
 
 #define context_set(c, v, f)   \
-    if (c != v) {              \
-      c = v;                   \
-      bitsToSet |= f;          \
+    if ((c) != (v)) {          \
+      (c) = (v);               \
+      bitsToSet |= (f);        \
     }                          \
 
 
@@ -56,6 +56,16 @@ esp_err_t context_set_temp_water(context_t *context, float temp) {
 
     EventBits_t bitsToSet = 0U;
     context_set(context->sensors.temp.water, temp, CONTEXT_EVENT_TEMP_WATER)
+
+    if (bitsToSet) xEventGroupSetBits(context->event_group, bitsToSet);
+    return ESP_OK;
+}
+
+esp_err_t context_set_temp_probe(context_t *context, float temp) {
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL)
+
+    EventBits_t bitsToSet = 0U;
+    context_set(context->sensors.temp.probe, temp, CONTEXT_EVENT_TEMP_PROBE)
 
     if (bitsToSet) xEventGroupSetBits(context->event_group, bitsToSet);
     return ESP_OK;

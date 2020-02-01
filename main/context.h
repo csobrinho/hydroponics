@@ -9,24 +9,25 @@
 #include "rotary_encoder.h"
 
 #define CONTEXT_UNKNOWN_VALUE INT16_MIN
-#define CONTEXT_VALUE_IS_VALID(x) (x != CONTEXT_UNKNOWN_VALUE)
+#define CONTEXT_VALUE_IS_VALID(x) ((x) != CONTEXT_UNKNOWN_VALUE)
 
 typedef enum {
     CONTEXT_EVENT_TEMP_INDOOR = BIT0,    /*!< Updated indoor temperature from BME280 sensor. */
     CONTEXT_EVENT_TEMP_WATER = BIT1,     /*!< Updated water temperature from DS18B20 sensor. */
+    CONTEXT_EVENT_TEMP_PROBE = BIT2,     /*!< Updated water temperature from EC probe. */
     CONTEXT_EVENT_HUMIDITY = BIT0,       /*!< Updated humidity value from BME280 sensor. */
     CONTEXT_EVENT_PRESSURE = BIT0,       /*!< Updated pressure value from BME280 sensor. */
-    CONTEXT_EVENT_EC = BIT2,             /*!< Updated EC value or parameters. */
-    CONTEXT_EVENT_PH = BIT3,             /*!< Updated PH value or parameters. */
-    CONTEXT_EVENT_ROTARY = BIT4,         /*!< Updated rotary value or state. */
-    CONTEXT_EVENT_PUMP_PH_UP = BIT5,     /*!< Updated PH up pump state. */
-    CONTEXT_EVENT_PUMP_PH_DOWN = BIT6,   /*!< Updated PH down pump state. */
-    CONTEXT_EVENT_PUMP_EC_A = BIT7,      /*!< Updated EC A nutrient solution pump state. */
-    CONTEXT_EVENT_PUMP_EC_B = BIT8,      /*!< Updated EC B nutrient solution pump state. */
-    CONTEXT_EVENT_PUMP_MAIN = BIT9,      /*!< Updated main pump state. */
-    CONTEXT_EVENT_NETWORK = BIT10,       /*!< Updated network state. */
-    CONTEXT_EVENT_TIME = BIT11,          /*!< Updated network time. */
-    CONTEXT_EVENT_CONFIG = BIT12,        /*!< Updated config. */
+    CONTEXT_EVENT_EC = BIT3,             /*!< Updated EC value or parameters. */
+    CONTEXT_EVENT_PH = BIT4,             /*!< Updated PH value or parameters. */
+    CONTEXT_EVENT_ROTARY = BIT5,         /*!< Updated rotary value or state. */
+    CONTEXT_EVENT_PUMP_PH_UP = BIT6,     /*!< Updated PH up pump state. */
+    CONTEXT_EVENT_PUMP_PH_DOWN = BIT7,   /*!< Updated PH down pump state. */
+    CONTEXT_EVENT_PUMP_EC_A = BIT8,      /*!< Updated EC A nutrient solution pump state. */
+    CONTEXT_EVENT_PUMP_EC_B = BIT9,      /*!< Updated EC B nutrient solution pump state. */
+    CONTEXT_EVENT_PUMP_MAIN = BIT10,     /*!< Updated main pump state. */
+    CONTEXT_EVENT_NETWORK = BIT11,       /*!< Updated network state. */
+    CONTEXT_EVENT_TIME = BIT12,          /*!< Updated network time. */
+    CONTEXT_EVENT_CONFIG = BIT13,        /*!< Updated config. */
 } context_event_t;
 
 typedef struct {
@@ -43,6 +44,7 @@ typedef struct {
         struct {
             volatile float indoor;
             volatile float water;
+            volatile float probe;
         } temp;
         volatile float humidity;
         volatile float pressure;
@@ -91,6 +93,8 @@ context_t *context_create(void);
 esp_err_t context_set_temp_indoor_humidity_pressure(context_t *context, float temp, float humidity, float pressure);
 
 esp_err_t context_set_temp_water(context_t *context, float temp);
+
+esp_err_t context_set_temp_probe(context_t *context, float temp);
 
 esp_err_t context_set_ec(context_t *context, float value);
 
