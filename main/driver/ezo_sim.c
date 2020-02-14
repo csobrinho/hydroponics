@@ -57,21 +57,21 @@ esp_err_t ezo_device_info(ezo_sensor_t *sensor) {
     return ESP_OK;
 }
 
-esp_err_t ezo_status(ezo_sensor_t *sensor, const ezo_status_t *status, const float *voltage) {
+esp_err_t ezo_status(ezo_sensor_t *sensor, ezo_status_t *status, float *voltage) {
     ARG_UNUSED(sensor);
     ARG_UNUSED(status);
     ARG_UNUSED(voltage);
     return ESP_FAIL;
 }
 
-esp_err_t ezo_export_calibration(ezo_sensor_t *sensor, char **buffer, const size_t *size) {
+esp_err_t ezo_export_calibration(ezo_sensor_t *sensor, char **buffer, size_t *size) {
     ARG_UNUSED(sensor);
     ARG_UNUSED(buffer);
     ARG_UNUSED(size);
     return ESP_FAIL;
 }
 
-esp_err_t ezo_calibration_mode(ezo_sensor_t *sensor, const ezo_calibration_mode_t *mode) {
+esp_err_t ezo_calibration_mode(ezo_sensor_t *sensor, ezo_calibration_mode_t *mode) {
     ARG_UNUSED(sensor);
     ARG_UNUSED(mode);
     return ESP_FAIL;
