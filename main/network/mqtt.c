@@ -27,7 +27,7 @@ static char *subscribe_topic_config;
 static iotc_mqtt_qos_t iotc_example_qos = IOTC_MQTT_QOS_AT_LEAST_ONCE;
 static iotc_timed_task_handle_t delayed_publish_task = IOTC_INVALID_TIMED_TASK_HANDLE;
 static iotc_context_handle_t iotc_context = IOTC_INVALID_CONTEXT_HANDLE;
-static context_t *mqtt_context;
+static context_t *context;
 static const mqtt_config_t *mqtt_config;
 
 extern const uint8_t ec_pv_key_start[] asm("_certs_ec_private_key_pem_start");
@@ -41,7 +41,7 @@ static void publish_telemetry_event(iotc_context_handle_t context_handle, iotc_t
     char *publish_topic = NULL;
     asprintf(&publish_topic, PUBLISH_TOPIC_EVENT, CONFIG_GIOT_DEVICE_ID);
     char *publish_message = NULL;
-    mqtt_config->handle_publish(mqtt_context, &publish_message);
+    ESP_ERROR_CHECK(mqtt_config->handle_publish(context, &publish_message));
     ESP_LOGI(TAG, "publishing msg '%s' to topic: '%s'", publish_message, publish_topic);
 
     iotc_publish(context_handle, publish_topic, publish_message, iotc_example_qos, /* callback= */ NULL,
@@ -69,9 +69,9 @@ static void iotc_mqttlogic_subscribe_callback(iotc_context_handle_t in_context_h
         ESP_LOGI(TAG, "Message Payload: %s", sub_message);
 
         if (strcmp(subscribe_topic_config, params->message.topic) == 0) {
-            mqtt_config->handle_config(mqtt_context, sub_message);
+            ESP_ERROR_CHECK(mqtt_config->handle_config(context, sub_message));
         } else if (strcmp(subscribe_topic_command, params->message.topic) == 0) {
-            mqtt_config->handle_command(mqtt_context, sub_message);
+            ESP_ERROR_CHECK(mqtt_config->handle_command(context, sub_message));
         }
         free(sub_message);
     }
@@ -113,39 +113,39 @@ static void on_connection_state_changed(iotc_context_handle_t in_context_handle,
         case IOTC_CONNECTION_STATE_OPEN_FAILED:
             ESP_LOGE(TAG, "Connection has failed reason %d", state);
 
-            /* exit it out of the application by stopping the event loop. */
+            /* Exit it out of the application by stopping the event loop. */
             iotc_events_stop();
             break;
 
-            /* IOTC_CONNECTION_STATE_CLOSED is set when the IoTC Client has been
-               disconnected. The disconnection may have been caused by some external
-               issue, or user may have requested a disconnection. In order to
-               distinguish between those two situation it is advised to check the state
-               variable value. If the state == IOTC_STATE_OK then the application has
-               requested a disconnection via 'iotc_shutdown_connection'. If the state !=
-               IOTC_STATE_OK then the connection has been closed from one side. */
+            /* IOTC_CONNECTION_STATE_CLOSED is set when the IoTC Client has been disconnected. The disconnection may
+             * have been caused by some external issue, or user may have requested a disconnection. In order to
+             * distinguish between those two situation it is advised to check the state variable value. If the
+             * state == IOTC_STATE_OK then the application has requested a disconnection via 'iotc_shutdown_connection'.
+             * If the state != IOTC_STATE_OK then the connection has been closed from one side. */
         case IOTC_CONNECTION_STATE_CLOSED:
             free(subscribe_topic_command);
             free(subscribe_topic_config);
-            /* When the connection is closed it's better to cancel some of previously
-               registered activities. Using cancel function on handler will remove the
-               handler from the timed queue which prevents the registered handle to be
-               called when there is no connection. */
+            /* When the connection is closed it's better to cancel some of previously registered activities. Using
+             * cancel function on handler will remove the handler from the timed queue which prevents the registered
+             * handle to be called when there is no connection. */
             if (IOTC_INVALID_TIMED_TASK_HANDLE != delayed_publish_task) {
                 iotc_cancel_timed_task(delayed_publish_task);
                 delayed_publish_task = IOTC_INVALID_TIMED_TASK_HANDLE;
             }
 
             if (state == IOTC_STATE_OK) {
-                /* The connection has been closed intentionally. Therefore, stop
-                   the event processing loop as there's nothing left to do
-                   in this example. */
+                /* The connection has been closed intentionally. Therefore, stop the event processing loop as there's
+                 * nothing left to do in this example. */
                 iotc_events_stop();
             } else {
                 ESP_LOGI(TAG, "connection closed - reason %d!", state);
-                /* The disconnection was unforeseen.  Try reconnect to the server
-                with previously set configuration, which has been provided
-                to this callback in the conn_data structure. */
+                /* The disconnection was unforeseen.  Try reconnect to the server with previously set configuration,
+                 * which has been provided to this callback in the conn_data structure. */
+
+                // Wait until network is connected and time is updated from the network.
+                xEventGroupWaitBits(context->event_group, CONTEXT_EVENT_NETWORK | CONTEXT_EVENT_TIME, pdFALSE, pdTRUE,
+                                    portMAX_DELAY);
+
                 iotc_connect(in_context_handle, conn_data->username, conn_data->password, conn_data->client_id,
                              conn_data->connection_timeout, conn_data->keepalive_timeout,
                              &on_connection_state_changed);
@@ -160,6 +160,12 @@ static void on_connection_state_changed(iotc_context_handle_t in_context_handle,
 
 static void mqtt_task(void *args) {
     ARG_UNUSED(args);
+
+    // Wait until network is connected and time is updated from the network.
+    xEventGroupWaitBits(context->event_group, CONTEXT_EVENT_NETWORK | CONTEXT_EVENT_TIME, pdFALSE, pdTRUE,
+                        portMAX_DELAY);
+
+    ESP_LOGI(TAG, "Connecting to Google IoT Core");
 
     /* Format the key type descriptors so the client understands which type of key is being represented. In this case,
      * a PEM encoded byte array of a ES256 key. */
@@ -222,10 +228,10 @@ static void mqtt_task(void *args) {
     vTaskDelete(NULL);
 }
 
-esp_err_t mqtt_init(context_t *context, const mqtt_config_t *config) {
+esp_err_t mqtt_init(context_t *ctx, const mqtt_config_t *config) {
     ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
-    mqtt_context = context;
+    context = ctx;
     mqtt_config = config;
     xTaskCreatePinnedToCore(mqtt_task, "mqtt", 8192, NULL, 5, NULL, tskNO_AFFINITY);
     return ESP_OK;

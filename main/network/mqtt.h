@@ -1,15 +1,15 @@
-#ifndef HYDROPONICS_MQTT_H
-#define HYDROPONICS_MQTT_H
+#ifndef HYDROPONICS_NETWORK_MQTT_H
+#define HYDROPONICS_NETWORK_MQTT_H
 
 #include "esp_err.h"
 
 #include "context.h"
 
-typedef void (*mqtt_handle_config_t)(context_t *context, char *config);
+typedef esp_err_t (*mqtt_handle_config_t)(context_t *context, const char *config);
 
-typedef void (*mqtt_handle_publish_t)(context_t *context, char **message);
+typedef esp_err_t (*mqtt_handle_publish_t)(context_t *context, char **message);
 
-typedef void (*mqtt_handle_command_t)(context_t *context, char *command);
+typedef esp_err_t (*mqtt_handle_command_t)(context_t *context, const char *command);
 
 typedef struct {
     const mqtt_handle_config_t handle_config;
@@ -19,4 +19,4 @@ typedef struct {
 
 esp_err_t mqtt_init(context_t *context, const mqtt_config_t *config);
 
-#endif //HYDROPONICS_MQTT_H
+#endif //HYDROPONICS_NETWORK_MQTT_H
