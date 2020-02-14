@@ -136,7 +136,7 @@ CONFIG_ESP_SAMPLING_PH_MS=1500
 #
 # Simulate
 #
-CONFIG_ESP_SIMULATE_SENSORS=y
+# CONFIG_ESP_SIMULATE_SENSORS is not set
 # end of Simulate
 # end of Project config
 
