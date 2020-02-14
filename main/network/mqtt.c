@@ -30,8 +30,8 @@ static iotc_context_handle_t iotc_context = IOTC_INVALID_CONTEXT_HANDLE;
 static context_t *context;
 static const mqtt_config_t *mqtt_config;
 
-extern const uint8_t ec_pv_key_start[] asm("_certs_ec_private_key_pem_start");
-extern const uint8_t ec_pv_key_end[] asm("_certs_ec_private_key_pem_end");
+extern const uint8_t EC_PV_KEY_START[] asm("_binary_ec_private_pem_start");
+extern const uint8_t EC_PV_KEY_END[] asm("_binary_ec_private_pem_end");
 
 static void publish_telemetry_event(iotc_context_handle_t context_handle, iotc_timed_task_handle_t timed_task,
                                     void *user_data) {
@@ -172,7 +172,7 @@ static void mqtt_task(void *args) {
     iotc_crypto_key_data_t iotc_connect_private_key_data;
     iotc_connect_private_key_data.crypto_key_signature_algorithm = IOTC_CRYPTO_KEY_SIGNATURE_ALGORITHM_ES256;
     iotc_connect_private_key_data.crypto_key_union_type = IOTC_CRYPTO_KEY_UNION_TYPE_PEM;
-    iotc_connect_private_key_data.crypto_key_union.key_pem.key = (char *) ec_pv_key_start;
+    iotc_connect_private_key_data.crypto_key_union.key_pem.key = (char *) EC_PV_KEY_START;
 
     /* Initialize the iotc library and create a context to use to connect to the GCP IoT Core Service. */
     const iotc_state_t error_init = iotc_initialize();
@@ -229,7 +229,7 @@ static void mqtt_task(void *args) {
 }
 
 esp_err_t mqtt_init(context_t *ctx, const mqtt_config_t *config) {
-    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
+    ARG_CHECK(ctx != NULL, ERR_PARAM_NULL);
 
     context = ctx;
     mqtt_config = config;

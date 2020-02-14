@@ -9,6 +9,7 @@
 #define EZO_DELAY_MS_SHORT 300
 #define EZO_DELAY_MS_SLOW 600
 #define EZO_DELAY_MS_SLOWEST 900
+#define EZO_MAX_RETRIES 4
 
 typedef enum {
     EZO_SENSOR_RESPONSE_UNKNOWN = 0,

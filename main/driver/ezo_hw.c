@@ -13,9 +13,9 @@
 static const char *TAG = "ezo";
 
 esp_err_t ezo_send_command(ezo_sensor_t *sensor, uint16_t delay_ms, const char *cmd_fmt, ...) {
-    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL)
-    ARG_CHECK(delay_ms > 0, ERR_PARAM_LE_ZERO)
-    ARG_CHECK(cmd_fmt != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
+    ARG_CHECK(delay_ms > 0, ERR_PARAM_LE_ZERO);
+    ARG_CHECK(cmd_fmt != NULL, ERR_PARAM_NULL);
     LOG(TAG, "[0x%.2x] send_command '%s' and wait %dms", sensor->address, cmd_fmt, delay_ms);
 
     sensor->status = EZO_SENSOR_RESPONSE_UNKNOWN;
@@ -76,7 +76,7 @@ esp_err_t ezo_send_command(ezo_sensor_t *sensor, uint16_t delay_ms, const char *
 }
 
 esp_err_t ezo_parse_response(ezo_sensor_t *sensor, uint8_t fields, const char *response_fmt, ...) {
-    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
     LOG(TAG, "[0x%.2x] read_response '%s'", sensor->address, response_fmt);
 
     if (response_fmt == NULL && fields == 0 && sensor->bytes_read != 0) {
@@ -99,7 +99,7 @@ esp_err_t ezo_parse_response(ezo_sensor_t *sensor, uint8_t fields, const char *r
 }
 
 esp_err_t ezo_read(ezo_sensor_t *sensor, float *value) {
-    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
 
     xSemaphoreTake(sensor->lock, portMAX_DELAY);
     ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->delay_read_ms, "R"));
@@ -110,7 +110,7 @@ esp_err_t ezo_read(ezo_sensor_t *sensor, float *value) {
 }
 
 esp_err_t ezo_read_temperature(ezo_sensor_t *sensor, float *value, float temp) {
-    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
 
     xSemaphoreTake(sensor->lock, portMAX_DELAY);
     ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->delay_read_ms, "RT,%.2f", temp));
@@ -121,7 +121,7 @@ esp_err_t ezo_read_temperature(ezo_sensor_t *sensor, float *value, float temp) {
 }
 
 esp_err_t ezo_device_info(ezo_sensor_t *sensor) {
-    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
 
     xSemaphoreTake(sensor->lock, portMAX_DELAY);
     ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->delay_ms, "I"));
@@ -132,7 +132,7 @@ esp_err_t ezo_device_info(ezo_sensor_t *sensor) {
 }
 
 esp_err_t ezo_status(ezo_sensor_t *sensor, ezo_status_t *status, float *voltage) {
-    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
 
     xSemaphoreTake(sensor->lock, portMAX_DELAY);
     ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->delay_ms, "Status"));
@@ -143,7 +143,7 @@ esp_err_t ezo_status(ezo_sensor_t *sensor, ezo_status_t *status, float *voltage)
 }
 
 esp_err_t ezo_export_calibration(ezo_sensor_t *sensor, char **buffer, size_t *size) {
-    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
 
     int rows;
     int bytes;
@@ -169,7 +169,7 @@ esp_err_t ezo_export_calibration(ezo_sensor_t *sensor, char **buffer, size_t *si
 }
 
 esp_err_t ezo_calibration_mode(ezo_sensor_t *sensor, ezo_calibration_mode_t *mode) {
-    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
 
     xSemaphoreTake(sensor->lock, portMAX_DELAY);
     ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->delay_ms, "Cal,?"));
@@ -189,7 +189,7 @@ static const char *EZO_CALIBRATION_STEPS[EZO_CALIBRATION_STEP_MAX] = {
 };
 
 esp_err_t ezo_calibration_step(ezo_sensor_t *sensor, ezo_calibration_step_t step, float value) {
-    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
     ARG_CHECK(step < EZO_CALIBRATION_STEP_MAX, "parameter >= EZO_CALIBRATION_MAX");
 
     xSemaphoreTake(sensor->lock, portMAX_DELAY);
@@ -201,7 +201,7 @@ esp_err_t ezo_calibration_step(ezo_sensor_t *sensor, ezo_calibration_step_t step
 }
 
 esp_err_t ezo_protocol_lock(ezo_sensor_t *sensor, bool lock) {
-    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL)
+    ARG_CHECK(sensor != NULL, ERR_PARAM_NULL);
 
     xSemaphoreTake(sensor->lock, portMAX_DELAY);
     ESP_ERROR_CHECK(ezo_send_command(sensor, sensor->delay_ms, "Plock,%d", lock ? 1 : 0));
