@@ -9,15 +9,16 @@
 
 #include "buses.h"
 #include "config.h"
-#include "console/console.h"
 #include "context.h"
 #include "error.h"
+#include "console/console.h"
 #include "display/display.h"
 #include "display/lcd.h"
 #include "driver/status.h"
 #include "driver/storage.h"
-#include "network/wifi.h"
+#include "network/iot.h"
 #include "network/ntp.h"
+#include "network/wifi.h"
 #include "sensors/ezo_ec.h"
 #include "sensors/ezo_ph.h"
 #include "sensors/ezo_rtd.h"
@@ -67,6 +68,7 @@ void app_main() {
     ESP_ERROR_CHECK(temperature_init(context));
     ESP_ERROR_CHECK(wifi_init(context, context->config.ssid, context->config.password));
     ESP_ERROR_CHECK(ntp_init(context));
+    ESP_ERROR_CHECK(iot_init(context));
 
     xTaskCreatePinnedToCore(test_task, "test", 2048, NULL, 15, NULL, tskNO_AFFINITY);
 
