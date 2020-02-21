@@ -42,6 +42,7 @@ static void on_got_ipv4(void *arg, esp_event_base_t event_base, int32_t event_id
     ip_event_got_ip_t *event = (ip_event_got_ip_t *) event_data;
     memcpy(&ip4_addr, &event->ip_info.ip, sizeof(ip4_addr));
     xEventGroupSetBits(connect_event_group, GOT_IPV4_BIT);
+    ESP_ERROR_CHECK(context_set_network_connected(args.context, true));
 }
 
 static void on_got_ipv6(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
@@ -51,6 +52,7 @@ static void on_got_ipv6(void *arg, esp_event_base_t event_base, int32_t event_id
     ip_event_got_ip6_t *event = (ip_event_got_ip6_t *) event_data;
     memcpy(&ip6_addr, &event->ip6_info.ip, sizeof(ip6_addr));
     xEventGroupSetBits(connect_event_group, GOT_IPV6_BIT);
+    ESP_ERROR_CHECK(context_set_network_connected(args.context, true));
 }
 
 static void on_wifi_disconnect(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
@@ -72,8 +74,6 @@ static void on_wifi_connect(void *esp_netif, esp_event_base_t event_base, int32_
     ARG_UNUSED(event_id);
     ARG_UNUSED(event_data);
     esp_netif_create_ip6_linklocal(esp_netif);
-
-    ESP_ERROR_CHECK(context_set_network_connected(args.context, true));
 }
 
 static void wifi_start() {
