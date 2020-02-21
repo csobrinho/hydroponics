@@ -5,7 +5,9 @@
 #include "freertos/task.h"
 
 #include <iotc.h>
+#include <iotc_helpers.h>
 #include <iotc_jwt.h>
+#include <iotc_macros.h>
 
 #include "esp_err.h"
 #include "esp_log.h"
@@ -20,6 +22,8 @@
 #define SUBSCRIBE_TOPIC_CONFIG "/devices/%s/config"
 #define PUBLISH_TOPIC_EVENT "/devices/%s/events"
 #define PUBLISH_TOPIC_STATE "/devices/%s/state"
+#define TASK_REPEAT_SEC 30
+#define TASK_REPEAT_FOREVER 1
 
 static const char *TAG = "mqtt";
 static char *subscribe_topic_command;
@@ -29,9 +33,19 @@ static iotc_timed_task_handle_t delayed_publish_task = IOTC_INVALID_TIMED_TASK_H
 static iotc_context_handle_t iotc_context = IOTC_INVALID_CONTEXT_HANDLE;
 static context_t *context;
 static const mqtt_config_t *mqtt_config;
+static char jwt[IOTC_JWT_SIZE] = {0};
+static const uint32_t jwt_expiration_sec = 3600 * 24;
 
 extern const uint8_t EC_PV_KEY_START[] asm("_binary_ec_private_pem_start");
 extern const uint8_t EC_PV_KEY_END[] asm("_binary_ec_private_pem_end");
+
+/* Format the key type descriptors so the client understands which type of key is being represented. In this case,
+ * a PEM encoded byte array of a ES256 key. */
+static const iotc_crypto_key_data_t PRIVATE_KEY_DATA = {
+        .crypto_key_signature_algorithm = IOTC_CRYPTO_KEY_SIGNATURE_ALGORITHM_ES256,
+        .crypto_key_union_type = IOTC_CRYPTO_KEY_UNION_TYPE_PEM,
+        .crypto_key_union.key_pem.key = (char *) EC_PV_KEY_START,
+};
 
 static void publish_telemetry_event(iotc_context_handle_t context_handle, iotc_timed_task_handle_t timed_task,
                                     void *user_data) {
@@ -48,6 +62,29 @@ static void publish_telemetry_event(iotc_context_handle_t context_handle, iotc_t
             /* user_data= */ NULL);
     free(publish_topic);
     free(publish_message);
+}
+
+/* Generate the client authentication JWT, which will serve as the MQTT password. */
+static iotc_state_t mqtt_create_jwt_token(void) {
+    size_t bytes_written = 0;
+    return iotc_create_iotcore_jwt(CONFIG_GIOT_PROJECT_ID, jwt_expiration_sec, &PRIVATE_KEY_DATA, jwt,
+                                   IOTC_JWT_SIZE, &bytes_written);
+}
+
+static void mqtt_update_jwt_token(char **password) {
+    ESP_LOGI(TAG, "Updating the JWT token");
+    iotc_state_t state = mqtt_create_jwt_token();
+    if (IOTC_STATE_OK != state) {
+        ESP_LOGE(TAG, "mqtt_update_jwt_token returned with error: %ul", state);
+        vTaskDelete(NULL);
+    }
+    if (strcmp(jwt, *password) != 0) {
+        IOTC_SAFE_FREE(*password);
+        *password = iotc_str_dup(jwt);
+        IOTC_CHECK_MEMORY(*password, state);
+    }
+    err_handling:
+    return;
 }
 
 static void iotc_mqttlogic_subscribe_callback(iotc_context_handle_t in_context_handle, iotc_sub_call_type_t call_type,
@@ -98,8 +135,10 @@ static void on_connection_state_changed(iotc_context_handle_t in_context_handle,
             iotc_subscribe(in_context_handle, subscribe_topic_config, IOTC_MQTT_QOS_AT_LEAST_ONCE,
                            &iotc_mqttlogic_subscribe_callback, /* user_data= */ NULL);
 
-            /* Create a timed task to publish every 10 seconds. */
-            delayed_publish_task = iotc_schedule_timed_task(in_context_handle, publish_telemetry_event, 10, 15, NULL);
+            /* Create a timed task to publish every 'x' seconds. */
+            delayed_publish_task = iotc_schedule_timed_task(in_context_handle, publish_telemetry_event, TASK_REPEAT_SEC,
+                                                            TASK_REPEAT_FOREVER, NULL);
+            ESP_ERROR_CHECK(context_set_iot_connected(context, true));
             break;
 
             /* IOTC_CONNECTION_STATE_OPEN_FAILED is set when there was a problem
@@ -112,6 +151,7 @@ static void on_connection_state_changed(iotc_context_handle_t in_context_handle,
                message. */
         case IOTC_CONNECTION_STATE_OPEN_FAILED:
             ESP_LOGE(TAG, "Connection has failed reason %d", state);
+            ESP_ERROR_CHECK(context_set_iot_connected(context, false));
 
             /* Exit it out of the application by stopping the event loop. */
             iotc_events_stop();
@@ -123,6 +163,7 @@ static void on_connection_state_changed(iotc_context_handle_t in_context_handle,
              * state == IOTC_STATE_OK then the application has requested a disconnection via 'iotc_shutdown_connection'.
              * If the state != IOTC_STATE_OK then the connection has been closed from one side. */
         case IOTC_CONNECTION_STATE_CLOSED:
+            ESP_ERROR_CHECK(context_set_iot_connected(context, false));
             free(subscribe_topic_command);
             free(subscribe_topic_config);
             /* When the connection is closed it's better to cancel some of previously registered activities. Using
@@ -146,6 +187,7 @@ static void on_connection_state_changed(iotc_context_handle_t in_context_handle,
                 xEventGroupWaitBits(context->event_group, CONTEXT_EVENT_NETWORK | CONTEXT_EVENT_TIME, pdFALSE, pdTRUE,
                                     portMAX_DELAY);
 
+                mqtt_update_jwt_token(&conn_data->password);
                 iotc_connect(in_context_handle, conn_data->username, conn_data->password, conn_data->client_id,
                              conn_data->connection_timeout, conn_data->keepalive_timeout,
                              &on_connection_state_changed);
@@ -166,13 +208,6 @@ static void mqtt_task(void *args) {
                         portMAX_DELAY);
 
     ESP_LOGI(TAG, "Connecting to Google IoT Core");
-
-    /* Format the key type descriptors so the client understands which type of key is being represented. In this case,
-     * a PEM encoded byte array of a ES256 key. */
-    iotc_crypto_key_data_t iotc_connect_private_key_data;
-    iotc_connect_private_key_data.crypto_key_signature_algorithm = IOTC_CRYPTO_KEY_SIGNATURE_ALGORITHM_ES256;
-    iotc_connect_private_key_data.crypto_key_union_type = IOTC_CRYPTO_KEY_UNION_TYPE_PEM;
-    iotc_connect_private_key_data.crypto_key_union.key_pem.key = (char *) EC_PV_KEY_START;
 
     /* Initialize the iotc library and create a context to use to connect to the GCP IoT Core Service. */
     const iotc_state_t error_init = iotc_initialize();
@@ -196,12 +231,7 @@ static void mqtt_task(void *args) {
     const uint16_t connection_timeout = 0;
     const uint16_t keepalive_timeout = 20;
 
-    /* Generate the client authentication JWT, which will serve as the MQTT password. */
-    char jwt[IOTC_JWT_SIZE] = {0};
-    size_t bytes_written = 0;
-    iotc_state_t state = iotc_create_iotcore_jwt(CONFIG_GIOT_PROJECT_ID, /* expiration_period_sec= */ 3600,
-                                                 &iotc_connect_private_key_data, jwt, IOTC_JWT_SIZE, &bytes_written);
-
+    iotc_state_t state = mqtt_create_jwt_token();
     if (IOTC_STATE_OK != state) {
         ESP_LOGE(TAG, "iotc_create_iotcore_jwt returned with error: %ul", state);
         vTaskDelete(NULL);
@@ -213,6 +243,8 @@ static void mqtt_task(void *args) {
     iotc_connect(iotc_context, NULL, jwt, device_path, connection_timeout, keepalive_timeout,
                  &on_connection_state_changed);
     free(device_path);
+
+    ESP_ERROR_CHECK(context_set_iot_connected(context, false));
 
     /* The IoTC Client was designed to be able to run on single threaded devices. As such it does not have its own event
      * loop thread. Instead you must regularly call the function iotc_events_process_blocking() to process connection
