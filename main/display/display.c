@@ -15,9 +15,10 @@
 #define I2C_ADDRESS_OLED 0x78  /*!< Slave address for OLED display. */
 
 static const char *TAG = "display";
+static const EventBits_t clear_bits = CONTEXT_EVENT_TEMP_INDOOR | CONTEXT_EVENT_TEMP_WATER | CONTEXT_EVENT_PRESSURE
+                                      | CONTEXT_EVENT_HUMIDITY | CONTEXT_EVENT_EC | CONTEXT_EVENT_PH;
+static const EventBits_t wait_bits = clear_bits | CONTEXT_EVENT_NETWORK | CONTEXT_EVENT_TIME | CONTEXT_EVENT_IOT;
 static u8g2_t u8g2;
-static const EventBits_t display_bits = CONTEXT_EVENT_TEMP_INDOOR | CONTEXT_EVENT_TEMP_WATER | CONTEXT_EVENT_PRESSURE
-                                        | CONTEXT_EVENT_HUMIDITY | CONTEXT_EVENT_EC | CONTEXT_EVENT_PH;
 
 static size_t snprintf_append(char *buf, size_t len, size_t max_size, float value) {
     if (CONTEXT_VALUE_IS_VALID(value)) {
@@ -47,6 +48,9 @@ static esp_err_t display_draw(context_t *context) {
     float humidity = context->sensors.humidity;
     float ec = context->sensors.ec.value;
     float ph = context->sensors.ph.value;
+    bool connected = context->network.connected;
+    bool time_updated = context->network.time_updated;
+    bool iot_connected = context->network.iot_connected;
     portEXIT_CRITICAL(&context->spinlock);
 
     size_t len = strlcpy(buf, "Tmp:", sizeof(buf));
@@ -56,14 +60,18 @@ static esp_err_t display_draw(context_t *context) {
     snprintf(buf + len, sizeof(buf) - len, " \260C");
     u8g2_DrawStr(&u8g2, 0, 7, buf);
 
-    snprintf_value(buf, sizeof(buf), "Hum: %.1f %%", "Hum: ?? %%", humidity);
+    snprintf_value(buf, sizeof(buf), "Hum: %.f %%", "Hum: ?? %%", humidity);
     u8g2_DrawStr(&u8g2, 0, 15, buf);
 
-    snprintf_value(buf, sizeof(buf), "EC: %.1f uS/cm", "EC: ?? uS/cm", ec);
+    snprintf_value(buf, sizeof(buf), "EC: %.f uS/cm", "EC: ?? uS/cm", ec);
     u8g2_DrawStr(&u8g2, 0, 23, buf);
 
-    snprintf_value(buf, sizeof(buf), "PH: %.1f", "PH: ??", ph);
+    snprintf_value(buf, sizeof(buf), "PH: %.2f", "PH: ??", ph);
     u8g2_DrawStr(&u8g2, 0, 31, buf);
+
+    snprintf(buf, sizeof(buf), "%c%c%c", connected ? 'W' : '*', time_updated ? 'T' : '*', iot_connected ? 'G' : '*');
+    u8g2_DrawStr(&u8g2, u8g2_GetDisplayWidth(&u8g2) - (6 * 3), 31, buf);
+
     u8g2_SendBuffer(&u8g2);
 
     return ESP_OK;
@@ -95,7 +103,10 @@ static void display_task(void *arg) {
     u8g2_SendBuffer(&u8g2);
 
     while (1) {
-        xEventGroupWaitBits(context->event_group, display_bits, pdTRUE, pdFALSE, portMAX_DELAY);
+        xEventGroupWaitBits(context->event_group, wait_bits, pdFALSE, pdFALSE, portMAX_DELAY);
+        // Even though we wait for some status bits like network/time/etc, these are used elsewhere as a form of
+        // synchronization between tasks so make sure we don't clear them!
+        xEventGroupClearBits(context->event_group, clear_bits);
         ESP_ERROR_CHECK(display_draw(context));
         vTaskDelay(pdMS_TO_TICKS(250));
     }
