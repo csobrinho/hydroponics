@@ -28,6 +28,7 @@ typedef enum {
     CONTEXT_EVENT_NETWORK = BIT11,       /*!< Updated network state. */
     CONTEXT_EVENT_TIME = BIT12,          /*!< Updated network time. */
     CONTEXT_EVENT_CONFIG = BIT13,        /*!< Updated config. */
+    CONTEXT_EVENT_IOT = BIT14,           /*!< Updated iot state. */
 } context_event_t;
 
 typedef struct {
@@ -85,6 +86,7 @@ typedef struct {
     struct {
         bool connected;
         bool time_updated;
+        bool iot_connected;
     } network;
 } context_t;
 
@@ -111,6 +113,8 @@ esp_err_t context_set_rotary_pressed(context_t *context, bool pressed);
 esp_err_t context_set_network_connected(context_t *context, bool connected);
 
 esp_err_t context_set_time_updated(context_t *context);
+
+esp_err_t context_set_iot_connected(context_t *context, bool connected);
 
 esp_err_t context_set_config(context_t *context, const char *device_id, const char *ssid, const char *password);
 
