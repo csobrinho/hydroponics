@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <time.h>
 #include "lwip/apps/sntp.h"
 
@@ -15,21 +16,27 @@ static void ntp_task(void *arg) {
     xEventGroupWaitBits(context->event_group, CONTEXT_EVENT_NETWORK, pdFALSE, pdFALSE, portMAX_DELAY);
 
     ESP_LOGI(TAG, "Initializing SNTP...");
+    // Set the timezone to Pacific time.
+    setenv("TZ", "PST8PDT", 1);
+    tzset();
+    ESP_LOGI(TAG, "Set timezone to Pacific Time...");
+
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
     sntp_setservername(0, "time.google.com");
     sntp_init();
 
-    // Sait for time to be set.
+    // Wait for time to be set.
     time_t now = 0;
-    struct tm timeinfo = {0};
-    while (timeinfo.tm_year < (2019 - 1900)) {
+    struct tm t = {0};
+    while (t.tm_year < (2019 - 1900)) {
         ESP_LOGI(TAG, "Waiting for system time to be set...");
         vTaskDelay(pdMS_TO_TICKS(2000));
         time(&now);
-        localtime_r(&now, &timeinfo);
+        localtime_r(&now, &t);
     }
-    ESP_LOGI(TAG, "Time is set...");
-
+    char buf[64] = {0};
+    strftime(buf, sizeof(buf), "%F %R", &t);
+    ESP_LOGI(TAG, "Time set to %s...", buf);
     context_set_time_updated(context);
 
     // We are done with this task.
