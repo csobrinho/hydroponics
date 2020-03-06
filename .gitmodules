@@ -20,5 +20,5 @@
 	update = merge
 [submodule "components/esp-google-iot"]
 	path = components/esp-google-iot
-	url = https://github.com/espressif/esp-google-iot
+	url = https://github.com/csobrinho/esp-google-iot
 	update = merge
