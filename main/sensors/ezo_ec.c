@@ -52,6 +52,6 @@ static void ezo_ec_task(void *arg) {
 }
 
 esp_err_t ezo_ec_init(context_t *context) {
-    xTaskCreatePinnedToCore(ezo_ec_task, "ezo_ec", 2048, context, 10, NULL, tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(ezo_ec_task, "ezo_ec", 3072, context, 10, NULL, tskNO_AFFINITY);
     return ESP_OK;
 }

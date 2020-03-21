@@ -44,6 +44,6 @@ static void ntp_task(void *arg) {
 }
 
 esp_err_t ntp_init(context_t *context) {
-    xTaskCreatePinnedToCore(ntp_task, "ntp", 2048, context, 5, NULL, tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(ntp_task, "ntp", 3072, context, 5, NULL, tskNO_AFFINITY);
     return ESP_OK;
 }
