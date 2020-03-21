@@ -121,17 +121,10 @@ static void on_connection_state_changed(iotc_context_handle_t in_context_handle,
             ESP_ERROR_CHECK(context_set_iot_connected(context, true));
             break;
 
-            /* IOTC_CONNECTION_STATE_OPEN_FAILED is set when there was a problem
-               when establishing a connection to the server. The reason for the error
-               is contained in the 'state' variable. Here we log the error state and
-               exit out of the application. */
+            /* IOTC_CONNECTION_STATE_OPEN_FAILED is set when there was a problem when establishing a connection to the
+             * server. The reason for the error is contained in the 'state' variable. */
         case IOTC_CONNECTION_STATE_OPEN_FAILED:
-            ESP_LOGE(TAG, "Connection has failed reason %d", state);
-            ESP_ERROR_CHECK(context_set_iot_connected(context, false));
-
-            /* Exit it out of the application by stopping the event loop. */
-            iotc_events_stop();
-            break;
+            // fall-through.
 
             /* IOTC_CONNECTION_STATE_CLOSED is set when the IoTC Client has been disconnected. The disconnection may
              * have been caused by some external issue, or user may have requested a disconnection. In order to
