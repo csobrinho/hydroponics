@@ -1,10 +1,9 @@
 #include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
-
-#include "lwip/err.h"
-#include "lwip/sockets.h"
 
 #include "esp_err.h"
 
@@ -41,9 +40,13 @@ static int socket_fd = INT32_MIN;
 static esp_err_t syslog_connect() {
     socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
     if (socket_fd != -1) {
+        struct timeval send_timeout = {.tv_sec=1, .tv_usec=0};
+        if (setsockopt(socket_fd, SOL_SOCKET, SO_SNDTIMEO, (const char *) &send_timeout, sizeof(send_timeout)) < 0) {
+            ESP_LOGDE(TAG, "Failed to set SO_SNDTIMEO: %s", strerror(errno));
+        }
         return ESP_OK;
     }
-    ESP_LOGDE(TAG, "Unable to create socket: errno %d", errno);
+    ESP_LOGDE(TAG, "Unable to create socket: %s", strerror(errno));
     return ESP_ERR_INVALID_STATE;
 }
 
@@ -51,7 +54,7 @@ static esp_err_t syslog_send(syslog_entry_t *msg) {
     if (sendto(socket_fd, msg->msg, msg->msg_len, 0, (struct sockaddr *) &dest_addr, sizeof(dest_addr)) >= 0) {
         return ESP_OK;
     }
-    ESP_LOGDE(TAG, "Error occurred during sending: errno %d", errno);
+    ESP_LOGDE(TAG, "Error occurred during sending: %s", strerror(errno));
     return ESP_ERR_INVALID_STATE;
 }
 
@@ -95,8 +98,13 @@ static void syslog_task(void *arg) {
                             portMAX_DELAY);
         while (true) {
             if (xQueueReceive(queue, &msg, portMAX_DELAY) == pdTRUE) {
-                syslog_send(&msg);
+                esp_err_t err = syslog_send(&msg);
                 syslog_free(&msg);
+                if (err != ESP_OK) {
+                    // Something went wrong so just wait a few seconds and wait for config/network to be ready again
+                    vTaskDelay(pdMS_TO_TICKS(5000));
+                    break;
+                }
             }
         }
     }
