@@ -37,6 +37,16 @@ static int socket_fd = INT32_MIN;
         printf(LOG_FORMAT(E, format), esp_log_timestamp(), tag, ##__VA_ARGS__); \
     } while(0)
 
+static esp_err_t syslog_disconnect() {
+    if (socket_fd != INT32_MIN) {
+        ESP_LOGDE(TAG, "Shutting down socket and restarting...");
+        shutdown(socket_fd, 0);
+        close(socket_fd);
+        socket_fd = INT32_MIN;
+    }
+    return ESP_OK;
+}
+
 static esp_err_t syslog_connect() {
     socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
     if (socket_fd != -1) {
@@ -92,10 +102,11 @@ static void syslog_task(void *arg) {
     ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
 
     syslog_entry_t msg;
-    syslog_connect();
     while (true) {
+        syslog_disconnect();
         xEventGroupWaitBits(context->event_group, CONTEXT_EVENT_CONFIG | CONTEXT_EVENT_NETWORK, pdFALSE, pdTRUE,
                             portMAX_DELAY);
+        syslog_connect();
         while (true) {
             if (xQueueReceive(queue, &msg, portMAX_DELAY) == pdTRUE) {
                 esp_err_t err = syslog_send(&msg);
