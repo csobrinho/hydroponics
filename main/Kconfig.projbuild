@@ -36,6 +36,27 @@ menu "Project config"
             Some GPIOs are used for other purposes (flash connections, etc.) and cannot be used.
             GPIOs 35-39 are input-only so cannot be used to drive the One Wire Bus.
 
+    menu "Syslog"
+        config ESP_SYSLOG_ENABLE
+            bool "Enable"
+
+        config ESP_SYSLOG_IPV4_ADDR
+            string "IPV4 Address"
+            default "10.0.0.10"
+            depends on ESP_SYSLOG_ENABLE
+            help
+                IPV4 address to which the syslog client will send data.
+
+        config ESP_SYSLOG_PORT
+            int "Port"
+            range 0 65535
+            default 514
+            depends on ESP_SYSLOG_ENABLE
+            help
+                The remote port to which the syslog client will send data.
+
+    endmenu
+
     menu "Sampling"
         config ESP_SAMPLING_HUMIDITY_MS
             int "Humidity"

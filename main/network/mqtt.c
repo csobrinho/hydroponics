@@ -71,32 +71,14 @@ static iotc_state_t mqtt_create_jwt_token(void) {
                                    IOTC_JWT_SIZE, &bytes_written);
 }
 
-static void mqtt_update_jwt_token(char **password) {
-    ESP_LOGI(TAG, "Updating the JWT token");
-    iotc_state_t state = mqtt_create_jwt_token();
-    if (IOTC_STATE_OK != state) {
-        ESP_LOGE(TAG, "mqtt_update_jwt_token returned with error: %ul", state);
-        vTaskDelete(NULL);
-    }
-    if (strcmp(jwt, *password) != 0) {
-        IOTC_SAFE_FREE(*password);
-        *password = iotc_str_dup(jwt);
-        IOTC_CHECK_MEMORY(*password, state);
-    }
-    err_handling:
-    return;
-}
-
 static void iotc_mqttlogic_subscribe_callback(iotc_context_handle_t in_context_handle, iotc_sub_call_type_t call_type,
                                               const iotc_sub_call_params_t *const params, iotc_state_t state,
                                               void *user_data) {
     ARG_UNUSED(in_context_handle);
-    ARG_UNUSED(call_type);
-    ARG_UNUSED(state);
     ARG_UNUSED(user_data);
     if (params != NULL && params->message.topic != NULL) {
-        ESP_LOGI(TAG, "Subscription Topic: %s", params->message.topic);
-        char *sub_message = (char *) malloc(params->message.temporary_payload_data_length + 1);
+        ESP_LOGI(TAG, "Subscription Topic[type: %d / state: %d]: %s", call_type, state, params->message.topic);
+        char *sub_message = (char *) calloc(1, params->message.temporary_payload_data_length + 1);
         if (sub_message == NULL) {
             ESP_LOGE(TAG, "Failed to allocate memory");
             return;
@@ -145,10 +127,6 @@ static void on_connection_state_changed(iotc_context_handle_t in_context_handle,
                when establishing a connection to the server. The reason for the error
                is contained in the 'state' variable. Here we log the error state and
                exit out of the application. */
-
-            /* Publish immediately upon connect. 'publish_function' is defined
-               in this example file and invokes the IoTC API to publish a
-               message. */
         case IOTC_CONNECTION_STATE_OPEN_FAILED:
             ESP_LOGE(TAG, "Connection has failed reason %d", state);
             ESP_ERROR_CHECK(context_set_iot_connected(context, false));
@@ -187,10 +165,14 @@ static void on_connection_state_changed(iotc_context_handle_t in_context_handle,
                 xEventGroupWaitBits(context->event_group, CONTEXT_EVENT_NETWORK | CONTEXT_EVENT_TIME, pdFALSE, pdTRUE,
                                     portMAX_DELAY);
 
-                mqtt_update_jwt_token(&conn_data->password);
-                iotc_connect(in_context_handle, conn_data->username, conn_data->password, conn_data->client_id,
-                             conn_data->connection_timeout, conn_data->keepalive_timeout,
-                             &on_connection_state_changed);
+                ESP_LOGI(TAG, "Updating the JWT token");
+                iotc_state_t jwt_state = mqtt_create_jwt_token();
+                if (IOTC_STATE_OK != jwt_state) {
+                    ESP_LOGE(TAG, "mqtt_create_jwt_token returned with error: %ul", jwt_state);
+                    vTaskDelete(NULL);
+                }
+                iotc_connect(in_context_handle, conn_data->username, jwt, conn_data->client_id,
+                             conn_data->connection_timeout, conn_data->keepalive_timeout, &on_connection_state_changed);
             }
             break;
 

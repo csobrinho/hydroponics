@@ -39,6 +39,8 @@ typedef struct {
         const char *device_id;
         const char *ssid;
         const char *password;
+        const char *syslog_hostname;
+        uint16_t syslog_port;
     } config;
 
     struct {

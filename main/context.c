@@ -153,6 +153,8 @@ esp_err_t context_set_config(context_t *context, const char *device_id, const ch
     context_set(context->config.device_id, device_id, CONTEXT_EVENT_CONFIG);
     context_set(context->config.ssid, ssid, CONTEXT_EVENT_CONFIG);
     context_set(context->config.password, password, CONTEXT_EVENT_CONFIG);
+    context_set(context->config.syslog_hostname, CONFIG_ESP_SYSLOG_IPV4_ADDR, CONTEXT_EVENT_CONFIG);
+    context_set(context->config.syslog_port, CONFIG_ESP_SYSLOG_PORT, CONTEXT_EVENT_CONFIG);
     portEXIT_CRITICAL(&context->spinlock);
 
     if (bitsToSet) xEventGroupSetBits(context->event_group, bitsToSet);
