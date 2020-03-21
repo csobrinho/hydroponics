@@ -107,12 +107,10 @@ static void on_connection_state_changed(iotc_context_handle_t in_context_handle,
 
             /* Publish immediately upon connect. 'publish_function' is defined in this example file and invokes the IoTC
              * API to publish a message. */
-            asprintf(&subscribe_topic_command, SUBSCRIBE_TOPIC_COMMAND, CONFIG_GIOT_DEVICE_ID);
             ESP_LOGI(TAG, "subscribed to topic: '%s'", subscribe_topic_command);
             iotc_subscribe(in_context_handle, subscribe_topic_command, IOTC_MQTT_QOS_AT_LEAST_ONCE,
                            &iotc_mqttlogic_subscribe_callback, /* user_data= */ NULL);
 
-            asprintf(&subscribe_topic_config, SUBSCRIBE_TOPIC_CONFIG, CONFIG_GIOT_DEVICE_ID);
             ESP_LOGI(TAG, "subscribed to topic: '%s'", subscribe_topic_config);
             iotc_subscribe(in_context_handle, subscribe_topic_config, IOTC_MQTT_QOS_AT_LEAST_ONCE,
                            &iotc_mqttlogic_subscribe_callback, /* user_data= */ NULL);
@@ -142,8 +140,6 @@ static void on_connection_state_changed(iotc_context_handle_t in_context_handle,
              * If the state != IOTC_STATE_OK then the connection has been closed from one side. */
         case IOTC_CONNECTION_STATE_CLOSED:
             ESP_ERROR_CHECK(context_set_iot_connected(context, false));
-            free(subscribe_topic_command);
-            free(subscribe_topic_config);
             /* When the connection is closed it's better to cancel some of previously registered activities. Using
              * cancel function on handler will remove the handler from the timed queue which prevents the registered
              * handle to be called when there is no connection. */
@@ -160,6 +156,9 @@ static void on_connection_state_changed(iotc_context_handle_t in_context_handle,
                 ESP_LOGI(TAG, "connection closed - reason %d!", state);
                 /* The disconnection was unforeseen.  Try reconnect to the server with previously set configuration,
                  * which has been provided to this callback in the conn_data structure. */
+
+                // Wait a few seconds for the wifi reconnect logic to kick in.
+                vTaskDelay(pdMS_TO_TICKS(2000));
 
                 // Wait until network is connected and time is updated from the network.
                 xEventGroupWaitBits(context->event_group, CONTEXT_EVENT_NETWORK | CONTEXT_EVENT_TIME, pdFALSE, pdTRUE,
@@ -184,6 +183,9 @@ static void on_connection_state_changed(iotc_context_handle_t in_context_handle,
 
 static void mqtt_task(void *args) {
     ARG_UNUSED(args);
+
+    asprintf(&subscribe_topic_command, SUBSCRIBE_TOPIC_COMMAND, CONFIG_GIOT_DEVICE_ID);
+    asprintf(&subscribe_topic_config, SUBSCRIBE_TOPIC_CONFIG, CONFIG_GIOT_DEVICE_ID);
 
     // Wait until network is connected and time is updated from the network.
     xEventGroupWaitBits(context->event_group, CONTEXT_EVENT_NETWORK | CONTEXT_EVENT_TIME, pdFALSE, pdTRUE,
