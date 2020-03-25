@@ -54,6 +54,7 @@ dkms.conf
 # Custom
 .idea
 build/*
+tmp/*
 sdkconfig
 sdkconfig.old
 main/certs/*private*
