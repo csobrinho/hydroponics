@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -46,6 +47,9 @@ type event struct {
 
 // FirestorePubSub consumes a Pub/Sub message and insert those values into the Firestore database.
 func FirestorePubSub(ctx context.Context, m pubSubMessage) error {
+	if strings.HasSuffix(m.Attributes.DeviceId, "-test") {
+		return nil
+	}
 	meta, err := metadata.FromContext(ctx)
 	if err != nil {
 		return err

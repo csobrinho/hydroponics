@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"strings"
 	"time"
 
   "cloud.google.com/go/bigquery"
@@ -37,6 +38,10 @@ var tableName = os.Getenv("TABLE")
 
 // BigqueryPubSub consumes a Pub/Sub message and inserts a new Bigquery row.
 func BigqueryPubSub(ctx context.Context, m pubSubMessage) error {
+	if strings.HasSuffix(m.Attributes.DeviceId, "-test") {
+		return nil
+	}
+
 	meta, err := metadata.FromContext(ctx)
 	if err != nil {
 		return err
