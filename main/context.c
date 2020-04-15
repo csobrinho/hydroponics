@@ -5,18 +5,26 @@
 #include "context.h"
 #include "error.h"
 
-#define context_set(p, v, f) do { \
-      if ((p) != (v)) {           \
-        (p) = (v);                \
-        bitsToSet |= (f);         \
-      }                           \
+#define context_set(p, v, f) do {                    \
+      if ((p) != (v)) {                              \
+        (p) = (v);                                   \
+        bitsToSet |= (f);                            \
+      }                                              \
     } while (0)
 
-#define context_set_single(c, p, v, f) do {        \
-      if ((p) != (v)) {                            \
-        (p) = (v);                                 \
-        xEventGroupSetBits((c)->event_group, (f)); \
-      }                                            \
+#define context_set_single(c, p, v, f) do {          \
+      if ((p) != (v)) {                              \
+        (p) = (v);                                   \
+        xEventGroupSetBits((c)->event_group, (f));   \
+      }                                              \
+    } while (0)
+
+#define context_set_flags(c, v, f) do {              \
+      if (v) {                                       \
+        xEventGroupSetBits((c)->event_group, (f));   \
+      } else {                                       \
+        xEventGroupClearBits((c)->event_group, (f)); \
+      }                                              \
     } while (0)
 
 static const char *TAG = "context";
@@ -30,6 +38,8 @@ context_t *context_create(void) {
 
     context->sensors.temp.indoor = CONTEXT_UNKNOWN_VALUE;
     context->sensors.temp.water = CONTEXT_UNKNOWN_VALUE;
+    context->sensors.temp.probe = CONTEXT_UNKNOWN_VALUE;
+
     context->sensors.humidity = CONTEXT_UNKNOWN_VALUE;
     context->sensors.pressure = CONTEXT_UNKNOWN_VALUE;
 
@@ -129,19 +139,25 @@ esp_err_t context_set_rotary_pressed(context_t *context, bool pressed) {
 
 esp_err_t context_set_network_connected(context_t *context, bool connected) {
     ARG_CHECK(context != NULL, ERR_PARAM_NULL);
-    context_set_single(context, context->network.connected, connected, CONTEXT_EVENT_NETWORK);
+    context_set_flags(context, connected, CONTEXT_EVENT_NETWORK);
+    return ESP_OK;
+}
+
+esp_err_t context_set_network_error(context_t *context, bool error) {
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
+    context_set_flags(context, error, CONTEXT_EVENT_NETWORK_ERROR);
     return ESP_OK;
 }
 
 esp_err_t context_set_time_updated(context_t *context) {
     ARG_CHECK(context != NULL, ERR_PARAM_NULL);
-    context_set_single(context, context->network.time_updated, true, CONTEXT_EVENT_TIME);
+    xEventGroupSetBits(context->event_group, CONTEXT_EVENT_TIME);
     return ESP_OK;
 }
 
 esp_err_t context_set_iot_connected(context_t *context, bool connected) {
     ARG_CHECK(context != NULL, ERR_PARAM_NULL);
-    context_set_single(context, context->network.iot_connected, connected, CONTEXT_EVENT_IOT);
+    context_set_flags(context, connected, CONTEXT_EVENT_IOT);
     return ESP_OK;
 }
 
@@ -158,5 +174,33 @@ esp_err_t context_set_config(context_t *context, const char *device_id, const ch
     portEXIT_CRITICAL(&context->spinlock);
 
     if (bitsToSet) xEventGroupSetBits(context->event_group, bitsToSet);
+    return ESP_OK;
+}
+
+esp_err_t context_set_state_message(context_t *context, char *message) {
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
+
+    EventBits_t bitsToSet = 0U;
+    portENTER_CRITICAL(&context->spinlock);
+    if (context->status.state_message != NULL) {
+        free(context->status.state_message);
+    }
+    context_set(context->status.state_message, message, CONTEXT_EVENT_STATE);
+    portEXIT_CRITICAL(&context->spinlock);
+
+    if (bitsToSet) xEventGroupSetBits(context->event_group, bitsToSet);
+    return ESP_OK;
+}
+
+esp_err_t context_get_state_message(context_t *context, char **message) {
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
+    ARG_CHECK(message != NULL, ERR_PARAM_NULL);
+
+    portENTER_CRITICAL(&context->spinlock);
+    *message = context->status.state_message;
+    context->status.state_message = NULL;
+    xEventGroupClearBits(context->event_group, CONTEXT_EVENT_STATE);
+    portEXIT_CRITICAL(&context->spinlock);
+
     return ESP_OK;
 }

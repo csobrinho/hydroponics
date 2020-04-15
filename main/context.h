@@ -1,6 +1,7 @@
 #ifndef HYDROPONICS_CONTEXT_H
 #define HYDROPONICS_CONTEXT_H
 
+#include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include "freertos/portmacro.h"
 
@@ -29,6 +30,8 @@ typedef enum {
     CONTEXT_EVENT_TIME = BIT12,          /*!< Updated network time. */
     CONTEXT_EVENT_CONFIG = BIT13,        /*!< Updated config. */
     CONTEXT_EVENT_IOT = BIT14,           /*!< Updated iot state. */
+    CONTEXT_EVENT_STATE = BIT15,         /*!< Updated state state. */
+    CONTEXT_EVENT_NETWORK_ERROR = BIT16, /*!< Updated network error state. */
 } context_event_t;
 
 typedef struct {
@@ -86,10 +89,11 @@ typedef struct {
     } outputs;
 
     struct {
-        bool connected;
-        bool time_updated;
-        bool iot_connected;
     } network;
+
+    struct {
+        char *state_message;
+    } status;
 } context_t;
 
 context_t *context_create(void);
@@ -114,10 +118,16 @@ esp_err_t context_set_rotary_pressed(context_t *context, bool pressed);
 
 esp_err_t context_set_network_connected(context_t *context, bool connected);
 
+esp_err_t context_set_network_error(context_t *context, bool error);
+
 esp_err_t context_set_time_updated(context_t *context);
 
 esp_err_t context_set_iot_connected(context_t *context, bool connected);
 
 esp_err_t context_set_config(context_t *context, const char *device_id, const char *ssid, const char *password);
+
+esp_err_t context_set_state_message(context_t *context, char *message);
+
+esp_err_t context_get_state_message(context_t *context, char **message);
 
 #endif //HYDROPONICS_CONTEXT_H
