@@ -1,4 +1,10 @@
 set(exclude_srcs)
+set(extra_dirs)
+
+if (CONFIG_IDF_TARGET_ESP32)
+    # The LCD component doesn't support ESP32-S2 right now so disable it.
+    list(APPEND extra_dirs "display")
+endif ()
 
 if (CONFIG_ESP_SIMULATE_SENSORS)
     list(APPEND exclude_srcs
@@ -13,7 +19,12 @@ else ()
 endif ()
 
 idf_component_register(
-        SRC_DIRS "." "console" "display" "driver" "network" "sensors"
+        SRC_DIRS "${extra_dirs}" "." "console" "driver" "filter" "network" "sensors" "tasks"
         EXCLUDE_SRCS "${exclude_srcs}"
-        INCLUDE_DIRS "." "console" "display" "driver" "network" "sensors"
-        EMBED_FILES "certs/ec_private.pem" "embed/hydroponics_logo.bin")
+        INCLUDE_DIRS "${extra_dirs}" "." "console" "driver" "filter" "network" "sensors" "tasks"
+        EMBED_FILES "certs/ec_private.pem" "embed/hydroponics_logo.bin"
+        REQUIRES
+        # Internal components.
+        "bme280" "esp32-ds18b20" "esp32-owb" "esp32-rotary-encoder" "esp-google-iot" "u8g2"
+        # External components.
+        "config" "console" "json" "nvs_flash")
