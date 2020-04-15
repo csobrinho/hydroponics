@@ -2,8 +2,10 @@ set(exclude_srcs)
 set(extra_dirs)
 
 if (CONFIG_IDF_TARGET_ESP32)
-    # The LCD component doesn't support ESP32-S2 right now so disable it.
     list(APPEND extra_dirs "display")
+elseif (CONFIG_IDF_TARGET_ESP32S2)
+    # The ESP32-S2 doesn't currently support the lcd_common component so disable it.
+    list(APPEND exclude_srcs "driver/i2s_lcd8.c" "driver/i2s_lcd8.h")
 endif ()
 
 if (CONFIG_ESP_SIMULATE_SENSORS)
