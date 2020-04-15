@@ -25,7 +25,7 @@ esp_err_t storage_init(context_t *context) {
 }
 
 esp_err_t storage_get_string(const char *key, char **buf, size_t *length) {
-    size_t len;
+    size_t len = 0;
     esp_err_t err = nvs_get_str(handle, key, NULL, &len);
     switch (err) {
         case ESP_OK:
