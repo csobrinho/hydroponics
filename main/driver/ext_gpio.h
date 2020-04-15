@@ -3,7 +3,7 @@
 
 #include "driver/gpio.h"
 
-#define EXT_GPIO_ADDRESS 0x40
+#define EXT_GPIO_ADDRESS 0x20
 
 typedef enum {
     EXT_GPIO_A_0 = GPIO_NUM_0,

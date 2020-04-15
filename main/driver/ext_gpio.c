@@ -166,7 +166,7 @@ esp_err_t ext_gpio_config_intr(bool mirroring, bool openDrain, bool polarity) {
 }
 
 esp_err_t ext_gpio_set_intr_type(ext_gpio_num_t gpio_num, gpio_int_type_t intr_type) {
-    ARG_CHECK(intr_type == GPIO_INTR_ANYEDGE || intr_type == GPIO_INTR_NEGEDGE || intr_type == GPIO_INTR_POSEDGE,
+    ARG_CHECK(intr_type != GPIO_INTR_ANYEDGE && intr_type != GPIO_INTR_NEGEDGE && intr_type != GPIO_INTR_POSEDGE,
               "intr_type is invalid");
 
     uint8_t mask = PIN_MASK(gpio_num);
