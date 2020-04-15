@@ -15,9 +15,9 @@ static struct bme280_dev dev;
 
 static void humidity_pressure_publish(context_t *context, struct bme280_data *comp_data) {
 #ifdef BME280_FLOAT_ENABLE
-    float indoor = comp_data->temperature;
-    float pressure = comp_data->pressure;
-    float humidity = comp_data->humidity;
+    float indoor = (float) comp_data->temperature;
+    float pressure = (float) comp_data->pressure;
+    float humidity = (float) comp_data->humidity;
 #else
     float indoor = comp_data->temperature / 100.f;
     float pressure = comp_data->pressure / 100.f;
