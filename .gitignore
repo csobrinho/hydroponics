@@ -58,3 +58,4 @@ tmp/*
 sdkconfig
 sdkconfig.old
 main/certs/*private*
+firmware/*
