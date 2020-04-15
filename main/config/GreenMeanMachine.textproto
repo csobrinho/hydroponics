@@ -1,0 +1,46 @@
+# proto-file: main/config/config.proto
+# proto-message: hydroponics.Config
+sampling {
+  humidity: 1000
+  temperature: 1000
+  ec_probe: 1500
+  ec_probe_temp: 1000
+  ph_probe: 1500
+}
+controller: {
+  ec: {
+    target: 2000
+    min: 1900
+    max: 2100
+    pid: {
+      sampling: 20
+      p: 1.0
+      i: 0.0
+      d: 0.0
+    }
+  }
+  ph: {
+    target: 6.2
+    min: 6.1
+    max: 6.35
+    pid: {
+      sampling: 20
+      p: 1.0
+      i: 0.0
+      d: 0.0
+    }
+  }
+}
+task: {
+  name: "FooBar0"
+  output: "EXT_GPIO_A_0"
+  cron_on: "0 0 * * * *"
+  cron_off: "0 5 * * * *"
+}
+task: {
+  name: "FooBar1"
+  output: "EXT_GPIO_A_1"
+  output: "EXT_GPIO_A_2"
+  cron_on: "0 1 * * * *"
+  cron_off: "0 6 * * * *"
+}

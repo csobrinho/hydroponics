@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package hydroponics;
+
+message Sampling {
+  int32 humidity = 1;
+  int32 temperature = 2;
+  int32 ec_probe = 3;
+  int32 ec_probe_temp = 4;
+  int32 ph_probe = 5;
+}
+
+message Controller {
+  message Entry {
+    message Pid {
+      int32 sampling = 1;
+      float p = 2;
+      float i = 3;
+      float d = 4;
+    }
+
+    float target = 1;
+    float min = 2;
+    float max = 3;
+    Pid pid = 4;
+  }
+  Entry ec = 1;
+  Entry ph = 2;
+}
+
+message Task {
+  string name = 1;
+  repeated string output = 2;
+  repeated string cron_on = 3;
+  repeated string cron_off = 4;
+}
+
+message Config {
+  Sampling sampling = 1;
+  Controller controller = 2;
+  repeated Task task = 3;
+}
