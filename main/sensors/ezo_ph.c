@@ -53,7 +53,7 @@ static void ezo_ph_task(void *arg) {
 }
 
 esp_err_t ezo_ph_init(context_t *context) {
-    xTaskCreatePinnedToCore(ezo_ph_task, "ezo_ph", 3072, context, 10, NULL, tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(ezo_ph_task, "ezo_ph", 3072, context, tskIDLE_PRIORITY + 8, NULL, tskNO_AFFINITY);
     return ESP_OK;
 }
 

@@ -63,6 +63,6 @@ esp_err_t humidity_pressure_init(context_t *context) {
         ESP_LOGE(TAG, "error initializing BME280 err: %d", ret);
     }
 
-    xTaskCreatePinnedToCore(humidity_pressure_task, TAG, 2048, context, 20, NULL, tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(humidity_pressure_task, TAG, 2048, context, tskIDLE_PRIORITY + 10, NULL, tskNO_AFFINITY);
     return ESP_OK;
 }

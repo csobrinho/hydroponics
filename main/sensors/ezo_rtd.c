@@ -46,6 +46,6 @@ static void ezo_rtd_task(void *arg) {
 }
 
 esp_err_t ezo_rtd_init(context_t *context) {
-    xTaskCreatePinnedToCore(ezo_rtd_task, "ezo_rtd", 3072, context, 10, NULL, tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(ezo_rtd_task, "ezo_rtd", 3072, context, tskIDLE_PRIORITY + 9, NULL, tskNO_AFFINITY);
     return ESP_OK;
 }

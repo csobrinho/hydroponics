@@ -103,6 +103,6 @@ esp_err_t console_init(void) {
     }
 
     /* Main console loop. */
-    xTaskCreatePinnedToCore(console_task, "console", 3 * 1024, NULL, 15, NULL, tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(console_task, "console", 3 * 1024, NULL, configMAX_PRIORITIES - 5, NULL, tskNO_AFFINITY);
     return ESP_OK;
 }
