@@ -166,8 +166,8 @@ esp_err_t ext_gpio_config_intr(bool mirroring, bool openDrain, bool polarity) {
 }
 
 esp_err_t ext_gpio_set_intr_type(ext_gpio_num_t gpio_num, gpio_int_type_t intr_type) {
-    ARG_CHECK(intr_type != GPIO_INTR_ANYEDGE && intr_type != GPIO_INTR_NEGEDGE && intr_type != GPIO_INTR_POSEDGE,
-              "intr_type is invalid");
+    ARG_CHECK(intr_type == GPIO_INTR_DISABLE || intr_type == GPIO_INTR_ANYEDGE || intr_type == GPIO_INTR_NEGEDGE ||
+              intr_type == GPIO_INTR_POSEDGE, "intr_type is invalid");
 
     uint8_t mask = PIN_MASK(gpio_num);
 
@@ -254,26 +254,26 @@ esp_err_t ext_gpio_config(const gpio_config_t *config) {
         if (((config->pin_bit_mask >> io_num) & BIT(0))) {
             if (config->mode == GPIO_MODE_INPUT) {
                 input_en = 1;
-                ext_gpio_set_direction(io_num, config->mode);
+                ESP_ERROR_CHECK(ext_gpio_set_direction(io_num, config->mode));
             } else if (config->mode == GPIO_MODE_OUTPUT) {
                 output_en = 1;
-                ext_gpio_set_direction(io_num, config->mode);
+                ESP_ERROR_CHECK(ext_gpio_set_direction(io_num, config->mode));
             } else {
                 ESP_LOGE(TAG, "config->mode = %d is not supported", config->mode);
             }
             if (config->pull_up_en) {
                 pu_en = 1;
-                ext_gpio_set_pull_mode(io_num, GPIO_PULLUP_ONLY);
+                ESP_ERROR_CHECK(ext_gpio_set_pull_mode(io_num, GPIO_PULLUP_ONLY));
             } else {
-                ext_gpio_set_pull_mode(io_num, GPIO_FLOATING);
+                ESP_ERROR_CHECK(ext_gpio_set_pull_mode(io_num, GPIO_FLOATING));
             }
             if (config->pull_down_en) {
                 ESP_LOGE(TAG, "config->pull_down_en = %d is not supported", config->pull_down_en);
             }
 
-            ESP_LOGI(TAG, "EXT_GPIO[%d]| InputEn: %d| OutputEn: %d| Pullup: %d| Intr:%d ",
-                     io_num, input_en, output_en, pu_en, config->intr_type);
-            ext_gpio_set_intr_type(io_num, config->intr_type);
+            ESP_LOGI(TAG, "EXT_GPIO[%d]| InputEn: %d| OutputEn: %d| Pullup: %d| Intr:%d ", io_num, input_en, output_en,
+                     pu_en, config->intr_type);
+            ESP_ERROR_CHECK(ext_gpio_set_intr_type(io_num, config->intr_type));
         }
         io_num++;
     } while (io_num < GPIO_PIN_COUNT);

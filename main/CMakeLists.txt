@@ -3,6 +3,8 @@ set(extra_dirs)
 
 if (CONFIG_IDF_TARGET_ESP32)
     list(APPEND extra_dirs "display")
+    # The ESP32 prototype doesn't currently have a MCP23017 I2C expander so disable it.
+    list(APPEND exclude_srcs "driver/ext_gpio.c" "driver/ext_gpio.h")
 elseif (CONFIG_IDF_TARGET_ESP32S2)
     # The ESP32-S2 doesn't currently support the lcd_common component so disable it.
     list(APPEND exclude_srcs "driver/i2s_lcd8.c" "driver/i2s_lcd8.h")
