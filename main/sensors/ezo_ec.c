@@ -30,7 +30,7 @@ static void ezo_ec_task(void *arg) {
     ESP_ERROR_CHECK(ezo_init(&ec));
 
     float last_temp = 25.0f;
-    float value;
+    float value = 0.f;
     while (1) {
         if (ec.pause) {
             vTaskDelay(pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_EC_MS));

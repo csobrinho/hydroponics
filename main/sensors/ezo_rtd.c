@@ -29,7 +29,7 @@ static void ezo_rtd_task(void *arg) {
     ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
     ESP_ERROR_CHECK(ezo_init(&rtd));
 
-    float value;
+    float value = 0.f;
     while (1) {
         if (rtd.pause) {
             vTaskDelay(pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_RTD_MS));
