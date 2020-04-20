@@ -8,7 +8,6 @@
 #include "config.h"
 #include "context.h"
 #include "console/console.h"
-#include "driver/storage.h"
 #include "network/iot.h"
 #include "network/ntp.h"
 #include "network/wifi.h"
@@ -17,6 +16,7 @@
 #include "sensors/ezo_rtd.h"
 #include "sensors/humidity_pressure.h"
 #include "sensors/temperature.h"
+#include "storage.h"
 #include "tasks/monitor.h"
 
 #ifdef CONFIG_IDF_TARGET_ESP32

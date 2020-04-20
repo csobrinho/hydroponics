@@ -1,5 +1,3 @@
-#include "freertos/FreeRTOS.h"
-
 #include "esp_err.h"
 #include "nvs_flash.h"
 #include "nvs.h"
@@ -8,6 +6,7 @@
 #include "error.h"
 #include "storage.h"
 
+static const char *TAG = "storage";
 static nvs_handle_t handle;
 
 esp_err_t storage_init(context_t *context) {
@@ -25,6 +24,7 @@ esp_err_t storage_init(context_t *context) {
 }
 
 esp_err_t storage_get_string(const char *key, char **buf, size_t *length) {
+    ARG_CHECK(buf != NULL, ERR_PARAM_NULL);
     size_t len = 0;
     esp_err_t err = nvs_get_str(handle, key, NULL, &len);
     switch (err) {
@@ -46,5 +46,31 @@ esp_err_t storage_get_string(const char *key, char **buf, size_t *length) {
 
 esp_err_t storage_set_string(const char *key, char *buf) {
     esp_err_t err = nvs_set_str(handle, key, buf);
+    return err == ESP_OK ? nvs_commit(handle) : err;
+}
+
+esp_err_t storage_get_blob(const char *key, uint8_t **buf, size_t *length) {
+    ARG_CHECK(buf != NULL, ERR_PARAM_NULL);
+    size_t len = 0;
+    esp_err_t err = nvs_get_blob(handle, key, NULL, &len);
+    switch (err) {
+        case ESP_OK:
+            *buf = malloc(len);
+            if (*buf == NULL) {
+                return ESP_ERR_NO_MEM;
+            }
+            if (length != NULL) {
+                *length = len;
+            }
+            return nvs_get_blob(handle, key, *buf, &len);
+        case ESP_ERR_NVS_NOT_FOUND:
+            return ESP_OK;
+        default:
+            return err;
+    }
+}
+
+esp_err_t storage_set_blob(const char *key, uint8_t *buf, size_t length) {
+    esp_err_t err = nvs_set_blob(handle, key, buf, length);
     return err == ESP_OK ? nvs_commit(handle) : err;
 }
