@@ -16,6 +16,7 @@
 #include "context.h"
 #include "error.h"
 #include "mqtt.h"
+#include "utils.h"
 
 #define DEVICE_PATH "projects/%s/locations/%s/registries/%s/devices/%s"
 #define SUBSCRIBE_TOPIC_COMMAND "/devices/%s/commands/#"
@@ -91,8 +92,7 @@ static void mqtt_publish_telemetry_event(iotc_context_handle_t context_handle, i
         ESP_LOGI(TAG, "Publishing topic: '%s' with message:\n%*s", publish_topic_event, size, msg);
         iotc_publish_data(context_handle, publish_topic_event, msg, size, mqtt_qos, /* callback= */ NULL,
                 /* user_data= */ NULL);
-        free(msg);
-        msg = NULL;
+        SAFE_FREE(msg);
     }
 
     /* Now try to publish the state if available. */
@@ -101,8 +101,7 @@ static void mqtt_publish_telemetry_event(iotc_context_handle_t context_handle, i
         ESP_LOGI(TAG, "Publishing topic: '%s' with message:\n%*s", publish_topic_state, size, msg);
         iotc_publish_data(context_handle, publish_topic_state, msg, size, mqtt_qos, /* callback= */ NULL,
                 /* user_data= */ NULL);
-        free(msg);
-        msg = NULL;
+        SAFE_FREE(msg);
     }
 }
 
@@ -282,7 +281,7 @@ static void mqtt_task(void *args) {
             ESP_LOGE(TAG, "iotc_connect returned error: %d", err);
             ESP_ERROR_CHECK(ESP_ERR_INVALID_STATE);
         }
-        free(device_path);
+        SAFE_FREE(device_path);
 
         /* The IoTC Client was designed to be able to run on single threaded devices. As such it does not have its own
          * event loop thread. Instead you must regularly call the function iotc_events_process_blocking() to process

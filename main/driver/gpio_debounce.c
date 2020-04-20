@@ -7,6 +7,7 @@
 
 #include "error.h"
 #include "gpio_debounce.h"
+#include "utils.h"
 
 #define ALL_OFF        0b00000000u
 #define ALL_ON         0b11111111u
@@ -165,9 +166,7 @@ esp_err_t gpio_debounce_deregister(gpio_num_t gpio) {
         if (config.gpios[i] == NULL || config.gpios[i]->gpio != gpio) {
             continue;
         }
-        free(config.gpios[i]);
-        config.gpios[i] = NULL;
-
+        SAFE_FREE(config.gpios[i]);
         portEXIT_CRITICAL(&config_spinlock);
         return ESP_OK;
     }

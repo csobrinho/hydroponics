@@ -4,6 +4,7 @@
 
 #include "error.h"
 #include "moving_average.h"
+#include "utils.h"
 
 static const char *TAG = "moving_average";
 
@@ -15,7 +16,7 @@ moving_average_t *moving_average_create(uint16_t len, float initial) {
     ma->values_len = len;
     ma->values = calloc(len, sizeof(float));
     if (ma->values == NULL) {
-        free(ma);
+        SAFE_FREE(ma);
         return NULL;
     }
     ma->position = 0;
@@ -54,8 +55,7 @@ void moving_average_reset(moving_average_t *ma) {
 
 esp_err_t moving_average_destroy(moving_average_t *ma) {
     ARG_CHECK(ma != NULL, ERR_PARAM_NULL);
-    free(ma->values);
-    ma->values = NULL;
-    free(ma);
+    SAFE_FREE(ma->values);
+    SAFE_FREE(ma);
     return ESP_OK;
 }

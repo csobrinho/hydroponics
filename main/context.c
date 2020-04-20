@@ -4,6 +4,7 @@
 
 #include "context.h"
 #include "error.h"
+#include "utils.h"
 
 #define context_set(p, v, f) do {                    \
       if ((p) != (v)) {                              \
@@ -183,7 +184,7 @@ esp_err_t context_set_state_message(context_t *context, char *message) {
     EventBits_t bitsToSet = 0U;
     portENTER_CRITICAL(&context->spinlock);
     if (context->status.state_message != NULL) {
-        free(context->status.state_message);
+        SAFE_FREE(context->status.state_message);
     }
     context_set(context->status.state_message, message, CONTEXT_EVENT_STATE);
     portEXIT_CRITICAL(&context->spinlock);

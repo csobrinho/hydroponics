@@ -9,6 +9,7 @@
 
 #include "error.h"
 #include "monitor.h"
+#include "utils.h"
 
 #define MONITOR_SAMPLING       60 * 1000     // One a minute
 #define MONITOR_STATE_SAMPLING 60 * 1000 * 2 // Every two minutes.
@@ -155,7 +156,7 @@ static void monitor_dump(context_t *context) {
             next_state_sampling = now + pdMS_TO_TICKS(MONITOR_STATE_SAMPLING);
         }
     }
-    free(pxTaskStatusArray);
+    SAFE_FREE(pxTaskStatusArray);
 }
 
 static void monitor_task(void *arg) {

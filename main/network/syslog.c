@@ -10,6 +10,7 @@
 #include "context.h"
 #include "error.h"
 #include "syslog.h"
+#include "utils.h"
 
 #define SYSLOG_NILVALUE "-"
 
@@ -69,9 +70,8 @@ static esp_err_t syslog_send(syslog_entry_t *msg) {
 }
 
 static inline void syslog_free(syslog_entry_t *msg) {
-    if (msg != NULL && msg->msg != NULL) {
-        free((void *) msg->msg);
-        msg->msg = NULL;
+    if (msg != NULL) {
+        SAFE_FREE(msg->msg);
     }
 }
 
