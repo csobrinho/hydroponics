@@ -13,7 +13,7 @@
 #include "cmd_ezo.h"
 
 /* Prompt to be printed before each line. */
-const char *prompt = "hydroponics> ";
+const char *prompt = CONFIG_LWIP_LOCAL_HOSTNAME "> ";
 
 static void console_task(void *arg) {
     vTaskDelay(pdMS_TO_TICKS(1000));
@@ -27,7 +27,7 @@ static void console_task(void *arg) {
         linenoiseHistoryAdd(line);
 
         /* Try to run the command */
-        int ret;
+        int ret = ESP_OK;
         esp_err_t err = esp_console_run(line, &ret);
         if (err == ESP_ERR_NOT_FOUND) {
             printf("Unrecognized command\n");
@@ -65,7 +65,7 @@ esp_err_t console_init(void) {
             .data_bits = UART_DATA_8_BITS,
             .parity = UART_PARITY_DISABLE,
             .stop_bits = UART_STOP_BITS_1,
-            .use_ref_tick = true,
+            .source_clk = UART_SCLK_APB,
     };
     /* Install UART driver for interrupt-driven reads and writes */
     ESP_ERROR_CHECK(uart_param_config(CONFIG_ESP_CONSOLE_UART_NUM, &uart_config));
