@@ -14,6 +14,8 @@
 #define CONFIG_KEY_PROTO     "proto"
 
 static const char *TAG = "config";
+#define OUTPUT_BY_VALUE hydroponics__task__output__descriptor.values
+#define OUTPUT_MAX hydroponics__task__output__descriptor.n_values
 
 static esp_err_t config_load_proto(void) {
     char *proto = NULL;
@@ -25,7 +27,7 @@ static esp_err_t config_load_proto(void) {
         }
         return ESP_OK;
     }
-    Hydroponics__Config *config;
+    Hydroponics__Config *config = NULL;
     ESP_ERROR_CHECK(config_parse((uint8_t *) proto, proto_len, &config));
     free(proto);
     ESP_ERROR_CHECK(config_dump(config));
@@ -61,6 +63,7 @@ esp_err_t config_dump(const Hydroponics__Config *config) {
         ESP_LOGE(TAG, "Stream == NULL");
         return ESP_FAIL;
     }
+    fprintf(stream, "\n");
     fprintf(stream, "Sampling:\n");
     if (config->sampling != NULL) {
         fprintf(stream, "  humidity:      %d ms\n", config->sampling->humidity);
@@ -74,8 +77,14 @@ esp_err_t config_dump(const Hydroponics__Config *config) {
     if (config->controller != NULL) {
         fprintf(stream, "Controller EC:\n");
         if (config->controller->ec != NULL) {
-            fprintf(stream, "  target: %.f  [%.f, %.f]\n", config->controller->ec->target, config->controller->ec->min,
+            fprintf(stream, "  target: %.0f  [%.0f, %.0f]\n", config->controller->ec->target,
+                    config->controller->ec->min,
                     config->controller->ec->max);
+            if (config->controller->ec->pid != NULL) {
+                fprintf(stream, "  PID sampling: %d ms\n", config->controller->ec->pid->sampling);
+                fprintf(stream, "  PID p: %.2f   i: %.2f   d: %.2f\n", config->controller->ec->pid->p,
+                        config->controller->ec->pid->i, config->controller->ec->pid->d);
+            }
         } else {
             fprintf(stream, "  none\n");
         }
@@ -84,6 +93,11 @@ esp_err_t config_dump(const Hydroponics__Config *config) {
             fprintf(stream, "  target: %.2f  [%.2f, %.2f]\n", config->controller->ph->target,
                     config->controller->ph->min,
                     config->controller->ph->max);
+            if (config->controller->ph->pid != NULL) {
+                fprintf(stream, "  PID sampling: %d ms\n", config->controller->ph->pid->sampling);
+                fprintf(stream, "  PID p: %.2f   i: %.2f   d: %.2f\n", config->controller->ph->pid->p,
+                        config->controller->ph->pid->i, config->controller->ph->pid->d);
+            }
         } else {
             fprintf(stream, "  none\n");
         }
@@ -93,7 +107,8 @@ esp_err_t config_dump(const Hydroponics__Config *config) {
         for (int i = 0; i < config->n_task; ++i) {
             fprintf(stream, "  [%*d] name: %s\n", config->n_task >= 10 ? 2 : 1, i, config->task[i]->name);
             for (int j = 0; j < config->task[i]->n_output; ++j) {
-                fprintf(stream, "      output: %s\n", config->task[i]->output[j]);
+                Hydroponics__Task__Output output = config->task[i]->output[j];
+                fprintf(stream, "      output: %s\n", output < OUTPUT_MAX ? OUTPUT_BY_VALUE[output].name : "???");
             }
             for (int j = 0; j < config->task[i]->n_cron_on; ++j) {
                 fprintf(stream, "      cron on: %s\n", config->task[i]->cron_on[j]);

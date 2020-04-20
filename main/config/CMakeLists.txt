@@ -1,5 +1,10 @@
 # To re-generate the files:
+# $ brew install protobuf-c
 # $ cmake --build build --target config_pb config_textpb
+#
+# To upload the GreenMeanMachine.pb:
+# $ gcloud iot devices configs update --config-file=main/config/GreenMeanMachine.pb --registry=registry --region=us-central1 --device=GreenMeanMachine-test
+# $ gcloud iot devices configs update --config-file=main/config/GreenMeanMachine.pb --registry=registry --region=us-central1 --device=GreenMeanMachine
 
 idf_component_register(SRC_DIRS "." INCLUDE_DIRS "." REQUIRES "protobuf-c")
 
