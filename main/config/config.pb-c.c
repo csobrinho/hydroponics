@@ -109,6 +109,12 @@ void   hydroponics__controller__free_unpacked
   assert(message->base.descriptor == &hydroponics__controller__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+void   hydroponics__task__cron__init
+                     (Hydroponics__Task__Cron         *message)
+{
+  static const Hydroponics__Task__Cron init_value = HYDROPONICS__TASK__CRON__INIT;
+  *message = init_value;
+}
 void   hydroponics__task__init
                      (Hydroponics__Task         *message)
 {
@@ -494,6 +500,57 @@ const ProtobufCMessageDescriptor hydroponics__controller__descriptor =
   (ProtobufCMessageInit) hydroponics__controller__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
+static const ProtobufCFieldDescriptor hydroponics__task__cron__field_descriptors[2] =
+{
+  {
+    "action",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_ENUM,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__Task__Cron, action),
+    &hydroponics__task__output_action__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "expression",
+    2,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_STRING,
+    offsetof(Hydroponics__Task__Cron, n_expression),
+    offsetof(Hydroponics__Task__Cron, expression),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned hydroponics__task__cron__field_indices_by_name[] = {
+  0,   /* field[0] = action */
+  1,   /* field[1] = expression */
+};
+static const ProtobufCIntRange hydroponics__task__cron__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 2 }
+};
+const ProtobufCMessageDescriptor hydroponics__task__cron__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "hydroponics.Task.Cron",
+  "Cron",
+  "Hydroponics__Task__Cron",
+  "hydroponics",
+  sizeof(Hydroponics__Task__Cron),
+  2,
+  hydroponics__task__cron__field_descriptors,
+  hydroponics__task__cron__field_indices_by_name,
+  1,  hydroponics__task__cron__number_ranges,
+  (ProtobufCMessageInit) hydroponics__task__cron__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
 static const ProtobufCEnumValue hydroponics__task__output__enum_values_by_number[16] =
 {
   { "EXT_GPIO_A_0", "HYDROPONICS__TASK__OUTPUT__EXT_GPIO_A_0", 0 },
@@ -550,7 +607,35 @@ const ProtobufCEnumDescriptor hydroponics__task__output__descriptor =
   hydroponics__task__output__value_ranges,
   NULL,NULL,NULL,NULL   /* reserved[1234] */
 };
-static const ProtobufCFieldDescriptor hydroponics__task__field_descriptors[4] =
+static const ProtobufCEnumValue hydroponics__task__output_action__enum_values_by_number[2] =
+{
+  { "OFF", "HYDROPONICS__TASK__OUTPUT_ACTION__OFF", 0 },
+  { "ON", "HYDROPONICS__TASK__OUTPUT_ACTION__ON", 1 },
+};
+static const ProtobufCIntRange hydroponics__task__output_action__value_ranges[] = {
+{0, 0},{0, 2}
+};
+static const ProtobufCEnumValueIndex hydroponics__task__output_action__enum_values_by_name[2] =
+{
+  { "OFF", 0 },
+  { "ON", 1 },
+};
+const ProtobufCEnumDescriptor hydroponics__task__output_action__descriptor =
+{
+  PROTOBUF_C__ENUM_DESCRIPTOR_MAGIC,
+  "hydroponics.Task.OutputAction",
+  "OutputAction",
+  "Hydroponics__Task__OutputAction",
+  "hydroponics",
+  2,
+  hydroponics__task__output_action__enum_values_by_number,
+  2,
+  hydroponics__task__output_action__enum_values_by_name,
+  1,
+  hydroponics__task__output_action__value_ranges,
+  NULL,NULL,NULL,NULL   /* reserved[1234] */
+};
+static const ProtobufCFieldDescriptor hydroponics__task__field_descriptors[3] =
 {
   {
     "name",
@@ -577,40 +662,27 @@ static const ProtobufCFieldDescriptor hydroponics__task__field_descriptors[4] =
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "cron_on",
+    "cron",
     3,
     PROTOBUF_C_LABEL_REPEATED,
-    PROTOBUF_C_TYPE_STRING,
-    offsetof(Hydroponics__Task, n_cron_on),
-    offsetof(Hydroponics__Task, cron_on),
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(Hydroponics__Task, n_cron),
+    offsetof(Hydroponics__Task, cron),
+    &hydroponics__task__cron__descriptor,
     NULL,
-    &protobuf_c_empty_string,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "cron_off",
-    4,
-    PROTOBUF_C_LABEL_REPEATED,
-    PROTOBUF_C_TYPE_STRING,
-    offsetof(Hydroponics__Task, n_cron_off),
-    offsetof(Hydroponics__Task, cron_off),
-    NULL,
-    &protobuf_c_empty_string,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
 };
 static const unsigned hydroponics__task__field_indices_by_name[] = {
-  3,   /* field[3] = cron_off */
-  2,   /* field[2] = cron_on */
+  2,   /* field[2] = cron */
   0,   /* field[0] = name */
   1,   /* field[1] = output */
 };
 static const ProtobufCIntRange hydroponics__task__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 4 }
+  { 0, 3 }
 };
 const ProtobufCMessageDescriptor hydroponics__task__descriptor =
 {
@@ -620,7 +692,7 @@ const ProtobufCMessageDescriptor hydroponics__task__descriptor =
   "Hydroponics__Task",
   "hydroponics",
   sizeof(Hydroponics__Task),
-  4,
+  3,
   hydroponics__task__field_descriptors,
   hydroponics__task__field_indices_by_name,
   1,  hydroponics__task__number_ranges,

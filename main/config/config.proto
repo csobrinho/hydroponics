@@ -48,10 +48,19 @@ message Task {
     EXT_GPIO_B_7 = 15;
   };
 
+  enum OutputAction {
+    OFF = 0;
+    ON = 1;
+  }
+
+  message Cron {
+    OutputAction action = 1;
+    repeated string expression = 2;
+  }
+
   string name = 1;
   repeated Output output = 2;
-  repeated string cron_on = 3;
-  repeated string cron_off = 4;
+  repeated Cron cron = 3;
 }
 
 message Config {

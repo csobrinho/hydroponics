@@ -34,13 +34,25 @@ controller: {
 task: {
   name: "FooBar0"
   output: EXT_GPIO_A_0
-  cron_on: "0 0 * * * *"
-  cron_off: "0 5 * * * *"
+  cron: {
+    action: ON,
+    expression: "0 0 * * * *"
+  }
+  cron: {
+    action: OFF,
+    expression: "0 5 * * * *"
+  }
 }
 task: {
-  name: "FooBar1"
+  name: "FooBar0"
   output: EXT_GPIO_A_1
   output: EXT_GPIO_A_2
-  cron_on: "0 1 * * * *"
-  cron_off: "0 6 * * * *"
+  cron: {
+    action: ON,
+    expression: "0 1 * * * *"
+  }
+  cron: {
+    action: OFF,
+    expression: "0 6 * * * *"
+  }
 }

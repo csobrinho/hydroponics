@@ -20,6 +20,7 @@ typedef struct _Hydroponics__Controller Hydroponics__Controller;
 typedef struct _Hydroponics__Controller__Entry Hydroponics__Controller__Entry;
 typedef struct _Hydroponics__Controller__Entry__Pid Hydroponics__Controller__Entry__Pid;
 typedef struct _Hydroponics__Task Hydroponics__Task;
+typedef struct _Hydroponics__Task__Cron Hydroponics__Task__Cron;
 typedef struct _Hydroponics__Config Hydroponics__Config;
 
 
@@ -44,6 +45,11 @@ typedef enum _Hydroponics__Task__Output {
   HYDROPONICS__TASK__OUTPUT__EXT_GPIO_B_7 = 15
     PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(HYDROPONICS__TASK__OUTPUT)
 } Hydroponics__Task__Output;
+typedef enum _Hydroponics__Task__OutputAction {
+  HYDROPONICS__TASK__OUTPUT_ACTION__OFF = 0,
+  HYDROPONICS__TASK__OUTPUT_ACTION__ON = 1
+    PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(HYDROPONICS__TASK__OUTPUT_ACTION)
+} Hydroponics__Task__OutputAction;
 
 /* --- messages --- */
 
@@ -98,20 +104,30 @@ struct  _Hydroponics__Controller
     , NULL, NULL }
 
 
+struct  _Hydroponics__Task__Cron
+{
+  ProtobufCMessage base;
+  Hydroponics__Task__OutputAction action;
+  size_t n_expression;
+  char **expression;
+};
+#define HYDROPONICS__TASK__CRON__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&hydroponics__task__cron__descriptor) \
+    , HYDROPONICS__TASK__OUTPUT_ACTION__OFF, 0,NULL }
+
+
 struct  _Hydroponics__Task
 {
   ProtobufCMessage base;
   char *name;
   size_t n_output;
   Hydroponics__Task__Output *output;
-  size_t n_cron_on;
-  char **cron_on;
-  size_t n_cron_off;
-  char **cron_off;
+  size_t n_cron;
+  Hydroponics__Task__Cron **cron;
 };
 #define HYDROPONICS__TASK__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&hydroponics__task__descriptor) \
-    , (char *)protobuf_c_empty_string, 0,NULL, 0,NULL, 0,NULL }
+    , (char *)protobuf_c_empty_string, 0,NULL, 0,NULL }
 
 
 struct  _Hydroponics__Config
@@ -171,6 +187,9 @@ Hydroponics__Controller *
 void   hydroponics__controller__free_unpacked
                      (Hydroponics__Controller *message,
                       ProtobufCAllocator *allocator);
+/* Hydroponics__Task__Cron methods */
+void   hydroponics__task__cron__init
+                     (Hydroponics__Task__Cron         *message);
 /* Hydroponics__Task methods */
 void   hydroponics__task__init
                      (Hydroponics__Task         *message);
@@ -223,6 +242,9 @@ typedef void (*Hydroponics__Controller__Entry_Closure)
 typedef void (*Hydroponics__Controller_Closure)
                  (const Hydroponics__Controller *message,
                   void *closure_data);
+typedef void (*Hydroponics__Task__Cron_Closure)
+                 (const Hydroponics__Task__Cron *message,
+                  void *closure_data);
 typedef void (*Hydroponics__Task_Closure)
                  (const Hydroponics__Task *message,
                   void *closure_data);
@@ -240,7 +262,9 @@ extern const ProtobufCMessageDescriptor hydroponics__controller__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__controller__entry__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__controller__entry__pid__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__task__descriptor;
+extern const ProtobufCMessageDescriptor hydroponics__task__cron__descriptor;
 extern const ProtobufCEnumDescriptor    hydroponics__task__output__descriptor;
+extern const ProtobufCEnumDescriptor    hydroponics__task__output_action__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__config__descriptor;
 
 PROTOBUF_C__END_DECLS
