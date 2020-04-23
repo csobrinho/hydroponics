@@ -22,7 +22,7 @@
 	path = components/esp-google-iot
 	url = https://github.com/csobrinho/esp-google-iot
 	update = merge
-[submodule "components/esp-cron"]
-	path = components/esp-cron
-	url = https://github.com/DavidMora/esp_cron
+[submodule "components/esp-ccronexpr"]
+	path = components/esp-ccronexpr
+	url = git@github.com:csobrinho/esp-ccronexpr.git
 	update = merge
