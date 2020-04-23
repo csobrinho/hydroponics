@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "esp_err.h"
 #include "esp_log.h"
@@ -7,55 +8,78 @@
 #include "context.h"
 #include "error.h"
 #include "storage.h"
+#include "utils.h"
 
-#define CONFIG_KEY_DEVICE_ID "device_id"
-#define CONFIG_KEY_SSID      "ssid"
-#define CONFIG_KEY_PASSWORD  "password"
-#define CONFIG_KEY_PROTO     "proto"
+#define CONFIG_KEY_DEVICE_ID  "device_id"
+#define CONFIG_KEY_SSID       "wifi_ssid"
+#define CONFIG_KEY_PASSWORD   "wifi_password"
+#define CONFIG_KEY_IOT_CONFIG "iot_config"
 
 static const char *TAG = "config";
 #define OUTPUT_BY_VALUE hydroponics__task__output__descriptor.values
 #define OUTPUT_MAX hydroponics__task__output__descriptor.n_values
+#define OUTPUT_ACTION_BY_VALUE hydroponics__task__output_action__descriptor.values
+#define OUTPUT_ACTION_MAX hydroponics__task__output_action__descriptor.n_values
 
-static esp_err_t config_load_proto(void) {
-    char *proto = NULL;
-    size_t proto_len = 0;
-    ESP_ERROR_CHECK(storage_get_string(CONFIG_KEY_PROTO, &proto, &proto_len));
-    if (proto_len <= 0 || proto == NULL) {
-        if (proto != NULL) {
-            free(proto);
-        }
+static esp_err_t config_load_from_storage(context_t *context) {
+    uint8_t *data = NULL;
+    size_t size = 0;
+    ESP_ERROR_CHECK(storage_get_blob(CONFIG_KEY_IOT_CONFIG, &data, &size));
+    if (size <= 0 || data == NULL) {
+        SAFE_FREE(data);
         return ESP_OK;
     }
-    Hydroponics__Config *config = NULL;
-    ESP_ERROR_CHECK(config_parse((uint8_t *) proto, proto_len, &config));
-    free(proto);
-    ESP_ERROR_CHECK(config_dump(config));
-    ESP_ERROR_CHECK(config_free(config));
+    ESP_ERROR_CHECK(config_update(context, data, size));
+    SAFE_FREE(data);
     return ESP_OK;
 }
 
-esp_err_t config_parse(const uint8_t *data, size_t size, Hydroponics__Config **config) {
-    ARG_CHECK(data != NULL, ERR_PARAM_NULL);
-    ARG_CHECK(config != NULL, ERR_PARAM_NULL);
-    ARG_CHECK(size > 0, ERR_PARAM_LE_ZERO);
-    *config = hydroponics__config__unpack(NULL, size, data);
-    if (*config == NULL) {
-        ESP_LOGE(TAG, "Failed to parse the config proto.");
-        return ESP_FAIL;
+static esp_err_t config_save_to_storage(const uint8_t *data, size_t size, bool *updated) {
+    if (data == NULL || size == 0) {
+        ESP_LOGI(TAG, "Config was deleted.");
+        *updated = true;
+        ESP_ERROR_CHECK(storage_delete(CONFIG_KEY_IOT_CONFIG));
+        return ESP_OK;
     }
+    uint8_t *current = NULL;
+    size_t current_size = 0;
+    ESP_ERROR_CHECK(storage_get_blob(CONFIG_KEY_IOT_CONFIG, &current, &current_size));
+    if (current_size == size && memcmp(data, current, size) == 0) {
+        // Same config, nothing to do.
+        *updated = false;
+        return ESP_OK;
+    }
+    ESP_ERROR_CHECK(storage_set_blob(CONFIG_KEY_IOT_CONFIG, data, size));
+    *updated = true;
     return ESP_OK;
 }
 
-esp_err_t config_free(Hydroponics__Config *config) {
-    ARG_CHECK(config != NULL, ERR_PARAM_NULL);
-    hydroponics__config__free_unpacked(config, NULL);
+esp_err_t config_update(context_t *context, const uint8_t *data, size_t size) {
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
+
+    bool updated = false;
+    ESP_ERROR_CHECK(config_save_to_storage(data, size, &updated));
+    if (data == NULL || size <= 0) {
+        ESP_ERROR_CHECK(context_set_config(context, NULL));
+        return ESP_OK;
+    }
+    if (updated || context->config.config == NULL) {
+        Hydroponics__Config *config = hydroponics__config__unpack(NULL, size, data);
+        ESP_ERROR_CHECK(context_set_config(context, config));
+        if (config == NULL) {
+            ESP_LOGE(TAG, "Failed to parse the config proto.");
+            return ESP_FAIL;
+        }
+        ESP_ERROR_CHECK(config_dump(config));
+    }
+
     return ESP_OK;
 }
 
 esp_err_t config_dump(const Hydroponics__Config *config) {
-    ARG_CHECK(config != NULL, ERR_PARAM_NULL);
-
+    if (config == NULL) {
+        return ESP_OK;
+    }
     char *buf = NULL;
     size_t len = 0;
     FILE *stream = open_memstream(&buf, &len);
@@ -110,11 +134,14 @@ esp_err_t config_dump(const Hydroponics__Config *config) {
                 Hydroponics__Task__Output output = config->task[i]->output[j];
                 fprintf(stream, "      output: %s\n", output < OUTPUT_MAX ? OUTPUT_BY_VALUE[output].name : "???");
             }
-            for (int j = 0; j < config->task[i]->n_cron_on; ++j) {
-                fprintf(stream, "      cron on: %s\n", config->task[i]->cron_on[j]);
-            }
-            for (int j = 0; j < config->task[i]->n_cron_off; ++j) {
-                fprintf(stream, "      cron off: %s\n", config->task[i]->cron_off[j]);
+            for (int j = 0; j < config->task[i]->n_cron; ++j) {
+                Hydroponics__Task__Cron *cron = config->task[i]->cron[j];
+                Hydroponics__Task__OutputAction action = cron->action;
+                for (int k = 0; k < cron->n_expression; ++k) {
+                    fprintf(stream, "      cron %s: %s\n",
+                            action < OUTPUT_ACTION_MAX ? OUTPUT_ACTION_BY_VALUE[action].name : "???",
+                            cron->expression[k]);
+                }
             }
         }
     } else {
@@ -122,7 +149,7 @@ esp_err_t config_dump(const Hydroponics__Config *config) {
     }
     fclose(stream);
     ESP_LOGI(TAG, "%*s", len, buf);
-    free(buf);
+    SAFE_FREE(buf);
     return ESP_OK;
 }
 
@@ -133,10 +160,11 @@ esp_err_t config_init(context_t *context) {
     ESP_ERROR_CHECK(storage_get_string(CONFIG_KEY_DEVICE_ID, &device_id, NULL));
     ESP_ERROR_CHECK(storage_get_string(CONFIG_KEY_SSID, &ssid, NULL));
     ESP_ERROR_CHECK(storage_get_string(CONFIG_KEY_PASSWORD, &password, NULL));
-    ESP_ERROR_CHECK(config_load_proto());
-    ESP_ERROR_CHECK(context_set_config(context, device_id, ssid, password));
+    ESP_ERROR_CHECK(context_set_base_config(context, device_id, ssid, password));
+    ESP_ERROR_CHECK(config_load_from_storage(context));
     ESP_LOGI(TAG, "Config loaded");
     ESP_LOGI(TAG, "  device_id: %s", device_id);
     ESP_LOGI(TAG, "  ssid:      %s", ssid);
+    ESP_ERROR_CHECK(config_dump(context->config.config));
     return ESP_OK;
 }

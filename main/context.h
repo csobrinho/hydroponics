@@ -7,6 +7,7 @@
 
 #include "esp_bit_defs.h"
 
+#include "config/config.pb-c.h"
 #include "rotary_encoder.h"
 
 #define CONTEXT_UNKNOWN_VALUE INT16_MIN
@@ -28,10 +29,11 @@ typedef enum {
     CONTEXT_EVENT_PUMP_MAIN = BIT10,     /*!< Updated main pump state. */
     CONTEXT_EVENT_NETWORK = BIT11,       /*!< Updated network state. */
     CONTEXT_EVENT_TIME = BIT12,          /*!< Updated network time. */
-    CONTEXT_EVENT_CONFIG = BIT13,        /*!< Updated config. */
-    CONTEXT_EVENT_IOT = BIT14,           /*!< Updated iot state. */
-    CONTEXT_EVENT_STATE = BIT15,         /*!< Updated state state. */
-    CONTEXT_EVENT_NETWORK_ERROR = BIT16, /*!< Updated network error state. */
+    CONTEXT_EVENT_BASE_CONFIG = BIT13,   /*!< Updated base config. */
+    CONTEXT_EVENT_CONFIG = BIT14,        /*!< Updated config. */
+    CONTEXT_EVENT_IOT = BIT15,           /*!< Updated iot state. */
+    CONTEXT_EVENT_STATE = BIT16,         /*!< Updated state state. */
+    CONTEXT_EVENT_NETWORK_ERROR = BIT17, /*!< Updated network error state. */
 } context_event_t;
 
 typedef struct {
@@ -44,6 +46,8 @@ typedef struct {
         const char *password;
         const char *syslog_hostname;
         uint16_t syslog_port;
+        const Hydroponics__Config *config;
+        uint32_t config_version;
     } config;
 
     struct {
@@ -98,6 +102,10 @@ typedef struct {
 
 context_t *context_create(void);
 
+void context_lock(context_t *context);
+
+void context_unlock(context_t *context);
+
 esp_err_t context_set_temp_indoor_humidity_pressure(context_t *context, float temp, float humidity, float pressure);
 
 esp_err_t context_set_temp_water(context_t *context, float temp);
@@ -124,7 +132,9 @@ esp_err_t context_set_time_updated(context_t *context);
 
 esp_err_t context_set_iot_connected(context_t *context, bool connected);
 
-esp_err_t context_set_config(context_t *context, const char *device_id, const char *ssid, const char *password);
+esp_err_t context_set_base_config(context_t *context, const char *device_id, const char *ssid, const char *password);
+
+esp_err_t context_set_config(context_t *context, const Hydroponics__Config *config);
 
 esp_err_t context_set_state_message(context_t *context, char *message);
 

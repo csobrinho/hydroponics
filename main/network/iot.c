@@ -14,19 +14,6 @@
 
 static const char *TAG = "iot";
 
-static esp_err_t iot_handle_config(context_t *context, const uint8_t *config, size_t size) {
-    ARG_UNUSED(context);
-    ARG_UNUSED(config);
-    if (size <= 0) {
-        return ESP_OK;
-    }
-    Hydroponics__Config *pbcfg;
-    ESP_ERROR_CHECK(config_parse(config, size, &pbcfg));
-    ESP_ERROR_CHECK(config_dump(pbcfg));
-    ESP_ERROR_CHECK(config_free(pbcfg));
-    return ESP_OK;
-}
-
 static esp_err_t iot_handle_command(context_t *context, const uint8_t *command, size_t size) {
     ARG_UNUSED(context);
     ARG_UNUSED(command);
@@ -64,7 +51,7 @@ static esp_err_t iot_handle_publish_state(context_t *context, uint8_t **data, si
     ARG_CHECK(size != NULL, ERR_PARAM_NULL);
 
     *size = 0;
-    char *msg;
+    char *msg = NULL;
     ESP_ERROR_CHECK(context_get_state_message(context, &msg));
     if (msg != NULL) {
         *data = (uint8_t *) msg;
@@ -74,7 +61,7 @@ static esp_err_t iot_handle_publish_state(context_t *context, uint8_t **data, si
 }
 
 static mqtt_config_t config = {
-        .handle_config = iot_handle_config,
+        .handle_config = config_update,
         .handle_command = iot_handle_command,
         .handle_publish_telemetry = iot_handle_publish_telemetry,
         .handle_publish_state = iot_handle_publish_state,
