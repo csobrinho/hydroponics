@@ -6,7 +6,7 @@
 #define SAFE_FREE(f) do {    \
         if ((f) != NULL) {   \
             free(f);         \
-            (f) == NULL;     \
+            (f) = NULL;      \
         }                    \
     } while(0)
 
