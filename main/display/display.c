@@ -42,7 +42,7 @@ static esp_err_t display_draw(context_t *context) {
     u8g2_SetFont(&u8g2, u8g2_font_5x7_tf);
     char buf[128] = {0};
 
-    portENTER_CRITICAL(&context->spinlock);
+    context_lock(context);
     float indoor = context->sensors.temp.indoor;
     float probe = context->sensors.temp.probe;
     float humidity = context->sensors.humidity;
@@ -51,7 +51,7 @@ static esp_err_t display_draw(context_t *context) {
     bool connected = context->network.connected;
     bool time_updated = context->network.time_updated;
     bool iot_connected = context->network.iot_connected;
-    portEXIT_CRITICAL(&context->spinlock);
+    context_unlock(context);
 
     size_t len = strlcpy(buf, "Tmp:", sizeof(buf));
     len += snprintf_append(buf, len, sizeof(buf), indoor);

@@ -55,15 +55,23 @@ context_t *context_create(void) {
     return context;
 }
 
+inline void context_lock(context_t *context) {
+    portENTER_CRITICAL(&context->spinlock);
+}
+
+inline void context_unlock(context_t *context) {
+    portEXIT_CRITICAL(&context->spinlock);
+}
+
 esp_err_t context_set_temp_indoor_humidity_pressure(context_t *context, float temp, float humidity, float pressure) {
     ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
     EventBits_t bitsToSet = 0U;
-    portENTER_CRITICAL(&context->spinlock);
+    context_lock(context);
     context_set(context->sensors.temp.indoor, temp, CONTEXT_EVENT_TEMP_INDOOR);
     context_set(context->sensors.humidity, humidity, CONTEXT_EVENT_HUMIDITY);
     context_set(context->sensors.pressure, pressure, CONTEXT_EVENT_PRESSURE);
-    portEXIT_CRITICAL(&context->spinlock);
+    context_unlock(context);
 
     if (bitsToSet) xEventGroupSetBits(context->event_group, bitsToSet);
     return ESP_OK;
@@ -91,10 +99,10 @@ esp_err_t context_set_ec_target(context_t *context, float target_min, float targ
     ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
     EventBits_t bitsToSet = 0U;
-    portENTER_CRITICAL(&context->spinlock);
+    context_lock(context);
     context_set(context->sensors.ec.target_min, target_min, CONTEXT_EVENT_EC);
     context_set(context->sensors.ec.target_max, target_max, CONTEXT_EVENT_EC);
-    portEXIT_CRITICAL(&context->spinlock);
+    context_unlock(context);
 
     if (bitsToSet) xEventGroupSetBits(context->event_group, bitsToSet);
     return ESP_OK;
@@ -110,10 +118,10 @@ esp_err_t context_set_ph_target(context_t *context, float target_min, float targ
     ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
     EventBits_t bitsToSet = 0U;
-    portENTER_CRITICAL(&context->spinlock);
+    context_lock(context);
     context_set(context->sensors.ph.target_min, target_min, CONTEXT_EVENT_PH);
     context_set(context->sensors.ph.target_max, target_max, CONTEXT_EVENT_PH);
-    portEXIT_CRITICAL(&context->spinlock);
+    context_unlock(context);
 
     if (bitsToSet) xEventGroupSetBits(context->event_group, bitsToSet);
     return ESP_OK;
@@ -123,10 +131,10 @@ esp_err_t context_set_rotary(context_t *context, rotary_encoder_state_t state) {
     ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
     EventBits_t bitsToSet = 0U;
-    portENTER_CRITICAL(&context->spinlock);
+    context_lock(context);
     context_set(context->inputs.rotary.state.position, state.position, CONTEXT_EVENT_ROTARY);
     context_set(context->inputs.rotary.state.direction, state.direction, CONTEXT_EVENT_ROTARY);
-    portEXIT_CRITICAL(&context->spinlock);
+    context_unlock(context);
 
     if (bitsToSet) xEventGroupSetBits(context->event_group, bitsToSet);
     return ESP_OK;
@@ -162,19 +170,44 @@ esp_err_t context_set_iot_connected(context_t *context, bool connected) {
     return ESP_OK;
 }
 
-esp_err_t context_set_config(context_t *context, const char *device_id, const char *ssid, const char *password) {
+esp_err_t context_set_base_config(context_t *context, const char *device_id, const char *ssid, const char *password) {
     ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
     EventBits_t bitsToSet = 0U;
-    portENTER_CRITICAL(&context->spinlock);
-    context_set(context->config.device_id, device_id, CONTEXT_EVENT_CONFIG);
-    context_set(context->config.ssid, ssid, CONTEXT_EVENT_CONFIG);
-    context_set(context->config.password, password, CONTEXT_EVENT_CONFIG);
-    context_set(context->config.syslog_hostname, CONFIG_ESP_SYSLOG_IPV4_ADDR, CONTEXT_EVENT_CONFIG);
-    context_set(context->config.syslog_port, CONFIG_ESP_SYSLOG_PORT, CONTEXT_EVENT_CONFIG);
-    portEXIT_CRITICAL(&context->spinlock);
+    context_lock(context);
+    context_set(context->config.device_id, device_id, CONTEXT_EVENT_BASE_CONFIG);
+    context_set(context->config.ssid, ssid, CONTEXT_EVENT_BASE_CONFIG);
+    context_set(context->config.password, password, CONTEXT_EVENT_BASE_CONFIG);
+    context_set(context->config.syslog_hostname, CONFIG_ESP_SYSLOG_IPV4_ADDR, CONTEXT_EVENT_BASE_CONFIG);
+    context_set(context->config.syslog_port, CONFIG_ESP_SYSLOG_PORT, CONTEXT_EVENT_BASE_CONFIG);
+    context_unlock(context);
 
     if (bitsToSet) xEventGroupSetBits(context->event_group, bitsToSet);
+    return ESP_OK;
+}
+
+esp_err_t context_set_config(context_t *context, const Hydroponics__Config *config) {
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
+
+    context_lock(context);
+    if (context->config.config == config) {
+        context_unlock(context);
+        return ESP_OK;
+    }
+    if (context->config.config != NULL) {
+        hydroponics__config__free_unpacked((Hydroponics__Config *) context->config.config, NULL);
+        context->config.config = NULL;
+    }
+    context->config.config = config;
+    context->config.config_version++;
+    bool clear = context->config.config == NULL;
+    context_unlock(context);
+
+    if (clear) {
+        xEventGroupClearBits(context->event_group, CONTEXT_EVENT_CONFIG);
+    } else {
+        xEventGroupSetBits(context->event_group, CONTEXT_EVENT_CONFIG);
+    }
     return ESP_OK;
 }
 
@@ -182,12 +215,12 @@ esp_err_t context_set_state_message(context_t *context, char *message) {
     ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
     EventBits_t bitsToSet = 0U;
-    portENTER_CRITICAL(&context->spinlock);
+    context_lock(context);
     if (context->status.state_message != NULL) {
         SAFE_FREE(context->status.state_message);
     }
     context_set(context->status.state_message, message, CONTEXT_EVENT_STATE);
-    portEXIT_CRITICAL(&context->spinlock);
+    context_unlock(context);
 
     if (bitsToSet) xEventGroupSetBits(context->event_group, bitsToSet);
     return ESP_OK;
@@ -197,11 +230,11 @@ esp_err_t context_get_state_message(context_t *context, char **message) {
     ARG_CHECK(context != NULL, ERR_PARAM_NULL);
     ARG_CHECK(message != NULL, ERR_PARAM_NULL);
 
-    portENTER_CRITICAL(&context->spinlock);
+    context_lock(context);
     *message = context->status.state_message;
     context->status.state_message = NULL;
     xEventGroupClearBits(context->event_group, CONTEXT_EVENT_STATE);
-    portEXIT_CRITICAL(&context->spinlock);
+    context_unlock(context);
 
     return ESP_OK;
 }
