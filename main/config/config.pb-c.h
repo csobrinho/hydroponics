@@ -26,6 +26,9 @@ typedef struct _Hydroponics__Config Hydroponics__Config;
 
 /* --- enums --- */
 
+/*
+ * Directly matches "ext_gpio_num_t" enumeration.
+ */
 typedef enum _Hydroponics__Task__Output {
   HYDROPONICS__TASK__OUTPUT__EXT_GPIO_A_0 = 0,
   HYDROPONICS__TASK__OUTPUT__EXT_GPIO_A_1 = 1,

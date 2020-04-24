@@ -29,6 +29,7 @@ message Controller {
 }
 
 message Task {
+  // Directly matches "ext_gpio_num_t" enumeration.
   enum Output {
     EXT_GPIO_A_0 = 0;
     EXT_GPIO_A_1 = 1;
