@@ -17,8 +17,9 @@
 #include "sensors/humidity_pressure.h"
 #include "sensors/temperature.h"
 #include "storage.h"
-#include "tasks/monitor.h"
 #include "tasks/cron.h"
+#include "tasks/io.h"
+#include "tasks/monitor.h"
 
 #ifdef CONFIG_IDF_TARGET_ESP32
 #include "display/display.h"
@@ -50,6 +51,7 @@ void app_main() {
 #endif
 #ifdef CONFIG_IDF_TARGET_ESP32S2
     ESP_ERROR_CHECK(ext_gpio_init());
+    ESP_ERROR_CHECK(io_init(context));
 #endif
     ESP_ERROR_CHECK(humidity_pressure_init(context));
     ESP_ERROR_CHECK(ezo_ec_init(context));
