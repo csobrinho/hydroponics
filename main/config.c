@@ -16,10 +16,6 @@
 #define CONFIG_KEY_IOT_CONFIG "iot_config"
 
 static const char *TAG = "config";
-#define OUTPUT_BY_VALUE hydroponics__task__output__descriptor.values
-#define OUTPUT_MAX hydroponics__task__output__descriptor.n_values
-#define OUTPUT_ACTION_BY_VALUE hydroponics__task__output_action__descriptor.values
-#define OUTPUT_ACTION_MAX hydroponics__task__output_action__descriptor.n_values
 
 static esp_err_t config_load_from_storage(context_t *context) {
     uint8_t *data = NULL;
@@ -132,14 +128,14 @@ esp_err_t config_dump(const Hydroponics__Config *config) {
             fprintf(stream, "  [%*d] name: %s\n", config->n_task >= 10 ? 2 : 1, i, config->task[i]->name);
             for (int j = 0; j < config->task[i]->n_output; ++j) {
                 Hydroponics__Task__Output output = config->task[i]->output[j];
-                fprintf(stream, "      output: %s\n", output < OUTPUT_MAX ? OUTPUT_BY_VALUE[output].name : "???");
+                fprintf(stream, "      output: %s\n", enum_from_value(&hydroponics__task__output__descriptor, output));
             }
             for (int j = 0; j < config->task[i]->n_cron; ++j) {
                 Hydroponics__Task__Cron *cron = config->task[i]->cron[j];
                 Hydroponics__Task__OutputAction action = cron->action;
                 for (int k = 0; k < cron->n_expression; ++k) {
                     fprintf(stream, "      cron %s: %s\n",
-                            action < OUTPUT_ACTION_MAX ? OUTPUT_ACTION_BY_VALUE[action].name : "???",
+                            enum_from_value(&hydroponics__task__output_action__descriptor, action),
                             cron->expression[k]);
                 }
             }

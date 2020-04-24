@@ -34,3 +34,13 @@ esp_err_t sha256(const uint8_t *buf, const size_t len, unsigned char output[32])
     ESP_LOGW(TAG, "mbedtls_sha256_ret, error: %d", err);
     return ESP_FAIL;
 }
+
+const char *enum_from_value(const ProtobufCEnumDescriptor *descriptor, int value) {
+    ARG_ERROR_CHECK(descriptor != NULL, ERR_PARAM_NULL);
+    for (int i = 0; i < descriptor->n_values; ++i) {
+        if (descriptor->values[i].value == value) {
+            return descriptor->values[i].name;
+        }
+    }
+    return "???";
+}
