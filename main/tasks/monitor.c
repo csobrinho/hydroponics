@@ -12,8 +12,8 @@
 #include "monitor.h"
 #include "utils.h"
 
-#define MONITOR_CRON           "* */1 * * * *"    // Once every minute.
-#define MONITOR_STATE_SAMPLING 2                  // Once every two calls.
+#define MONITOR_CRON           "0 * * * * *"  // Once every minute, at 0s.
+#define MONITOR_STATE_SAMPLING 2              // Once every two calls.
 
 static const char *TAG = "monitor";
 static const char *STATES[] = {"R", "*", "B", "S", "D", "?"};
