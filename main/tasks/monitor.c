@@ -7,12 +7,13 @@
 #include "esp_err.h"
 #include "esp_log.h"
 
+#include "cron.h"
 #include "error.h"
 #include "monitor.h"
 #include "utils.h"
 
-#define MONITOR_SAMPLING       60 * 1000     // One a minute
-#define MONITOR_STATE_SAMPLING 60 * 1000 * 2 // Every two minutes.
+#define MONITOR_CRON           "* */1 * * * *"    // Once every minute.
+#define MONITOR_STATE_SAMPLING 2                  // Once every two calls.
 
 static const char *TAG = "monitor";
 static const char *STATES[] = {"R", "*", "B", "S", "D", "?"};
@@ -136,7 +137,7 @@ static void monitor_dump(context_t *context) {
     }
 
     // Generate raw status information about each task.
-    uint32_t ulTotalRunTime;
+    uint32_t ulTotalRunTime = 0;
     uxArraySize = uxTaskGetSystemState(pxTaskStatusArray, uxArraySize, &ulTotalRunTime);
 
     // For percentage calculations.
@@ -144,32 +145,25 @@ static void monitor_dump(context_t *context) {
 
     // Avoid divide by zero errors.
     if (ulTotalRunTime > 0) {
-        static TickType_t next_state_sampling;
-
         // Sort the TaskStatus_t array by the task name.
         qsort(pxTaskStatusArray, uxArraySize, sizeof(TaskStatus_t), by_task_name);
         ESP_ERROR_CHECK(monitor_dump_stdin(context, pxTaskStatusArray, uxArraySize, ulTotalRunTime));
 
-        TickType_t now = xTaskGetTickCount();
-        if (now >= next_state_sampling) {
+        static int counter = 0;
+        if ((++counter % MONITOR_STATE_SAMPLING) == 0) {
             ESP_ERROR_CHECK(monitor_dump_state_message(context, pxTaskStatusArray, uxArraySize, ulTotalRunTime));
-            next_state_sampling = now + pdMS_TO_TICKS(MONITOR_STATE_SAMPLING);
         }
     }
     SAFE_FREE(pxTaskStatusArray);
 }
 
-static void monitor_task(void *arg) {
-    context_t *context = (context_t *) arg;
-    ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
-    while (true) {
-        TickType_t last_wake_time = xTaskGetTickCount();
-        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(MONITOR_SAMPLING));
-        monitor_dump(context);
-    }
+static void monitor_cron_callback(cron_handle_t handle, const char *name, void *data) {
+    ARG_UNUSED(handle);
+    ESP_LOGI(TAG, "monitor_cron_callback name: %s", name);
+    monitor_dump((context_t *) data);
 }
 
 esp_err_t monitor_init(context_t *context) {
-    xTaskCreatePinnedToCore(monitor_task, "monitor", 4096, context, configMAX_PRIORITIES - 6, NULL, tskNO_AFFINITY);
+    ESP_ERROR_CHECK(cron_create("monitor", MONITOR_CRON, monitor_cron_callback, context, NULL));
     return ESP_OK;
 }

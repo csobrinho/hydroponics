@@ -18,6 +18,7 @@
 #include "sensors/temperature.h"
 #include "storage.h"
 #include "tasks/monitor.h"
+#include "tasks/cron.h"
 
 #ifdef CONFIG_IDF_TARGET_ESP32
 #include "display/display.h"
@@ -40,6 +41,7 @@ void app_main() {
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     ESP_ERROR_CHECK(config_init(context));
+    ESP_ERROR_CHECK(cron_init(context));
 #ifdef CONFIG_IDF_TARGET_ESP32
     ESP_ERROR_CHECK(syslog_init(context));
     ESP_ERROR_CHECK(status_init(context));
