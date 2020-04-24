@@ -1,5 +1,5 @@
-#ifndef HYDROPONICS_CRON_H
-#define HYDROPONICS_CRON_H
+#ifndef HYDROPONICS_TASKS_CRON_H
+#define HYDROPONICS_TASKS_CRON_H
 
 #include "esp_err.h"
 
@@ -29,4 +29,4 @@ esp_err_t cron_create(const char *name, const char *expression, cron_callback_t 
 
 esp_err_t cron_delete(cron_handle_t handle);
 
-#endif //HYDROPONICS_CRON_H
+#endif //HYDROPONICS_TASKS_CRON_H

@@ -53,7 +53,7 @@ typedef struct cron_job_entry {
     TAILQ_ENTRY(cron_job_entry) next;
 } cron_job_entry_t;
 
-typedef TAILQ_HEAD(head_s, cron_job_entry) cron_job_head_t;
+typedef TAILQ_HEAD(cron_job_head, cron_job_entry) cron_job_head_t;
 
 static const char *TAG = "cron";
 static atomic_uint id = 0;
