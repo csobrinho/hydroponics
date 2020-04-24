@@ -56,7 +56,7 @@ typedef struct cron_job_entry {
 typedef TAILQ_HEAD(cron_job_head, cron_job_entry) cron_job_head_t;
 
 static const char *TAG = "cron";
-static atomic_uint id = 0;
+static atomic_uint id = 1;
 static QueueHandle_t queue;
 static cron_job_head_t cron_job_head;
 
@@ -87,7 +87,7 @@ static TickType_t cron_next_delay(void) {
         return 0;
     }
     // Round up the delay to the nearest 'tick' to avoid undershooting.
-    long tick_ms = 1000 / configTICK_RATE_HZ;
+    long tick_ms = portTICK_PERIOD_MS;
     long round_up_delay_ms = ((delay_ms + tick_ms - 1) / tick_ms) * tick_ms;
     ESP_LOGD(TAG, "cron_next_delay will wait %ld ms (next: %ld, tv_sec: %ld, tv_msec: %ld)", round_up_delay_ms,
              first->job.next_execution, now.tv_sec, now.tv_nsec / NS_TO_MS);
@@ -100,6 +100,8 @@ static esp_err_t cron_calculate_next(cron_job_t *job) {
 }
 
 static esp_err_t cron_unschedule_job(cron_handle_t handle) {
+    ARG_CHECK(handle > INVALID_CRON_HANDLE, ERR_PARAM_LE_ZERO);
+
     cron_job_entry_t *e = NULL, *tmp = NULL;
     TAILQ_FOREACH_SAFE(e, &cron_job_head, next, tmp) {
         if (e->job.handle == handle) {
@@ -145,6 +147,8 @@ static esp_err_t cron_create_job(cron_job_t *job) {
 }
 
 static esp_err_t cron_destroy_job(cron_handle_t handle) {
+    ARG_CHECK(handle > INVALID_CRON_HANDLE, ERR_PARAM_LE_ZERO);
+
     cron_job_entry_t *e = NULL, *tmp = NULL;
     TAILQ_FOREACH_SAFE(e, &cron_job_head, next, tmp) {
         if (e->job.handle == handle) {
@@ -236,6 +240,8 @@ esp_err_t cron_create(const char *name, const char *expression, cron_callback_t 
 }
 
 esp_err_t cron_delete(cron_handle_t handle) {
+    ARG_CHECK(handle > INVALID_CRON_HANDLE, ERR_PARAM_LE_ZERO);
+
     cron_op_t arg = {.type = CRON_OP_REMOVE, .remove = {.handle = handle}};
     return xQueueSend(queue, &arg, portMAX_DELAY) == pdPASS ? ESP_OK : ESP_FAIL;
 }

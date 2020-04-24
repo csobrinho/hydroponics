@@ -29,7 +29,7 @@ static esp_err_t monitor_dump_stdin(context_t *context, TaskStatus_t *taskStatus
                                     uint32_t totalRunTimePercentage) {
     ARG_UNUSED(context);
     ESP_LOGI(TAG, "========================================================");
-    ESP_LOGI(TAG, " St P  Name                     Runtime      %%    Stack");
+    ESP_LOGI(TAG, " St  P  Name                    Runtime      %%    Stack");
     ESP_LOGI(TAG, "========================================================");
 
     // For each populated position in the taskStatus array, format the raw data as human readable.

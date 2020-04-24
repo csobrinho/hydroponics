@@ -5,6 +5,7 @@
 
 #include "context.h"
 
+#define INVALID_CRON_HANDLE 0
 typedef unsigned int cron_handle_t;
 
 typedef void (*cron_callback_t)(cron_handle_t handle, const char *name, void *data);
