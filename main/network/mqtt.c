@@ -6,7 +6,6 @@
 #include "freertos/task.h"
 
 #include <iotc.h>
-#include <iotc_helpers.h>
 #include <iotc_jwt.h>
 #include <iotc_types.h>
 
@@ -147,7 +146,6 @@ static void mqtt_subscribe_callback(iotc_context_handle_t in_context_handle, iot
             const size_t payload_size = params->message.temporary_payload_data_length;
             if (payload == NULL) {
                 ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
-                return;
             }
             if (strcmp(subscribe_topic_config, params->message.topic) == 0) {
                 ESP_LOGI(TAG, "Config payload: %d bytes", params->message.temporary_payload_data_length);
@@ -159,8 +157,7 @@ static void mqtt_subscribe_callback(iotc_context_handle_t in_context_handle, iot
             break;
         }
         default:
-            ESP_LOGI(TAG, "Subscription Topic [type: MSG / state: %d]: message %s", state,
-                     params->message.topic);
+            ESP_LOGI(TAG, "Subscription Topic [type: MSG / state: %d]: message %s", state, params->message.topic);
             break;
     }
 }
