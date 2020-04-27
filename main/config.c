@@ -42,10 +42,12 @@ static esp_err_t config_save_to_storage(const uint8_t *data, size_t size, bool *
     ESP_ERROR_CHECK(storage_get_blob(CONFIG_KEY_IOT_CONFIG, &current, &current_size));
     if (current_size == size && memcmp(data, current, size) == 0) {
         // Same config, nothing to do.
+        SAFE_FREE(current);
         *updated = false;
         return ESP_OK;
     }
     ESP_ERROR_CHECK(storage_set_blob(CONFIG_KEY_IOT_CONFIG, data, size));
+    SAFE_FREE(current);
     *updated = true;
     return ESP_OK;
 }
