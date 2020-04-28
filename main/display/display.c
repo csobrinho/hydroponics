@@ -35,7 +35,7 @@ static void snprintf_value(char *buf, size_t max_size, const char *format, const
     }
 }
 
-static esp_err_t display_draw(context_t *context) {
+static esp_err_t display_draw(context_t *context, bool connected, bool time_updated, bool iot_connected) {
     ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
     u8g2_ClearBuffer(&u8g2);
@@ -48,9 +48,6 @@ static esp_err_t display_draw(context_t *context) {
     float humidity = context->sensors.humidity;
     float ec = context->sensors.ec.value;
     float ph = context->sensors.ph.value;
-    bool connected = context->network.connected;
-    bool time_updated = context->network.time_updated;
-    bool iot_connected = context->network.iot_connected;
     context_unlock(context);
 
     size_t len = strlcpy(buf, "Tmp:", sizeof(buf));
@@ -103,11 +100,14 @@ static void display_task(void *arg) {
     u8g2_SendBuffer(&u8g2);
 
     while (1) {
-        xEventGroupWaitBits(context->event_group, wait_bits, pdFALSE, pdFALSE, portMAX_DELAY);
+        EventBits_t bits = xEventGroupWaitBits(context->event_group, wait_bits, pdFALSE, pdFALSE, portMAX_DELAY);
         // Even though we wait for some status bits like network/time/etc, these are used elsewhere as a form of
         // synchronization between tasks so make sure we don't clear them!
         xEventGroupClearBits(context->event_group, clear_bits);
-        ESP_ERROR_CHECK(display_draw(context));
+        bool connected = (bits & CONTEXT_EVENT_NETWORK) == CONTEXT_EVENT_NETWORK;
+        bool time_updated = (bits & CONTEXT_EVENT_TIME) == CONTEXT_EVENT_TIME;
+        bool iot_connected = (bits & CONTEXT_EVENT_IOT) == CONTEXT_EVENT_IOT;
+        ESP_ERROR_CHECK(display_draw(context, connected, time_updated, iot_connected));
         vTaskDelay(pdMS_TO_TICKS(250));
     }
 }
