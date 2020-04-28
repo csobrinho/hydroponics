@@ -33,26 +33,30 @@ controller: {
 }
 task: {
   name: "FooBar0"
-  output: EXT_GPIO_A_0
+  output: EXT_GPIO_A_7
   cron: {
     action: ON,
-    expression: "0 0 * * * *"
+    # On at xx:00, every 2 seconds.
+    expression: "0/2 * * * * *"
   }
   cron: {
     action: OFF,
-    expression: "0 5 * * * *"
+    # On at xx:01, every 2 seconds.
+    expression: "1/2 * * * * *"
   }
 }
 task: {
-  name: "FooBar0"
-  output: EXT_GPIO_A_1
-  output: EXT_GPIO_A_2
+  name: "FooBar1"
+  output: EXT_GPIO_B_0
+  output: EXT_GPIO_B_1
   cron: {
     action: ON,
-    expression: "0 1 * * * *"
+    # On every two minutes at xx:15.
+    expression: "15 */2 * * * *"
   }
   cron: {
     action: OFF,
-    expression: "0 6 * * * *"
+    # Off every two minutes at xx:45.
+    expression: "45 */2 * * * *"
   }
 }
