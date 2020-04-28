@@ -202,6 +202,9 @@ static void cron_task(void *arg) {
 
 esp_err_t cron_init(context_t *context) {
     queue = xQueueCreate(10, sizeof(cron_op_t));
+    if (queue == NULL) {
+        return ESP_ERR_NO_MEM;
+    }
     TAILQ_INIT(&cron_job_head);
 
     xTaskCreatePinnedToCore(cron_task, "cron", 4096, context, tskIDLE_PRIORITY + 3, NULL, tskNO_AFFINITY);
