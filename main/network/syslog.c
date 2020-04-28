@@ -77,7 +77,7 @@ static inline void syslog_free(syslog_entry_t *msg) {
 static int syslog_printf(const char *fmt, va_list va) {
     time_t now = 0;
     time(&now);
-    char *buf;
+    char *buf = NULL;
     size_t len = vasprintf(&buf, fmt, va);
     const syslog_entry_t msg = {
             .priority = SYSLOG_PRIORITY_INFO,
@@ -85,6 +85,7 @@ static int syslog_printf(const char *fmt, va_list va) {
             .msg = buf,
             .msg_len = len,
     };
+    printf("%*s", len, buf);
     while (xQueueSend(queue, &msg, 0) != pdTRUE) {
         // If we fail, just pop one from the queue to get space.
         syslog_entry_t tmp = {0};
@@ -92,7 +93,6 @@ static int syslog_printf(const char *fmt, va_list va) {
             syslog_free(&tmp);
         }
     }
-    printf("%s", buf);
     return len;
 }
 
