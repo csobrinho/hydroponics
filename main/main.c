@@ -28,9 +28,7 @@
 #include "network/syslog.h"
 #endif
 #ifdef CONFIG_IDF_TARGET_ESP32S2
-
 #include "driver/ext_gpio.h"
-
 #endif
 
 static context_t *context;
