@@ -28,9 +28,9 @@ static int by_task_name(const void *a, const void *b) {
 static esp_err_t monitor_dump_stdin(context_t *context, TaskStatus_t *taskStatus, UBaseType_t size,
                                     uint32_t totalRunTimePercentage) {
     ARG_UNUSED(context);
-    ESP_LOGI(TAG, "========================================================");
-    ESP_LOGI(TAG, " St  P  Name                    Runtime      %%    Stack");
-    ESP_LOGI(TAG, "========================================================");
+    ESP_LOGI(TAG, "==========================================================");
+    ESP_LOGI(TAG, " St C  P  Name                    Runtime      %%    Stack");
+    ESP_LOGI(TAG, "==========================================================");
 
     // For each populated position in the taskStatus array, format the raw data as human readable.
     for (UBaseType_t i = 0; i < size; i++) {
@@ -43,21 +43,21 @@ static esp_err_t monitor_dump_stdin(context_t *context, TaskStatus_t *taskStatus
                             ? STATES[taskStatus[i].eCurrentState]
                             : STATES[STATES_SIZE - 1];
 
+        const unsigned char cpu = taskStatus[i].xCoreID == tskNO_AFFINITY ? '?' : '0' + taskStatus[i].xCoreID;
         if (ulStatsAsPercentage > 0UL) {
-            ESP_LOGI(TAG, " [%s:%2d] %-16s    %11u    %2u%%    %5u", state, taskStatus[i].uxCurrentPriority,
+            ESP_LOGI(TAG, " [%s:%c:%2d] %-16s    %11u    %2u%%    %5u", state, cpu, taskStatus[i].uxCurrentPriority,
                      taskStatus[i].pcTaskName, taskStatus[i].ulRunTimeCounter, ulStatsAsPercentage,
                      taskStatus[i].usStackHighWaterMark);
         } else {
             // If the percentage is zero here then the task has
             // consumed less than 1% of the total run time.
-            ESP_LOGI(TAG, " [%s:%2d] %-16s    %11u    <1%%    %5u", state, taskStatus[i].uxCurrentPriority,
-                     taskStatus[i].pcTaskName, taskStatus[i].ulRunTimeCounter,
-                     taskStatus[i].usStackHighWaterMark);
+            ESP_LOGI(TAG, " [%s:%c:%2d] %-16s    %11u    <1%%    %5u", state, cpu, taskStatus[i].uxCurrentPriority,
+                     taskStatus[i].pcTaskName, taskStatus[i].ulRunTimeCounter, taskStatus[i].usStackHighWaterMark);
         }
     }
     ESP_LOGI(TAG, "");
     ESP_LOGI(TAG, "Minimum free heap: %d    free heap: %d", esp_get_minimum_free_heap_size(), esp_get_free_heap_size());
-    ESP_LOGI(TAG, "========================================================");
+    ESP_LOGI(TAG, "==========================================================");
 
     return ESP_OK;
 }
