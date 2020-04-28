@@ -62,7 +62,7 @@ static void io_cron_callback(cron_handle_t handle, const char *name, void *data)
     ARG_UNUSED(handle);
     io_cron_args_t *args = (io_cron_args_t *) data;
     for (int i = 0; i < args->n_output; ++i) {
-        ESP_LOGI(TAG, "io_cron_callback name: %s action: %-3s output: %s", name,
+        ESP_LOGI(TAG, "io_cron_callback name: %s action: %3s output: %s", name,
                  enum_from_value(&hydroponics__task__output_action__descriptor, args->action),
                  enum_from_value(&hydroponics__task__output__descriptor, args->output[i]));
         ESP_ERROR_CHECK(ext_gpio_set_level((ext_gpio_num_t) args->output[i],
