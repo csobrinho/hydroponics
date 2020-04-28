@@ -1,11 +1,11 @@
 set(exclude_srcs)
 set(extra_dirs)
+set(requires)
 
-if (CONFIG_IDF_TARGET_ESP32)
+if (IDF_TARGET STREQUAL "esp32")
     list(APPEND extra_dirs "display")
-    # The ESP32 prototype doesn't currently have a MCP23017 I2C expander so disable it.
-    list(APPEND exclude_srcs "driver/ext_gpio.c" "driver/ext_gpio.h")
-elseif (CONFIG_IDF_TARGET_ESP32S2)
+    list(APPEND requires "lcd_common")
+elseif (IDF_TARGET STREQUAL "esp32s2")
     # The ESP32-S2 doesn't currently support the lcd_common component so disable it.
     list(APPEND exclude_srcs "driver/i2s_lcd8.c" "driver/i2s_lcd8.h")
 endif ()
@@ -29,6 +29,6 @@ idf_component_register(
         EMBED_FILES "certs/ec_private.pem" "embed/hydroponics_logo.bin"
         REQUIRES
         # Internal components.
-        "bme280" "esp32-ds18b20" "esp32-owb" "esp32-rotary-encoder" "esp-google-iot" "u8g2" "esp-ccronexpr"
+        "bme280" "esp32-ds18b20" "esp32-owb" "esp32-rotary-encoder" "esp-google-iot" "u8g2" "esp-ccronexpr" "${requires}"
         # External components.
         "config" "console" "json" "nvs_flash")

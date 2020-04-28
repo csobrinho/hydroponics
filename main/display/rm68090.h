@@ -2,7 +2,6 @@
 #define HYDROPONICS_DISPLAY_RM68090_H
 
 #include "i2s_lcd8.h"
-#include "iot_i2s_lcd.h"
 
 esp_err_t rm68090_init(i2s_lcd8_dev_t *dev);
 
