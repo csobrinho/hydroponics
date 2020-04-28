@@ -10,6 +10,7 @@
 #include "console/console.h"
 #include "network/iot.h"
 #include "network/ntp.h"
+#include "network/syslog.h"
 #include "network/wifi.h"
 #include "sensors/ezo_ec.h"
 #include "sensors/ezo_ph.h"
@@ -25,7 +26,6 @@
 #include "display/display.h"
 #include "display/lcd.h"
 #include "driver/status.h" /*TODO(sobrinho): Adapt this module to support the RGB led.*/
-#include "network/syslog.h"
 #endif
 #ifdef CONFIG_IDF_TARGET_ESP32S2
 #include "driver/ext_gpio.h"
@@ -41,8 +41,8 @@ void app_main() {
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     ESP_ERROR_CHECK(config_init(context));
     ESP_ERROR_CHECK(cron_init(context));
-#ifdef CONFIG_IDF_TARGET_ESP32
     ESP_ERROR_CHECK(syslog_init(context));
+#ifdef CONFIG_IDF_TARGET_ESP32
     ESP_ERROR_CHECK(status_init(context));
     ESP_ERROR_CHECK(lcd_init(context));
     ESP_ERROR_CHECK(display_init(context));
