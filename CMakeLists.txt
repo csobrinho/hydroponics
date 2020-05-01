@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-set(EXTRA_COMPONENT_DIRS "$ENV{IDF_PATH}/../esp-iot-solution/components/i2s_devices/lcd_common" "main/config")
+set(EXTRA_COMPONENT_DIRS "$ENV{IDF_PATH}/../esp-iot-solution/components/i2s_devices/lcd_common")
 
 # Compile less components.
 set(COMPONENTS cxx app bootloader esptool_py main)

@@ -1,10 +1,10 @@
 # To re-generate the files:
 # $ brew install protobuf-c
-# $ cmake --build build --target config_pb config_textpb
+# $ cmake --build build --target protos config_protos
 #
 # To upload the GreenMeanMachine.pb:
-# $ gcloud iot devices configs update --config-file=main/config/GreenMeanMachine.pb --registry=registry --region=us-central1 --device=GreenMeanMachine-test
-# $ gcloud iot devices configs update --config-file=main/config/GreenMeanMachine.pb --registry=registry --region=us-central1 --device=GreenMeanMachine
+# $ gcloud iot devices configs update --config-file=components/protos/GreenMeanMachine.pb --registry=registry --region=us-central1 --device=GreenMeanMachine-test
+# $ gcloud iot devices configs update --config-file=components/protos/GreenMeanMachine.pb --registry=registry --region=us-central1 --device=GreenMeanMachine
 
 idf_component_register(SRC_DIRS "." INCLUDE_DIRS "." REQUIRES "protobuf-c")
 
@@ -23,7 +23,7 @@ add_custom_command(
         OUTPUT ${PROTO_OUTS}
         COMMENT "Generating protobuf-c for ${PROTO_SRC}."
         VERBATIM)
-add_custom_target(config_pb DEPENDS ${PROTO_OUTS})
+add_custom_target(protos DEPENDS ${PROTO_OUTS})
 
 # Generate the hydroponics.Config binary proto.
 add_custom_command(
@@ -33,4 +33,4 @@ add_custom_command(
         OUTPUT "${CONFIG_TEXTPROTO_OUT}"
         COMMENT "Generating hydroponics.Config for ${CONFIG_TEXTPROTO_SRC}."
         VERBATIM)
-add_custom_target(config_textpb DEPENDS "${CONFIG_TEXTPROTO_OUT}")
+add_custom_target(config_protos DEPENDS "${CONFIG_TEXTPROTO_OUT}")

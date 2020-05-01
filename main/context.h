@@ -7,7 +7,7 @@
 
 #include "esp_bit_defs.h"
 
-#include "config/config.pb-c.h"
+#include "config.pb-c.h"
 #include "rotary_encoder.h"
 
 #define CONTEXT_UNKNOWN_VALUE INT16_MIN

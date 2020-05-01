@@ -29,6 +29,6 @@ idf_component_register(
         EMBED_FILES "../firmware/private/ec_private.pem" "embed/hydroponics_logo.bin"
         REQUIRES
         # Internal components.
-        "bme280" "esp32-ds18b20" "esp32-owb" "esp32-rotary-encoder" "esp-google-iot" "u8g2" "esp-ccronexpr" "${requires}"
+        "protos" "bme280" "esp32-ds18b20" "esp32-owb" "esp32-rotary-encoder" "esp-google-iot" "u8g2" "esp-ccronexpr" "${requires}"
         # External components.
-        "config" "console" "json" "nvs_flash")
+        "console" "json" "nvs_flash")
