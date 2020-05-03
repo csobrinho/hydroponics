@@ -1,6 +1,3 @@
-#include "driver/gpio.h"
-#include "hal/gpio_types.h"
-
 #include "esp_event.h"
 #include "esp_log.h"
 
@@ -8,6 +5,7 @@
 #include "config.h"
 #include "context.h"
 #include "console/console.h"
+#include "driver/ext_gpio.h"
 #include "network/iot.h"
 #include "network/ntp.h"
 #include "network/syslog.h"
@@ -27,9 +25,6 @@
 #include "display/lcd.h"
 #include "driver/status.h" /*TODO(sobrinho): Adapt this module to support the RGB led.*/
 #endif
-#ifdef CONFIG_IDF_TARGET_ESP32S2
-#include "driver/ext_gpio.h"
-#endif
 
 static context_t *context;
 
@@ -42,14 +37,12 @@ void app_main() {
     ESP_ERROR_CHECK(config_init(context));
     ESP_ERROR_CHECK(cron_init(context));
     ESP_ERROR_CHECK(syslog_init(context));
+    ESP_ERROR_CHECK(ext_gpio_init());
+    ESP_ERROR_CHECK(io_init(context));
 #ifdef CONFIG_IDF_TARGET_ESP32
     ESP_ERROR_CHECK(status_init(context));
     ESP_ERROR_CHECK(lcd_init(context));
     ESP_ERROR_CHECK(display_init(context));
-#endif
-#ifdef CONFIG_IDF_TARGET_ESP32S2
-    ESP_ERROR_CHECK(ext_gpio_init());
-    ESP_ERROR_CHECK(io_init(context));
 #endif
     ESP_ERROR_CHECK(humidity_pressure_init(context));
     ESP_ERROR_CHECK(ezo_ec_init(context));
