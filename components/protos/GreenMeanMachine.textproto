@@ -1,4 +1,4 @@
-# proto-file: main/config/config.proto
+# proto-file: components/protos/config.proto
 # proto-message: hydroponics.Config
 sampling {
   humidity: 1000
@@ -33,7 +33,7 @@ controller: {
 }
 task: {
   name: "FooBar0"
-  output: EXT_GPIO_A_7
+  output: EXT_GPIO_B_0
   cron: {
     action: ON,
     # On at xx:00, every 2 seconds.
@@ -47,8 +47,7 @@ task: {
 }
 task: {
   name: "FooBar1"
-  output: EXT_GPIO_B_0
-  output: EXT_GPIO_B_1
+  output: EXT_GPIO_A_7
   cron: {
     action: ON,
     # On every two minutes at xx:15.
