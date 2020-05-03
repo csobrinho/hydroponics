@@ -15,7 +15,7 @@
 #define I2C_ADDRESS_OLED 0x78  /*!< Slave address for OLED display. */
 
 static const char *TAG = "display";
-static const EventBits_t clear_bits = CONTEXT_EVENT_TEMP_INDOOR | CONTEXT_EVENT_TEMP_WATER | CONTEXT_EVENT_PRESSURE
+static const EventBits_t clear_bits = CONTEXT_EVENT_TEMP_INDOOR | CONTEXT_EVENT_TEMP_PROBE | CONTEXT_EVENT_PRESSURE
                                       | CONTEXT_EVENT_HUMIDITY | CONTEXT_EVENT_EC | CONTEXT_EVENT_PH;
 static const EventBits_t wait_bits = clear_bits | CONTEXT_EVENT_NETWORK | CONTEXT_EVENT_TIME | CONTEXT_EVENT_IOT;
 static u8g2_t u8g2;
