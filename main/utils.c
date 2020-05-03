@@ -1,6 +1,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
 #include "esp_err.h"
 #include "esp_log.h"
 
@@ -43,4 +46,12 @@ const char *enum_from_value(const ProtobufCEnumDescriptor *descriptor, int value
         }
     }
     return "???";
+}
+
+void safe_delay_ms(uint32_t delay_ms) {
+    if (delay_ms < portTICK_PERIOD_MS) {
+        ets_delay_us(delay_ms * 1000);
+        return;
+    }
+    vTaskDelay(pdMS_TO_TICKS(delay_ms));
 }

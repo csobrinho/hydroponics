@@ -1,12 +1,12 @@
 /* Adapted from: kolban */
-
-#include "sdkconfig.h"
-#include "esp_log.h"
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#include "esp_log.h"
+
 #include "buses.h"
+#include "error.h"
+#include "utils.h"
 #include "u8g2_esp32_hal.h"
 
 static const char *TAG = "u8g2_hal";
@@ -72,6 +72,8 @@ uint8_t u8g2_esp32_i2c_byte_cb(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void 
  * to handle callbacks for GPIO and delay functions.
  */
 uint8_t u8g2_esp32_gpio_and_delay_cb(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr) {
+    ARG_UNUSED(u8x8);
+    ARG_UNUSED(arg_ptr);
     ESP_LOGD(TAG, "gpio_and_delay_cb: Received a msg: %d, arg_int: %d, arg_ptr: %p", msg, arg_int, arg_ptr);
 
     switch (msg) {
@@ -117,7 +119,7 @@ uint8_t u8g2_esp32_gpio_and_delay_cb(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int,
             break;
             // Delay for the number of milliseconds passed in through arg_int.
         case U8X8_MSG_DELAY_MILLI:
-            vTaskDelay(pdMS_TO_TICKS(arg_int));
+            safe_delay_ms(arg_int);
             break;
 
         default:

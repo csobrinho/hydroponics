@@ -9,6 +9,7 @@
 #include "bme280.h"
 
 #include "buses.h"
+#include "utils.h"
 
 static int8_t humidity_pressure_hal_i2c_read(uint8_t dev_id, uint8_t reg_addr, uint8_t *data, uint16_t len) {
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
@@ -48,14 +49,6 @@ static int8_t humidity_pressure_hal_i2c_write(uint8_t dev_id, uint8_t reg_addr, 
     return (err == ESP_OK) ? BME280_OK : BME280_E_COMM_FAIL;
 }
 
-static void humidity_pressure_hal_delay_ms(uint32_t period) {
-    if (period < portTICK_PERIOD_MS) {
-        ets_delay_us(period * 1000);
-        return;
-    }
-    vTaskDelay(pdMS_TO_TICKS(period));
-}
-
 int8_t humidity_pressure_hal_read(uint8_t sensor_comp, struct bme280_data *comp_data, struct bme280_dev *dev) {
     return bme280_get_sensor_data(sensor_comp, comp_data, dev);
 }
@@ -65,7 +58,7 @@ int8_t humidity_pressure_hal_init(struct bme280_dev *dev) {
     dev->intf = BME280_I2C_INTF;
     dev->read = humidity_pressure_hal_i2c_read;
     dev->write = humidity_pressure_hal_i2c_write;
-    dev->delay_ms = humidity_pressure_hal_delay_ms;
+    dev->delay_ms = safe_delay_ms;
 
     int8_t ret = bme280_init(dev);
     uint8_t settings_sel = BME280_OSR_PRESS_SEL | BME280_OSR_TEMP_SEL | BME280_OSR_HUM_SEL | BME280_FILTER_SEL;
