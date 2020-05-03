@@ -49,6 +49,10 @@ static int8_t humidity_pressure_hal_i2c_write(uint8_t dev_id, uint8_t reg_addr, 
 }
 
 static void humidity_pressure_hal_delay_ms(uint32_t period) {
+    if (period < portTICK_PERIOD_MS) {
+        ets_delay_us(period * 1000);
+        return;
+    }
     vTaskDelay(pdMS_TO_TICKS(period));
 }
 
