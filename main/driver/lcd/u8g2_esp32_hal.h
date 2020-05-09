@@ -9,7 +9,7 @@
 #include "driver/spi_master.h"
 #include "driver/i2c.h"
 
-#define U8G2_ESP32_HAL_UNDEFINED (-1)
+#define U8G2_ESP32_HAL_UNDEFINED (GPIO_NUM_NC)
 
 typedef struct {
     gpio_num_t sda;   // data for I²C.

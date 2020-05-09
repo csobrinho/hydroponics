@@ -1,14 +1,5 @@
 set(exclude_srcs)
-set(extra_dirs)
-set(requires)
-
-if (IDF_TARGET STREQUAL "esp32")
-    list(APPEND extra_dirs "display")
-    list(APPEND requires "lcd_common")
-elseif (IDF_TARGET STREQUAL "esp32s2")
-    # The ESP32-S2 doesn't currently support the lcd_common component so disable it.
-    list(APPEND exclude_srcs "driver/i2s_lcd8.c" "driver/i2s_lcd8.h")
-endif ()
+set(requires "lcd_common")
 
 if (CONFIG_ESP_SIMULATE_SENSORS)
     list(APPEND exclude_srcs
@@ -23,12 +14,12 @@ else ()
 endif ()
 
 idf_component_register(
-        SRC_DIRS "${extra_dirs}" "." "console" "driver" "filter" "network" "sensors" "tasks"
+        SRC_DIRS "." "console" "display" "driver" "driver/lcd" "filter" "network" "sensors" "tasks"
         EXCLUDE_SRCS "${exclude_srcs}"
-        INCLUDE_DIRS "${extra_dirs}" "." "console" "driver" "filter" "network" "sensors" "tasks"
+        INCLUDE_DIRS "." "console" "display" "driver" "driver/lcd" "filter" "network" "sensors" "tasks"
         EMBED_FILES "../firmware/private/ec_private.pem" "embed/hydroponics_logo.bin"
         REQUIRES
         # Internal components.
-        "protos" "bme280" "esp32-ds18b20" "esp32-owb" "esp32-rotary-encoder" "esp-google-iot" "u8g2" "esp-ccronexpr" "${requires}"
+        "protos" "bme280" "esp32-ds18b20" "esp32-owb" "esp32-rotary-encoder" "esp-google-iot" "u8g2" "ucglib" "esp-ccronexpr" "${requires}"
         # External components.
         "console" "json" "nvs_flash")

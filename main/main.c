@@ -5,6 +5,7 @@
 #include "config.h"
 #include "context.h"
 #include "console/console.h"
+#include "display/ext_display.h"
 #include "driver/ext_gpio.h"
 #include "network/iot.h"
 #include "network/ntp.h"
@@ -21,7 +22,6 @@
 
 #ifdef CONFIG_IDF_TARGET_ESP32
 #include "display/display.h"
-#include "display/lcd.h"
 #include "driver/status.h" /*TODO(sobrinho): Adapt this module to support the RGB led.*/
 #endif
 
@@ -40,9 +40,9 @@ void app_main() {
     ESP_ERROR_CHECK(io_init(context));
 #ifdef CONFIG_IDF_TARGET_ESP32
     ESP_ERROR_CHECK(status_init(context));
-    ESP_ERROR_CHECK(lcd_init(context));
     ESP_ERROR_CHECK(display_init(context));
 #endif
+    ESP_ERROR_CHECK(ext_display_init(context));
     ESP_ERROR_CHECK(humidity_pressure_init(context));
     ESP_ERROR_CHECK(ezo_ec_init(context));
     ESP_ERROR_CHECK(ezo_ph_init(context));

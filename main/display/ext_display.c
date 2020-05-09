@@ -2,6 +2,7 @@
 
 #include "driver/gpio.h"
 
+#include "buses.h"
 #include "driver/lcd/lcd.h"
 #include "driver/lcd/rm68090.h"
 #include "embedded.h"
@@ -16,25 +17,11 @@ static lcd_dev_t dev = {
         .config = {
                 .rotation = ROTATION_LANDSCAPE,
                 .data_width = 8,
-#ifdef CONFIG_IDF_TARGET_ESP32
-                .data_io_num = {
-                        GPIO_NUM_23, GPIO_NUM_18, GPIO_NUM_14, GPIO_NUM_27,
-                        GPIO_NUM_26, GPIO_NUM_21, GPIO_NUM_22, GPIO_NUM_19,
-                },
-                .ws_io_num = GPIO_NUM_17,
-                .rs_io_num = GPIO_NUM_12,
-                .rd_io_num = GPIO_NUM_NC,
-                .rst_io_num = GPIO_NUM_NC,
-#else
-                .data_io_num = {
-                        GPIO_NUM_2, GPIO_NUM_1, GPIO_NUM_8, GPIO_NUM_7,
-                        GPIO_NUM_6, GPIO_NUM_5, GPIO_NUM_4, GPIO_NUM_3,
-                },
-                .ws_io_num = GPIO_NUM_38,
-                .rs_io_num = GPIO_NUM_45,
-                .rd_io_num = GPIO_NUM_NC,
-                .rst_io_num = GPIO_NUM_NC,
-#endif
+                .data_io_num = LCD_DATA,
+                .ws_io_num = LCD_WS,
+                .rs_io_num = LCD_RS,
+                .rd_io_num = LCD_RD,
+                .rst_io_num = LCD_RST,
         },
         .device = {
                 .init = rm68090_init,
