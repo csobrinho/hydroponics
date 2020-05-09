@@ -9,9 +9,7 @@
 #define USE_I2S
 #include "./i2s.h"
 #else
-
 #include "./direct.h"
-
 #endif
 
 static const char *TAG = "lcd";
