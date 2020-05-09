@@ -15,7 +15,11 @@ typedef enum {
 } i2c_ack_t;
 
 #define I2C_MASTER_SCL  GPIO_NUM_15
+#ifdef CONFIG_IDF_TARGET_ESP32
 #define I2C_MASTER_SDA  GPIO_NUM_4
+#else
+#define I2C_MASTER_SDA  GPIO_NUM_14
+#endif
 #define OLED_RESET      GPIO_NUM_16
 #define ONE_WRITE_GPIO  CONFIG_ESP_ONE_WIRE_GPIO
 #define ROTARY_DT_GPIO  GPIO_NUM_37
