@@ -3,14 +3,14 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#include "driver/pcnt.h"
+#include "driver/gpio.h"
 
 #include "u8g2.h"
 
 #include "buses.h"
-#include "error.h"
 #include "context.h"
-#include "u8g2_esp32_hal.h"
+#include "driver/lcd/u8g2_esp32_hal.h"
+#include "error.h"
 
 #define I2C_ADDRESS_OLED 0x78  /*!< Slave address for OLED display. */
 

@@ -1,8 +1,3 @@
-#include "i2s_lcd8.h"
-
-#define RM68090_MAX_WIDTH 240
-#define RM68090_MAX_HEIGHT 320
-
 typedef enum {
     RM68090_REG_IR = 0x00,
     RM68090_REG_DRIVER_OUTPUT_CONTROL = 0x01,

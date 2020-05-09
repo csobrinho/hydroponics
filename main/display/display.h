@@ -1,7 +1,7 @@
 #ifndef HYDROPONICS_DISPLAY_DISPLAY_H
 #define HYDROPONICS_DISPLAY_DISPLAY_H
 
-#include "driver/gpio.h"
+#include "esp_err.h"
 
 #include "context.h"
 
