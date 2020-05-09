@@ -48,6 +48,14 @@ const char *enum_from_value(const ProtobufCEnumDescriptor *descriptor, int value
     return "???";
 }
 
+void safe_delay_us(uint32_t delay_us) {
+    if (delay_us * 1000 < portTICK_PERIOD_MS) {
+        ets_delay_us(delay_us);
+        return;
+    }
+    safe_delay_ms(delay_us / 1000);
+}
+
 void safe_delay_ms(uint32_t delay_ms) {
     if (delay_ms < portTICK_PERIOD_MS) {
         ets_delay_us(delay_ms * 1000);
