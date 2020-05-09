@@ -52,6 +52,7 @@ Mkfile.old
 dkms.conf
 
 # Custom
+.DS_Store
 .idea
 build/*
 tmp/*
