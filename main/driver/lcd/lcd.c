@@ -7,9 +7,9 @@
 
 #ifdef CONFIG_IDF_TARGET_ESP32
 #define USE_I2S
-#include "./i2s.h"
+#include "i2s.h"
 #else
-#include "./direct.h"
+#include "direct.h"
 #endif
 
 static const char *TAG = "lcd";
