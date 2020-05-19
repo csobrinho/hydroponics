@@ -26,3 +26,7 @@
 	path = components/esp-ccronexpr
 	url = https://github.com/csobrinho/esp-ccronexpr
 	update = merge
+[submodule "components/ucglib"]
+	path = components/ucglib
+	url = https://github.com/olikraus/ucglib
+	branch = master
