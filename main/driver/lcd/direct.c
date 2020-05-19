@@ -123,6 +123,22 @@ inline void lcd_direct_write_data16(const lcd_dev_t *dev, uint16_t data) {
     lcd_direct_write_data8(dev, data);
 }
 
+void lcd_direct_write_data16n(const lcd_dev_t *dev, uint16_t data, size_t len) {
+    ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL);
+    ARG_ERROR_CHECK(len > 0, ERR_PARAM_LE_ZERO);
+    uint16_t high_mask = data_mask_set[data >> 8];
+    uint16_t low_mask = data_mask_set[data & 0xff];
+    // len represents the len of bytes, not uint16_t.
+    for (int i = 0; i < len / sizeof(uint16_t); ++i) {
+        GPIO.out_w1tc = data_mask_clear;
+        GPIO.out_w1ts = high_mask;
+        WR_STROBE(dev);
+        GPIO.out_w1tc = data_mask_clear;
+        GPIO.out_w1ts = low_mask;
+        WR_STROBE(dev);
+    }
+}
+
 inline void lcd_direct_write_datan(const lcd_dev_t *dev, const uint16_t *buf, size_t len) {
     ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL);
     ARG_ERROR_CHECK(buf != NULL, ERR_PARAM_NULL);

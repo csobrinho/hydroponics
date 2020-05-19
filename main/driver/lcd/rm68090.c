@@ -119,21 +119,8 @@ void rm68090_fill(lcd_dev_t *dev, uint16_t color, uint16_t x1, uint16_t y1, uint
     rm68090_address_set(dev, x1, y1, x2, y2);
     rm68090_prepare_draw(dev);
 
-    uint16_t *tmp = dev->buffer;
     size_t size_remain = (((x2 - x1) + 1) * ((y2 - y1) + 1)) * sizeof(uint16_t);
-    bool filled = false;
-    while (size_remain > 0) {
-        size_t to_write = size_remain >= dev->buffer_len ? dev->buffer_len : size_remain;
-        if (!filled) {
-            for (int i = 0; i < to_write; i += sizeof(uint16_t)) {
-                *tmp++ = color;
-            }
-            filled = true;
-        }
-        LLOG(TAG, "  remaining %d bytes", size_remain);
-        lcd_write_datan(dev, dev->buffer, to_write);
-        size_remain -= to_write;
-    }
+    lcd_write_data16n(dev, color, size_remain);
 }
 
 void rm68090_draw(lcd_dev_t *dev, const uint16_t *buf, uint16_t x, uint16_t y, uint16_t width, uint16_t height) {

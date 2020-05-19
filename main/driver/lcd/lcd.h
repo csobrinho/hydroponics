@@ -5,8 +5,13 @@
 
 #include "esp_log.h"
 
-#define WR_IDLE(d)      gpio_set_level(d->config.ws_io_num, 1)
-#define WR_ACTIVE(d)    gpio_set_level(d->config.ws_io_num, 0)
+#ifdef LCD_CONTROL_LOW
+#define WR_IDLE(d)      GPIO.out_w1ts = (1 << d->config.ws_io_num)
+#define WR_ACTIVE(d)    GPIO.out_w1tc = (1 << d->config.ws_io_num)
+#else
+#define WR_IDLE(d)      GPIO.out1_w1ts.data = (1 << (d->config.ws_io_num - 32))
+#define WR_ACTIVE(d)    GPIO.out1_w1tc.data = (1 << (d->config.ws_io_num - 32))
+#endif
 #define WR_STROBE(d)    WR_ACTIVE(d); WR_IDLE(d)
 #define RD_IDLE(d)      gpio_set_level(d->config.rd_io_num, 1)
 #define RD_ACTIVE(d)    gpio_set_level(d->config.rd_io_num, 0)
@@ -105,6 +110,8 @@ esp_err_t lcd_init_registers(const lcd_dev_t *dev, const uint16_t *table, size_t
 uint16_t lcd_read_reg(const lcd_dev_t *dev, uint16_t cmd);
 
 void lcd_write_data16(const lcd_dev_t *dev, uint16_t data);
+
+void lcd_write_data16n(const lcd_dev_t *dev, uint16_t data, size_t len);
 
 void lcd_write_datan(const lcd_dev_t *dev, const uint16_t *buf, size_t len);
 
