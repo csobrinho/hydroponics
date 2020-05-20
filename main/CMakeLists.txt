@@ -1,5 +1,4 @@
 set(exclude_srcs)
-set(requires "lcd_common")
 
 if (CONFIG_ESP_SIMULATE_SENSORS)
     list(APPEND exclude_srcs
@@ -20,6 +19,7 @@ idf_component_register(
         EMBED_FILES "../firmware/private/ec_private.pem" "embed/hydroponics_logo.bin"
         REQUIRES
         # Internal components.
-        "protos" "bme280" "esp32-ds18b20" "esp32-owb" "esp32-rotary-encoder" "esp-google-iot" "u8g2" "ucglib" "esp-ccronexpr" "${requires}"
+        "protos" "bme280" "esp32-ds18b20" "esp32-owb" "esp32-rotary-encoder" "esp-google-iot" "u8g2" "ucglib"
+        "esp-ccronexpr" "lcd_common"
         # External components.
         "console" "json" "nvs_flash")
