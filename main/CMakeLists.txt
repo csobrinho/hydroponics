@@ -20,6 +20,6 @@ idf_component_register(
         REQUIRES
         # Internal components.
         "protos" "bme280" "esp32-ds18b20" "esp32-owb" "esp32-rotary-encoder" "esp-google-iot" "u8g2" "ucglib"
-        "esp-ccronexpr" "lcd_common"
+        "esp-ccronexpr" "lcd_common" "i2s_parallel"
         # External components.
         "console" "json" "nvs_flash")

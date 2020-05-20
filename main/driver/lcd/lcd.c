@@ -8,6 +8,9 @@
 #ifdef CONFIG_IDF_TARGET_ESP32
 #define USE_I2S
 #include "i2s.h"
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+#define USE_I2S_PARALLEL
+#include "i2s_parallel.h"
 #else
 #include "direct.h"
 #endif
@@ -25,6 +28,8 @@ esp_err_t lcd_init(lcd_dev_t *dev) {
 
 #ifdef USE_I2S
     ESP_ERROR_CHECK(lcd_i2s_init(dev));
+#elif defined(USE_I2S_PARALLEL)
+    ESP_ERROR_CHECK(lcd_i2s_parallel_init(dev));
 #else
     ESP_ERROR_CHECK(lcd_direct_init(dev));
 #endif
@@ -74,6 +79,8 @@ esp_err_t lcd_init_registers(const lcd_dev_t *dev, const uint16_t *table, size_t
 inline void lcd_write_data16(const lcd_dev_t *dev, uint16_t data) {
 #ifdef USE_I2S
     lcd_i2s_write_data16(dev, data);
+#elif defined(USE_I2S_PARALLEL)
+    lcd_i2s_parallel_write_data16(dev, data);
 #else
     lcd_direct_write_data16(dev, data);
 #endif
@@ -82,6 +89,8 @@ inline void lcd_write_data16(const lcd_dev_t *dev, uint16_t data) {
 void lcd_write_data16n(const lcd_dev_t *dev, uint16_t data, size_t len) {
 #ifdef USE_I2S
     lcd_i2s_write_data16n(dev, data);
+#elif defined(USE_I2S_PARALLEL)
+    lcd_i2s_parallel_write_data16n(dev, data, len);
 #else
     lcd_direct_write_data16n(dev, data, len);
 #endif
@@ -90,6 +99,8 @@ void lcd_write_data16n(const lcd_dev_t *dev, uint16_t data, size_t len) {
 inline void lcd_write_datan(const lcd_dev_t *dev, const uint16_t *buf, size_t len) {
 #ifdef USE_I2S
     lcd_i2s_write_datan(dev, buf, len);
+#elif defined(USE_I2S_PARALLEL)
+    lcd_i2s_parallel_write_datan(dev, buf, len);
 #else
     lcd_direct_write_datan(dev, buf, len);
 #endif
