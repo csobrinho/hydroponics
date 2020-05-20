@@ -27,11 +27,11 @@ static ucg_int_t ucg_rm68090_handle_l90fx(ucg_t *ucg) {
                 ucg->arg.pixel.pos.y += ucg->arg.len;
                 return 1;
             case 2: // Left<-
-                lcd_hline(dev, color, ucg->arg.pixel.pos.x - ucg->arg.len, ucg->arg.pixel.pos.y, ucg->arg.len);
+                lcd_hline(dev, color, ucg->arg.pixel.pos.x - ucg->arg.len + 1, ucg->arg.pixel.pos.y, ucg->arg.len);
                 ucg->arg.pixel.pos.x -= ucg->arg.len;
                 return 1;
             case 3: // Up<-
-                lcd_vline(dev, color, ucg->arg.pixel.pos.x, ucg->arg.pixel.pos.y - ucg->arg.len, ucg->arg.len);
+                lcd_vline(dev, color, ucg->arg.pixel.pos.x, ucg->arg.pixel.pos.y - ucg->arg.len + 1, ucg->arg.len);
                 ucg->arg.pixel.pos.y -= ucg->arg.len;
                 return 1;
             case 0: // ->RIGHT
