@@ -87,12 +87,10 @@ void rm68090_address_set(lcd_dev_t *dev, uint16_t x1, uint16_t y1, uint16_t x2, 
 
     lcd_write_reg(dev, dev->registers.mc, x1);
     lcd_write_reg(dev, dev->registers.mp, y1);
-    if (!(x1 == x2 && y1 == y2)) {  // Only need MC,MP for drawPixel.
-        lcd_write_reg(dev, dev->registers.sc, x1);
-        lcd_write_reg(dev, dev->registers.sp, y1);
-        lcd_write_reg(dev, dev->registers.ec, x2);
-        lcd_write_reg(dev, dev->registers.ep, y2);
-    }
+    lcd_write_reg(dev, dev->registers.sc, x1);
+    lcd_write_reg(dev, dev->registers.sp, y1);
+    lcd_write_reg(dev, dev->registers.ec, x2);
+    lcd_write_reg(dev, dev->registers.ep, y2);
 }
 
 void rm68090_draw_pixel(lcd_dev_t *dev, uint16_t color, uint16_t x, uint16_t y) {
@@ -116,6 +114,10 @@ void rm68090_fill(lcd_dev_t *dev, uint16_t color, uint16_t x1, uint16_t y1, uint
     ARG_ERROR_CHECK(x1 <= x2, "x1 > x2");
     ARG_ERROR_CHECK(y1 <= y2, "y1 > y2");
 
+    if (x1 == x2 && y1 == y2) {
+        rm68090_draw_pixel(dev, color, x1, y1);
+        return;
+    }
     rm68090_address_set(dev, x1, y1, x2, y2);
     rm68090_prepare_draw(dev);
 
