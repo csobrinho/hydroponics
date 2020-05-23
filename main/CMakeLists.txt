@@ -13,9 +13,9 @@ else ()
 endif ()
 
 idf_component_register(
-        SRC_DIRS "." "console" "display" "driver" "driver/lcd" "filter" "network" "sensors" "tasks"
+        SRC_DIRS "." "console" "display" "display/screens" "driver" "driver/lcd" "filter" "network" "sensors" "tasks"
         EXCLUDE_SRCS "${exclude_srcs}"
-        INCLUDE_DIRS "." "console" "display" "driver" "driver/lcd" "filter" "network" "sensors" "tasks"
+        INCLUDE_DIRS "." "console" "display" "display/screens" "driver" "driver/lcd" "filter" "network" "sensors" "tasks"
         EMBED_FILES "../firmware/private/ec_private.pem" "embed/hydroponics_logo.bin"
         REQUIRES
         # Internal components.
