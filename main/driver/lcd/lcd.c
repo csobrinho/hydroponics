@@ -102,8 +102,6 @@ inline void lcd_write_cmd(const lcd_dev_t *dev, uint16_t cmd) {
 }
 
 inline void lcd_write_reg(const lcd_dev_t *dev, uint16_t cmd, uint16_t data) {
-    ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL);
-
     LLOG(TAG, "[%s] cmd: 0x%04x data: 0x%04x", __FUNCTION__, cmd, data);
     lcd_write_cmd(dev, cmd);
     lcd_write_data16(dev, data);
@@ -122,14 +120,19 @@ inline void lcd_fill(lcd_dev_t *dev, uint16_t color, uint16_t x1, uint16_t y1, u
     dev->device.fill(dev, color, x1, y1, x2, y2);
 }
 
+inline void lcd_fill_wh(lcd_dev_t *dev, uint16_t color, uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
+    if (width <= 0 || height <= 0) return;
+    lcd_fill(dev, color, x, y, x + width - 1, y + height - 1);
+}
+
 inline void lcd_hline(lcd_dev_t *dev, uint16_t color, uint16_t x, uint16_t y, uint16_t width) {
     if (width <= 0) return;
-    lcd_fill(dev, color, x, y, x + width, y);
+    lcd_fill(dev, color, x, y, x + width - 1, y);
 }
 
 inline void lcd_vline(lcd_dev_t *dev, uint16_t color, uint16_t x, uint16_t y, uint16_t height) {
     if (height <= 0) return;
-    lcd_fill(dev, color, x, y, x, y + height);
+    lcd_fill(dev, color, x, y, x, y + height - 1);
 }
 
 // Adapted from http://www.edepot.com/linee.html
@@ -187,18 +190,14 @@ void lcd_line(lcd_dev_t *dev, uint16_t color, int32_t x, int32_t y, int32_t x2, 
 
 void lcd_rect(lcd_dev_t *dev, uint16_t color, uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
     if (width == 0 || height == 0) return;
-    if (width == 1) {
-        lcd_vline(dev, color, x, y, height);
-        return;
-    }
-    if (height == 1) {
-        lcd_hline(dev, color, x, y, width);
+    if (width <= 2 || height <= 2) {
+        lcd_fill_wh(dev, color, x, y, width, height);
         return;
     }
     lcd_hline(dev, color, x, y, width);
-    lcd_hline(dev, color, x, y + height, width);
+    lcd_hline(dev, color, x, y + height - 1, width);
     lcd_vline(dev, color, x, y + 1, height - 2);
-    lcd_vline(dev, color, x + width, y + 1, height - 2);
+    lcd_vline(dev, color, x + width - 1, y + 1, height - 2);
 }
 
 void lcd_draw(lcd_dev_t *dev, const uint16_t *img, uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
@@ -223,4 +222,14 @@ inline uint16_t lcd_width(const lcd_dev_t *dev) {
 
 inline uint16_t lcd_height(const lcd_dev_t *dev) {
     return dev->registers.height;
+}
+
+inline uint16_t lcd_rgb565(uint8_t r, uint8_t g, uint8_t b) {
+    return (((r >> 3) & 0b00011111) << 11)  // Red
+           | (((g >> 2) & 0b00111111) << 5) // Green
+           | ((b >> 3) & 0b00011111);       // Blue
+}
+
+inline uint16_t lcd_rgb565s(const lcd_rgb_t color) {
+    return lcd_rgb565(color.r, color.g, color.b);
 }
