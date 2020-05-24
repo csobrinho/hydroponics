@@ -57,6 +57,10 @@ typedef enum {
     LCD_COLOR_WHITE = 0xFFFF,
 } lcd_color_t;
 
+typedef struct {
+    uint8_t r, g, b;
+} lcd_rgb_t;
+
 typedef void *lcd_dev_handle_t;
 
 typedef struct lcd_dev lcd_dev_t;
@@ -125,6 +129,8 @@ void lcd_clear(lcd_dev_t *dev, uint16_t color);
 
 void lcd_fill(lcd_dev_t *dev, uint16_t color, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
 
+void lcd_fill_wh(lcd_dev_t *dev, uint16_t color, uint16_t x, uint16_t y, uint16_t width, uint16_t height);
+
 void lcd_hline(lcd_dev_t *dev, uint16_t color, uint16_t x, uint16_t y, uint16_t width);
 
 void lcd_vline(lcd_dev_t *dev, uint16_t color, uint16_t x, uint16_t y, uint16_t height);
@@ -146,5 +152,9 @@ esp_err_t lcd_invert_display(lcd_dev_t *dev, bool reverse);
 uint16_t lcd_width(const lcd_dev_t *dev);
 
 uint16_t lcd_height(const lcd_dev_t *dev);
+
+uint16_t lcd_rgb565(uint8_t r, uint8_t g, uint8_t b);
+
+uint16_t lcd_rgb565s(lcd_rgb_t color);
 
 #endif //HYDROPONICS_DRIVER_LCD_LCD_H

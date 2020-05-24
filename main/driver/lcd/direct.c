@@ -124,7 +124,6 @@ inline void lcd_direct_write_data16(const lcd_dev_t *dev, uint16_t data) {
 }
 
 void lcd_direct_write_data16n(const lcd_dev_t *dev, uint16_t data, size_t len) {
-    ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL);
     ARG_ERROR_CHECK(len > 0, ERR_PARAM_LE_ZERO);
     uint16_t high_mask = data_mask_set[data >> 8];
     uint16_t low_mask = data_mask_set[data & 0xff];
@@ -140,7 +139,6 @@ void lcd_direct_write_data16n(const lcd_dev_t *dev, uint16_t data, size_t len) {
 }
 
 inline void lcd_direct_write_datan(const lcd_dev_t *dev, const uint16_t *buf, size_t len) {
-    ARG_ERROR_CHECK(dev != NULL, ERR_PARAM_NULL);
     ARG_ERROR_CHECK(buf != NULL, ERR_PARAM_NULL);
     ARG_ERROR_CHECK(len > 0, ERR_PARAM_LE_ZERO);
 

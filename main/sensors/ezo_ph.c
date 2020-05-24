@@ -19,8 +19,8 @@ static ezo_sensor_t ph = {
         .delay_calibration_ms = EZO_DELAY_MS_SLOWEST,
         .calibration = EZO_CALIBRATION_MODE_THREE_POINTS,
 #ifdef CONFIG_ESP_SIMULATE_SENSORS
-        .simulate = 6.3f,
-        .threshold = 0.1f,
+        .simulate = 5.7f,
+        .threshold = 0.05f,
 #endif
 };
 

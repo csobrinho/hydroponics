@@ -11,15 +11,9 @@
 
 static const char *TAG = "ucg_rm68090_hal";
 
-static inline uint16_t rgb565(const uint8_t color[3]) {
-    return ((((color[0]) >> 3) & 0b00011111) << 11)  // Red
-           | ((((color[1]) >> 2) & 0b00111111) << 5) // Green
-           | (((color[2]) >> 3) & 0b00011111);       // Blue
-}
-
 static ucg_int_t ucg_rm68090_handle_l90fx(ucg_t *ucg) {
     lcd_dev_t *dev = HANDLE(ucg);
-    uint16_t color = rgb565(ucg->arg.pixel.rgb.color);
+    uint16_t color = lcd_rgb565(ucg->arg.pixel.rgb.color[0], ucg->arg.pixel.rgb.color[1], ucg->arg.pixel.rgb.color[2]);
     if (ucg_clip_l90fx(ucg) != 0) {
         switch (ucg->arg.dir) {
             case 1: // ->Down
@@ -27,11 +21,11 @@ static ucg_int_t ucg_rm68090_handle_l90fx(ucg_t *ucg) {
                 ucg->arg.pixel.pos.y += ucg->arg.len;
                 return 1;
             case 2: // Left<-
-                lcd_hline(dev, color, ucg->arg.pixel.pos.x - ucg->arg.len, ucg->arg.pixel.pos.y, ucg->arg.len);
+                lcd_hline(dev, color, ucg->arg.pixel.pos.x - ucg->arg.len + 1, ucg->arg.pixel.pos.y, ucg->arg.len);
                 ucg->arg.pixel.pos.x -= ucg->arg.len;
                 return 1;
             case 3: // Up<-
-                lcd_vline(dev, color, ucg->arg.pixel.pos.x, ucg->arg.pixel.pos.y - ucg->arg.len, ucg->arg.len);
+                lcd_vline(dev, color, ucg->arg.pixel.pos.x, ucg->arg.pixel.pos.y - ucg->arg.len + 1, ucg->arg.len);
                 ucg->arg.pixel.pos.y -= ucg->arg.len;
                 return 1;
             case 0: // ->RIGHT
@@ -60,7 +54,8 @@ static ucg_int_t ucg_rm68090_device(ucg_t *ucg, ucg_int_t msg, void *data) {
         case UCG_MSG_DRAW_PIXEL:
             if (ucg_clip_is_pixel_visible(ucg)) {
                 lcd_dev_t *dev = HANDLE(ucg);
-                uint16_t color = rgb565(ucg->arg.pixel.rgb.color);
+                uint16_t color = lcd_rgb565(ucg->arg.pixel.rgb.color[0], ucg->arg.pixel.rgb.color[1],
+                                            ucg->arg.pixel.rgb.color[2]);
                 lcd_draw_pixel(dev, color, ucg->arg.pixel.pos.x, ucg->arg.pixel.pos.y);
             }
             return 1;
