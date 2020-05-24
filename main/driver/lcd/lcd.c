@@ -81,7 +81,7 @@ inline void lcd_write_data16(const lcd_dev_t *dev, uint16_t data) {
 
 void lcd_write_data16n(const lcd_dev_t *dev, uint16_t data, size_t len) {
 #ifdef USE_I2S
-    lcd_i2s_write_data16n(dev, data);
+    lcd_i2s_write_data16n(dev, data, len);
 #else
     lcd_direct_write_data16n(dev, data, len);
 #endif
