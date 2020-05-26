@@ -18,6 +18,7 @@ static ucg_t ucg = {0};
 static lcd_dev_t dev = {
         .id = RM68090_ID,
         .config = {
+                .screen = RM68090_MAX_WIDTH * RM68090_MAX_HEIGHT * 2,
                 .rotation = ROTATION_PORTRAIT,
                 .data_width = 8,
                 .data_io_num = LCD_DATA,
