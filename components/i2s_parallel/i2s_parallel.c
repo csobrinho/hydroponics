@@ -18,8 +18,15 @@
 
 static i2s_parallel_pin_config_t i2s_parallel_bus;
 
-#define DMA_MAX 64
-static lldesc_t __dma[DMA_MAX] = {0};
+#define DMA_SIZE_MAX 4000
+#define DMA_LLDESC_MAX 64
+
+typedef enum {
+    BUFFER_POLICY_INCREMENT = 0,
+    BUFFER_POLICY_REUSE = 1,
+} buffer_policy_t;
+
+static lldesc_t dma[DMA_LLDESC_MAX] = {0};
 static SemaphoreHandle_t tx_sem = NULL;
 static uint8_t *i2s_parallel_buffer = NULL;
 
@@ -34,7 +41,7 @@ static void i2s_parallel_config(uint32_t clk_div)
     I2S0.clkm_conf.val = 0;
     I2S0.clkm_conf.clkm_div_num = 2;
     I2S0.clkm_conf.clkm_div_b = 0;
-    I2S0.clkm_conf.clkm_div_a =63;
+    I2S0.clkm_conf.clkm_div_a = 63;
     I2S0.clkm_conf.clk_en = 1;
     I2S0.clkm_conf.clk_sel = 2;
     I2S0.sample_rate_conf.val = 0;
@@ -74,11 +81,12 @@ static void i2s_parallel_set_pin(void)
     gpio_set_pull_mode(i2s_parallel_bus.pin_clk,GPIO_PULLUP_ONLY);
     gpio_matrix_out(i2s_parallel_bus.pin_clk, I2S0O_WS_OUT_IDX, true, 0);
 
-    for(int i = 0; i < i2s_parallel_bus.bit_width; i++) {
-        PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[i2s_parallel_bus.data[i]], PIN_FUNC_GPIO);
-        gpio_set_direction(i2s_parallel_bus.data[i], GPIO_MODE_OUTPUT);
-        gpio_set_pull_mode(i2s_parallel_bus.data[i],GPIO_PULLUP_ONLY);
-        gpio_matrix_out(i2s_parallel_bus.data[i], I2S0O_DATA_OUT0_IDX + i, false, 0);
+    for (int i = 0; i < i2s_parallel_bus.bit_width; i++) {
+        gpio_num_t pin = i2s_parallel_bus.data[i];
+        PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[pin], PIN_FUNC_GPIO);
+        gpio_set_direction(pin, GPIO_MODE_OUTPUT);
+        gpio_set_pull_mode(pin, GPIO_PULLUP_ONLY);
+        gpio_matrix_out(pin, I2S0O_DATA_OUT23_IDX - (i2s_parallel_bus.bit_width - 1) + i, false, 0);
     }
 }
 
@@ -96,14 +104,14 @@ static void IRAM_ATTR _i2s_isr(void *arg)
 
 static void i2s_parallel_interface_init(uint32_t clk_div)
 {
-    for(int i = 0; i < DMA_MAX; i++) {
-        __dma[i].size = 0;
-        __dma[i].length = 0;
-        __dma[i].sosf = 0;
-        __dma[i].eof = 1;
-        __dma[i].owner = 1;
-        __dma[i].buf = NULL;
-        __dma[i].empty = 0;
+    for(int i = 0; i < DMA_LLDESC_MAX; i++) {
+        dma[i].size = 0;
+        dma[i].length = 0;
+        dma[i].sosf = 0;
+        dma[i].eof = 1;
+        dma[i].owner = 1;
+        dma[i].buf = NULL;
+        dma[i].empty = 0;
     }
     i2s_parallel_set_pin();
     i2s_parallel_config(clk_div);
@@ -125,70 +133,64 @@ static inline void i2s_dma_start(void)
     I2S0.conf.tx_reset = 0;
 }
 
-static inline void i2s_parallel_dma_write(const uint8_t *buf, size_t length)
+static inline void i2s_parallel_dma_write(const uint8_t *buf, size_t length, buffer_policy_t policy)
 {
     int len = length;
     int trans_len = 0;
     int cnt = 0;
     while(len) {
-        trans_len = len > 4000 ? 4000 : len;
-        __dma[cnt].size = trans_len;
-        __dma[cnt].length = trans_len;
-        __dma[cnt].buf = buf;
-        __dma[cnt].eof = 0;
-        __dma[cnt].empty = (uint32_t) &__dma[cnt+1];
-        buf += trans_len;
+        trans_len = len > DMA_SIZE_MAX ? DMA_SIZE_MAX : len;
+        dma[cnt].size = trans_len;
+        dma[cnt].length = trans_len;
+        dma[cnt].buf = buf;
+        dma[cnt].eof = 0;
+        dma[cnt].empty = (uint32_t) &dma[cnt + 1];
+        if (policy == BUFFER_POLICY_INCREMENT) {
+            buf += trans_len;
+        }
         len -= trans_len;
         cnt++;
     }
-    __dma[cnt-1].eof = 1;
-    __dma[cnt-1].empty = 0;
-    I2S0.out_link.addr = ((uint32_t)&__dma[0]) & 0xfffff;
+    dma[cnt - 1].eof = 1;
+    dma[cnt - 1].empty = 0;
+    I2S0.out_link.addr = ((uint32_t)&dma[0]) & 0xfffff;
     i2s_dma_start();
 }
 
-void i2s_parallel_write_data(uint8_t *data, size_t len)
+void i2s_parallel_write_data(const uint8_t *data, size_t len)
 {
-#ifdef I2S_PARALLEL_BURST_BUFFER_SIZE
-    for (int x = 0; x < len / I2S_PARALLEL_BURST_BUFFER_SIZE; x++) {
-        memcpy(i2s_parallel_buffer, data, I2S_PARALLEL_BURST_BUFFER_SIZE);
-        i2s_parallel_dma_write(i2s_parallel_buffer, I2S_PARALLEL_BURST_BUFFER_SIZE);
-        data += I2S_PARALLEL_BURST_BUFFER_SIZE;
+    for (int x = 0; x < len / DMA_SIZE_MAX; x++) {
+        memcpy(i2s_parallel_buffer, data, DMA_SIZE_MAX);
+        i2s_parallel_dma_write(i2s_parallel_buffer, DMA_SIZE_MAX, BUFFER_POLICY_INCREMENT);
+        data += DMA_SIZE_MAX;
     }
-    if (len % I2S_PARALLEL_BURST_BUFFER_SIZE) {
-        memcpy(i2s_parallel_buffer, data, len % I2S_PARALLEL_BURST_BUFFER_SIZE);
-        i2s_parallel_dma_write(i2s_parallel_buffer, len % I2S_PARALLEL_BURST_BUFFER_SIZE);
+    if (len % DMA_SIZE_MAX) {
+        memcpy(i2s_parallel_buffer, data, len % DMA_SIZE_MAX);
+        i2s_parallel_dma_write(i2s_parallel_buffer, len % DMA_SIZE_MAX, BUFFER_POLICY_INCREMENT);
     }
-#else
-    i2s_parallel_dma_write((uint8_t *)data, len);
-#endif
 }
 
-void i2s_parallel_init(i2s_parallel_pin_config_t *pin_config, uint32_t clk_div)
+void i2s_parallel_init(const i2s_parallel_pin_config_t *pin_config, uint32_t clk_div)
 {
     if (pin_config == NULL) {
         return;
     }
     i2s_parallel_bus = *pin_config;
-#ifdef I2S_PARALLEL_BURST_BUFFER_SIZE
-    i2s_parallel_buffer = (uint8_t *)heap_caps_malloc(I2S_PARALLEL_BURST_BUFFER_SIZE, MALLOC_CAP_DMA);
-#endif
+    i2s_parallel_buffer = (uint8_t *) heap_caps_malloc(DMA_SIZE_MAX, MALLOC_CAP_DMA);
     i2s_parallel_interface_init(clk_div);
 }
 
 void i2s_parallel_write_data16n(uint16_t data, size_t len)
 {
-    uint16_t *tmp = (uint16_t *) i2s_parallel_buffer;
-    bool filled = false;
-    while (len > 0) {
-        size_t to_write = len >= I2S_PARALLEL_BURST_BUFFER_SIZE ? I2S_PARALLEL_BURST_BUFFER_SIZE : len;
-        if (!filled) {
-            for (int i = 0; i < to_write; i += sizeof(uint16_t)) {
-                *tmp++ = data;
-            }
-            filled = true;
+    size_t to_fill = len >= DMA_SIZE_MAX ? DMA_SIZE_MAX : len;
+    // Fill the buffer with the data.
+    if ((data & 0xff) == (data >> 8)) {
+        memset(i2s_parallel_buffer, data, to_fill);
+    } else {
+        uint16_t *tmp = (uint16_t *) i2s_parallel_buffer;
+        for (int i = 0; i < to_fill; i += sizeof(uint16_t)) {
+            *tmp++ = (data >> 8) | ((data & 0xFF) << 8);
         }
-        i2s_parallel_dma_write(i2s_parallel_buffer, to_write);
-        len -= to_write;
     }
+    i2s_parallel_dma_write(i2s_parallel_buffer, len, BUFFER_POLICY_REUSE);
 }
