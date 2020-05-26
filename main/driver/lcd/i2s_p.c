@@ -46,7 +46,7 @@ esp_err_t lcd_i2s_parallel_init(lcd_dev_t *dev) {
         lcd_conf->data[i] = dev->config.data_io_num[i];
     }
     lcd_conf->pin_clk = dev->config.ws_io_num;
-    i2s_parallel_init(lcd_conf, 4);
+    i2s_parallel_init(lcd_conf, 2);
     return ESP_OK;
 }
 
@@ -65,5 +65,5 @@ inline void lcd_i2s_parallel_write_datan(const lcd_dev_t *dev, const uint16_t *b
     ARG_ERROR_CHECK(buf != NULL, ERR_PARAM_NULL);
     ARG_ERROR_CHECK(len > 0, ERR_PARAM_LE_ZERO);
     LLOG(TAG, "[%s] buf: %p len: %2d", __FUNCTION__, buf, len);
-    i2s_parallel_write_data((uint8_t *) buf, len);
+    i2s_parallel_write_data((const uint8_t *) buf, len);
 }

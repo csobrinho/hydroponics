@@ -24,7 +24,6 @@
 // #define LLOG(args...) ESP_LOGD(args)
 #define LLOG(args...)    do {} while (0)
 
-#define LCD_BUFFER_SIZE 2000   // In uint32_t blocks.
 #define LCD_CMD_DELAY   0xFFFF // Used to add a delay inside the 'lcd_init_registers'.
 
 typedef enum {
@@ -37,6 +36,7 @@ typedef enum {
 } rotation_t;
 
 typedef const struct {
+    size_t screen;              /*!< Screen size in bytes necessary to refresh a full frame */
     gpio_num_t data_width;      /*!< Parallel data width, 16bit or 8bit available */
     gpio_num_t data_io_num[16]; /*!< Parallel data output IO*/
     gpio_num_t ws_io_num;       /*!< write clk io */

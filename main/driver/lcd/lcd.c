@@ -7,10 +7,12 @@
 
 #ifdef CONFIG_IDF_TARGET_ESP32
 #define USE_I2S
+#include "esp_heap_caps.h"
 #include "i2s.h"
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
 #define USE_I2S_PARALLEL
-#include "i2s_parallel.h"
+
+#include "i2s_p.h"
 #else
 #include "direct.h"
 #endif
@@ -19,11 +21,16 @@ static const char *TAG = "lcd";
 
 esp_err_t lcd_init(lcd_dev_t *dev) {
     ARG_CHECK(dev != NULL, ERR_PARAM_NULL);
-    dev->buffer_len = sizeof(uint32_t) * LCD_BUFFER_SIZE;
-    dev->buffer = calloc(1, dev->buffer_len);
+#ifdef USE_I2S
+    dev->buffer_len = dev->config.screen / 32;
+    dev->buffer = heap_caps_aligned_calloc(sizeof(uint32_t), 1, dev->buffer_len, MALLOC_CAP_DMA);
     if (!dev->buffer) {
         return ESP_ERR_NO_MEM;
     }
+#else
+    dev->buffer_len = 0;
+    dev->buffer = NULL;
+#endif
     dev->rotation = ROTATION_UNKNOWN;
 
 #ifdef USE_I2S
