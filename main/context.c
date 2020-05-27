@@ -154,7 +154,8 @@ esp_err_t context_set_network_connected(context_t *context, bool connected) {
 
 esp_err_t context_set_network_error(context_t *context, bool error) {
     ARG_CHECK(context != NULL, ERR_PARAM_NULL);
-    context_set_flags(context, error, CONTEXT_EVENT_NETWORK_ERROR);
+    ESP_LOGW(TAG, "context_set_network_error val: %s is disabled for now", error ? "true" : "false");
+    // context_set_flags(context, error, CONTEXT_EVENT_NETWORK_ERROR);
     return ESP_OK;
 }
 
