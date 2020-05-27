@@ -12,9 +12,10 @@
 #include "lcd.h"
 #include "utils.h"
 
+#define MAX_VALUES 2
 typedef struct log {
     time_t timestamp;
-    float value;
+    float values[MAX_VALUES];
     TAILQ_ENTRY(log) next;
 } log_t;
 typedef TAILQ_HEAD(log_head, log) log_head_t;
@@ -22,9 +23,11 @@ typedef TAILQ_HEAD(log_head, log) log_head_t;
 static const char *TAG = "ext_main";
 
 static const lcd_rgb_t COLOR_BACKGROUND = {0x3f, 0x3c, 0x49};
-static const lcd_rgb_t COLOR_PRIMARY1 = {0x58, 0xa0, 0xfd};
-static const lcd_rgb_t COLOR_PRIMARY2 = {0xff, 0x6c, 0x4b};
-static const lcd_rgb_t COLOR_PRIMARY3 = {0x86, 0xdd, 0xbd};
+static const lcd_rgb_t COLOR_PRIMARY[] = {
+        {0x58, 0xa0, 0xfd}, // COLOR_PRIMARY1
+        {0xff, 0x6c, 0x4b}, // COLOR_PRIMARY2
+        {0x86, 0xdd, 0xbd}, // COLOR_PRIMARY3
+};
 static const lcd_rgb_t COLOR_TEXT = {0xfb, 0xfc, 0xfb};
 static const lcd_rgb_t COLOR_ACTIVE = {0xae, 0xa6, 0xcb};
 static const lcd_rgb_t COLOR_INACTIVE = {0x63, 0x5e, 0x73};
@@ -64,45 +67,58 @@ static const char *render_time(void) {
     return buf;
 }
 
-static void draw_graph(ucg_t *ucg) {
+static void draw_graph_frame(ucg_t *ucg) {
     ucg_SetColor(ucg, 0, COLOR_INACTIVE.r, COLOR_INACTIVE.g, COLOR_INACTIVE.b);
-    ucg_DrawVLine(ucg, 30, 89, 124);
-    ucg_DrawVLine(ucg, 280, 89, 124);
-    ucg_DrawHLine(ucg, 27, 208, 257);
+    ucg_DrawVLine(ucg, 30, 89, 122);
+    ucg_DrawVLine(ucg, 280, 89, 122);
+    ucg_DrawHLine(ucg, 30, 210, 250);
 
     ucg_SetFont(ucg, ucg_font_helvR08_tr);
-    ucg_SetColor(ucg, 0, COLOR_PRIMARY1.r, COLOR_PRIMARY1.g, COLOR_PRIMARY1.b);
+    ucg_SetColor(ucg, 0, COLOR_PRIMARY[0].r, COLOR_PRIMARY[0].g, COLOR_PRIMARY[0].b);
     ucg_DrawString(ucg, 9, 100, 0, "6.0");
     ucg_DrawString(ucg, 9, 150, 0, "5.5");
     ucg_DrawString(ucg, 9, 200, 0, "5.0");
 
-    ucg_SetColor(ucg, 0, COLOR_PRIMARY2.r, COLOR_PRIMARY2.g, COLOR_PRIMARY2.b);
+    ucg_SetColor(ucg, 0, COLOR_PRIMARY[1].r, COLOR_PRIMARY[1].g, COLOR_PRIMARY[1].b);
     ucg_DrawString(ucg, 287, 100, 0, "2000");
     ucg_DrawString(ucg, 287, 150, 0, "1750");
     ucg_DrawString(ucg, 287, 200, 0, "1500");
+}
 
-    ucg_SetColor(ucg, 0, COLOR_PRIMARY1.r, COLOR_PRIMARY1.g, COLOR_PRIMARY1.b);
-    lerp_t mxb = lerp(6.f, 5.f, 100.f, 196.f);
-    log_t *e = NULL;
-    log_t *tmp = NULL;
-    uint16_t x = 280;
-    int16_t y_prev = -1;
-    TAILQ_FOREACH_SAFE(e, &head, next, tmp) {
-        if (CONTEXT_VALUE_IS_VALID(e->value)) {
-            uint16_t y = (uint16_t) (mxb.m * e->value + mxb.b);
-            y = clamp(y, 89, 207);
-            if (y_prev == -1) {
-                ucg_DrawBox(ucg, x - 1, y - 1, 3, 3);
-            } else {
-                ucg_DrawLine(ucg, x, y, x + 2, y_prev);
+static void draw_graph(ucg_t *ucg) {
+    ucg_SetColor(ucg, 0, COLOR_BACKGROUND.r, COLOR_BACKGROUND.g, COLOR_BACKGROUND.b);
+    ucg_DrawBox(ucg, 31, 89, 280 - 30 + 2, 208 - 89 + 1);
+    ucg_SetColor(ucg, 0, COLOR_INACTIVE.r, COLOR_INACTIVE.g, COLOR_INACTIVE.b);
+    ucg_DrawVLine(ucg, 280, 89, 122);
+
+    lerp_t mxb[MAX_VALUES] = {
+            lerp(6.f, 5.f, 100.f, 196.f),
+            lerp(2000.f, 1500.f, 100.f, 196.f),
+    };
+    for (int i = 0; i < MAX_VALUES; ++i) {
+        ucg_SetColor(ucg, 0, COLOR_PRIMARY[i].r, COLOR_PRIMARY[i].g, COLOR_PRIMARY[i].b);
+        log_t *e = NULL;
+        log_t *tmp = NULL;
+        uint16_t x = 280;
+        int16_t y_prev = -1;
+        TAILQ_FOREACH_SAFE(e, &head, next, tmp) {
+            if (CONTEXT_VALUE_IS_VALID(e->values[i])) {
+                uint16_t y = (uint16_t) (mxb[i].m * e->values[i] + mxb[i].b);
+                y = clamp(y, 89, 207);
+                if (y_prev == -1) {
+                    ucg_DrawBox(ucg, x - 1, y - 1, 3, 3);
+                } else {
+                    ucg_DrawLine(ucg, x, y, x + 2, y_prev);
+                }
+                y_prev = y;
             }
-            y_prev = y;
+            if (x > 32) {
+                x -= 2;
+                continue;
+            }
+            TAILQ_REMOVE(&head, e, next);
+            SAFE_FREE(e);
         }
-        if (x > 32) {
-            x -= 2;
-            continue;
-        }
-        TAILQ_REMOVE(&head, e, next);
     }
 }
 
@@ -133,6 +149,11 @@ static void draw_wifi(ucg_t *ucg, uint16_t x, uint16_t y) {
 
 static void draw_statusbar(ucg_t *ucg) {
     ucg_SetFont(ucg, ucg_font_helvB12_tr);
+    uint8_t font_height = ucg_GetFontCapitalAHeight(ucg);
+
+    ucg_SetColor(ucg, 0, COLOR_BACKGROUND.r, COLOR_BACKGROUND.g, COLOR_BACKGROUND.b);
+    ucg_DrawBox(ucg, 250, 18 - font_height, ucg_GetWidth(ucg) - 253, font_height);
+
     ucg_SetColor(ucg, 0, COLOR_TEXT.r, COLOR_TEXT.g, COLOR_TEXT.b);
     ucg_DrawString(ucg, 274, 18, 0, render_time());
     draw_wifi(ucg, 253, 6);
@@ -153,36 +174,41 @@ static void draw_values(context_t *context, ucg_t *ucg) {
     float temp = context->sensors.temp.probe;
     context_unlock(context);
 
-    // TODO(sobrinho): Cleanup.
     log_t *entry = calloc(1, sizeof(log_t));
     entry->timestamp = time(NULL);
-    entry->value = ph;
+    entry->values[0] = ph;
+    entry->values[1] = ec;
     TAILQ_INSERT_HEAD(&head, entry, next);
 
     ucg_SetFont(ucg, ucg_font_helvB18_tr);
-    ucg_SetColor(ucg, 0, COLOR_PRIMARY1.r, COLOR_PRIMARY1.g, COLOR_PRIMARY1.b);
+    ucg_SetColor(ucg, 0, COLOR_BACKGROUND.r, COLOR_BACKGROUND.g, COLOR_BACKGROUND.b);
+    uint8_t font_height = ucg_GetFontCapitalAHeight(ucg);
+    ucg_DrawBox(ucg, 32, 70 - font_height, 3 * COLUMN - 6, font_height);
+
+    ucg_SetColor(ucg, 0, COLOR_PRIMARY[0].r, COLOR_PRIMARY[0].g, COLOR_PRIMARY[0].b);
     ucg_DrawString(ucg, 32, 70, 0, render_value("%.2f", ph, "??"));
 
-    ucg_SetColor(ucg, 0, COLOR_PRIMARY2.r, COLOR_PRIMARY2.g, COLOR_PRIMARY2.b);
+    ucg_SetColor(ucg, 0, COLOR_PRIMARY[1].r, COLOR_PRIMARY[1].g, COLOR_PRIMARY[1].b);
     ucg_DrawString(ucg, 32 + COLUMN, 70, 0, render_value("%.f", ec, "??"));
 
-    ucg_SetColor(ucg, 0, COLOR_PRIMARY3.r, COLOR_PRIMARY3.g, COLOR_PRIMARY3.b);
+    ucg_SetColor(ucg, 0, COLOR_PRIMARY[2].r, COLOR_PRIMARY[2].g, COLOR_PRIMARY[2].b);
     ucg_DrawString(ucg, 32 + 2 * COLUMN, 70, 0, render_value("%.1f", temp, "??"));
 }
 
-esp_err_t ext_main_init(context_t *context) {
+esp_err_t ext_main_init(context_t *context, lcd_dev_t *dev, ucg_t *ucg) {
     ARG_UNUSED(context);
     TAILQ_INIT(&head);
+
+    lcd_clear(dev, lcd_rgb565s(COLOR_BACKGROUND));
+    draw_labels(ucg);
+    draw_indicators(ucg);
+    draw_graph_frame(ucg);
 
     return ESP_OK;
 }
 
-esp_err_t ext_main_draw(context_t *context, lcd_dev_t *dev, ucg_t *ucg) {
-    lcd_clear(dev, lcd_rgb565s(COLOR_BACKGROUND));
-
-    draw_labels(ucg);
+esp_err_t ext_main_draw(context_t *context, ucg_t *ucg) {
     draw_values(context, ucg);
-    draw_indicators(ucg);
     draw_graph(ucg);
     draw_statusbar(ucg);
 

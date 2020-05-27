@@ -45,11 +45,11 @@ static void ext_display_task(void *arg) {
 
     ESP_ERROR_CHECK(lcd_init(&dev));
     ESP_ERROR_CHECK(ucg_rm68090_init(&dev, &ucg));
-    ESP_ERROR_CHECK(ext_main_init(context));
+    ESP_ERROR_CHECK(ext_main_init(context, &dev, &ucg));
 
     while (1) {
-        ESP_ERROR_CHECK(ext_main_draw(context, &dev, &ucg));
-        vTaskDelay(pdMS_TO_TICKS(2000));
+        ESP_ERROR_CHECK(ext_main_draw(context, &ucg));
+        vTaskDelay(pdMS_TO_TICKS(1500));
     }
 }
 
