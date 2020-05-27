@@ -207,7 +207,7 @@ esp_err_t cron_init(context_t *context) {
     }
     TAILQ_INIT(&cron_job_head);
 
-    xTaskCreatePinnedToCore(cron_task, "cron", 4096, context, tskIDLE_PRIORITY + 3, NULL, tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(cron_task, "cron", 4096, context, configMAX_PRIORITIES - 5, NULL, tskNO_AFFINITY);
     return ESP_OK;
 }
 
