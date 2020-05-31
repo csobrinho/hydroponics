@@ -5,6 +5,7 @@
 #include "error.h"
 #include "lcd.h"
 #include "rm68090.h"
+#include "ucg_rm68090_hal.h"
 #include "utils.h"
 
 #define HANDLE(d) ((lcd_dev_t*)(d->user_ptr))

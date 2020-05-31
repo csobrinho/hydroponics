@@ -1,5 +1,5 @@
-#ifndef HYDROPONICS_DISPLAY_RM68090_H
-#define HYDROPONICS_DISPLAY_RM68090_H
+#ifndef HYDROPONICS_LCD_DEV_RM68090_H
+#define HYDROPONICS_LCD_DEV_RM68090_H
 
 #include "lcd.h"
 
@@ -27,4 +27,4 @@ esp_err_t rm68090_vertical_scroll(lcd_dev_t *dev, int16_t top, int16_t scroll_li
 
 esp_err_t rm68090_invert_display(lcd_dev_t *dev, bool reverse);
 
-#endif //HYDROPONICS_DISPLAY_RM68090_H
+#endif //HYDROPONICS_LCD_DEV_RM68090_H

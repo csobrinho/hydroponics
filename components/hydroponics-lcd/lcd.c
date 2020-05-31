@@ -1,45 +1,20 @@
+#include <string.h>
+
 #include "driver/gpio.h"
 #include "esp_err.h"
 
 #include "error.h"
 #include "lcd.h"
+#include "lcd_driver.h"
 #include "utils.h"
-
-#ifdef CONFIG_IDF_TARGET_ESP32
-#define USE_I2S
-#include "esp_heap_caps.h"
-#include "i2s.h"
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
-#define USE_I2S_PARALLEL
-
-#include "i2s_p.h"
-#else
-#include "direct.h"
-#endif
 
 static const char *TAG = "lcd";
 
 esp_err_t lcd_init(lcd_dev_t *dev) {
     ARG_CHECK(dev != NULL, ERR_PARAM_NULL);
-#ifdef USE_I2S
-    dev->buffer_len = dev->config.screen / 32;
-    dev->buffer = heap_caps_calloc(1, dev->buffer_len, MALLOC_CAP_DMA);
-    if (!dev->buffer) {
-        return ESP_ERR_NO_MEM;
-    }
-#else
-    dev->buffer_len = 0;
-    dev->buffer = NULL;
-#endif
     dev->rotation = ROTATION_UNKNOWN;
 
-#ifdef USE_I2S
-    ESP_ERROR_CHECK(lcd_i2s_init(dev));
-#elif defined(USE_I2S_PARALLEL)
-    ESP_ERROR_CHECK(lcd_i2s_parallel_init(dev));
-#else
-    ESP_ERROR_CHECK(lcd_direct_init(dev));
-#endif
+    ESP_ERROR_CHECK(lcd_driver_init(dev));
     ESP_ERROR_CHECK(lcd_reset(dev));
     ESP_ERROR_CHECK(dev->device.init(dev));
     lcd_clear(dev, LCD_COLOR_BLACK);
@@ -84,33 +59,15 @@ esp_err_t lcd_init_registers(const lcd_dev_t *dev, const uint16_t *table, size_t
 }
 
 inline void lcd_write_data16(const lcd_dev_t *dev, uint16_t data) {
-#ifdef USE_I2S
-    lcd_i2s_write_data16(dev, data);
-#elif defined(USE_I2S_PARALLEL)
-    lcd_i2s_parallel_write_data16(dev, data);
-#else
-    lcd_direct_write_data16(dev, data);
-#endif
+    lcd_driver_write_data16(dev, data);
 }
 
-void lcd_write_data16n(const lcd_dev_t *dev, uint16_t data, size_t len) {
-#ifdef USE_I2S
-    lcd_i2s_write_data16n(dev, data, len);
-#elif defined(USE_I2S_PARALLEL)
-    lcd_i2s_parallel_write_data16n(dev, data, len);
-#else
-    lcd_direct_write_data16n(dev, data, len);
-#endif
+inline void lcd_write_data16n(const lcd_dev_t *dev, uint16_t data, size_t len) {
+    lcd_driver_write_data16n(dev, data, len);
 }
 
 inline void lcd_write_datan(const lcd_dev_t *dev, const uint16_t *buf, size_t len) {
-#ifdef USE_I2S
-    lcd_i2s_write_datan(dev, buf, len);
-#elif defined(USE_I2S_PARALLEL)
-    lcd_i2s_parallel_write_datan(dev, buf, len);
-#else
-    lcd_direct_write_datan(dev, buf, len);
-#endif
+    lcd_driver_write_datan(dev, buf, len);
 }
 
 inline void lcd_write_cmd(const lcd_dev_t *dev, uint16_t cmd) {
@@ -250,4 +207,16 @@ inline uint16_t lcd_rgb565(uint8_t r, uint8_t g, uint8_t b) {
 
 inline uint16_t lcd_rgb565s(const lcd_rgb_t color) {
     return lcd_rgb565(color.r, color.g, color.b);
+}
+
+void lcd_buf_fill(uint8_t *buf, uint16_t data, size_t len) {
+    // Fill the buffer with the data.
+    if ((data & 0xff) == (data >> 8)) {
+        memset(buf, data, len);
+    } else {
+        uint16_t *tmp = (uint16_t *) buf;
+        for (int i = 0; i < len; i += sizeof(uint16_t)) {
+            *tmp++ = data;
+        }
+    }
 }

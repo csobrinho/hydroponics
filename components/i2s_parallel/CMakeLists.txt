@@ -1,4 +1,5 @@
-set(COMPONENT_SRCS "i2s_parallel.c")
-set(COMPONENT_ADD_INCLUDEDIRS "include")
-
-register_component()
+idf_component_register(
+        SRCS "i2s_parallel.c"
+        INCLUDE_DIRS "include"
+        REQUIRES "hydroponics-lcd" "hydroponics-lcd-i2s-parallel"
+)

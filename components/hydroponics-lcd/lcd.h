@@ -157,4 +157,6 @@ uint16_t lcd_rgb565(uint8_t r, uint8_t g, uint8_t b);
 
 uint16_t lcd_rgb565s(lcd_rgb_t color);
 
+void lcd_buf_fill(uint8_t *buf, uint16_t data, size_t len);
+
 #endif //HYDROPONICS_DRIVER_LCD_LCD_H

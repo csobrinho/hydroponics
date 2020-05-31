@@ -4,12 +4,12 @@
 #include "ucg.h"
 
 #include "buses.h"
-#include "driver/lcd/lcd.h"
-#include "driver/lcd/rm68090.h"
-#include "driver/lcd/ucg_rm68090_hal.h"
 #include "error.h"
 #include "ext_display.h"
+#include "lcd.h"
+#include "rm68090.h"
 #include "screens/ext_main.h"
+#include "ucg_rm68090_hal.h"
 #include "utils.h"
 
 static const char *TAG = "ext_display";

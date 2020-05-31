@@ -18,8 +18,10 @@ idf_component_register(
         INCLUDE_DIRS "." "console" "display" "display/screens" "driver" "driver/lcd" "filter" "network" "sensors" "tasks"
         EMBED_FILES "../firmware/private/ec_private.pem" "embed/hydroponics_logo.bin"
         REQUIRES
-        # Internal components.
-        "protos" "bme280" "esp32-ds18b20" "esp32-owb" "esp32-rotary-encoder" "esp-google-iot" "u8g2" "ucglib"
-        "esp-ccronexpr" "lcd_common" "i2s_parallel"
+        # Own components.
+        "hydroponics-context" "hydroponics-error" "hydroponics-lcd" "hydroponics-lcd-dev-rm68090" "hydroponics-utils"
         # External components.
-        "console" "json" "nvs_flash")
+        "bme280" "esp-ccronexpr" "esp-google-iot" "esp32-ds18b20" "esp32-owb" "protos" "u8g2"
+        # ESP-IDF components.
+        "console" "json" "nvs_flash"
+)

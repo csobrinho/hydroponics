@@ -15,6 +15,7 @@
 #include "soc/lldesc.h"
 
 #include "i2s_parallel.h"
+#include "lcd.h"
 
 static i2s_parallel_pin_config_t i2s_parallel_bus;
 
@@ -180,17 +181,11 @@ void i2s_parallel_init(const i2s_parallel_pin_config_t *pin_config, uint32_t clk
     i2s_parallel_interface_init(clk_div);
 }
 
-void i2s_parallel_write_data16n(uint16_t data, size_t len)
-{
+void i2s_parallel_write_data16n(uint16_t data, size_t len) {
     size_t to_fill = len >= DMA_SIZE_MAX ? DMA_SIZE_MAX : len;
-    // Fill the buffer with the data.
-    if ((data & 0xff) == (data >> 8)) {
-        memset(i2s_parallel_buffer, data, to_fill);
-    } else {
-        uint16_t *tmp = (uint16_t *) i2s_parallel_buffer;
-        for (int i = 0; i < to_fill; i += sizeof(uint16_t)) {
-            *tmp++ = (data >> 8) | ((data & 0xFF) << 8);
-        }
-    }
+
+    // Flip the high/low bytes.
+    data = (data >> 8) | ((data & 0xFF) << 8);
+    lcd_buf_fill(i2s_parallel_buffer, data, to_fill);
     i2s_parallel_dma_write(i2s_parallel_buffer, len, BUFFER_POLICY_REUSE);
 }
