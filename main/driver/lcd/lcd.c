@@ -23,7 +23,7 @@ esp_err_t lcd_init(lcd_dev_t *dev) {
     ARG_CHECK(dev != NULL, ERR_PARAM_NULL);
 #ifdef USE_I2S
     dev->buffer_len = dev->config.screen / 32;
-    dev->buffer = heap_caps_aligned_calloc(sizeof(uint32_t), 1, dev->buffer_len, MALLOC_CAP_DMA);
+    dev->buffer = heap_caps_calloc(1, dev->buffer_len, MALLOC_CAP_DMA);
     if (!dev->buffer) {
         return ESP_ERR_NO_MEM;
     }
