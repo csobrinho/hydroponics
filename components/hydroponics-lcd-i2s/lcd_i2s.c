@@ -1,5 +1,5 @@
 #include "driver/gpio.h"
-#include "driver/lcd_i2s.h"
+#include "driver/i2s.h"
 
 #include "esp_err.h"
 

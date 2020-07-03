@@ -18,7 +18,7 @@ static void temperature_task(void *arg) {
     int errors_count[OWB_MAX_DEVICES] = {0};
     int sample_count = 0;
 
-    while (1) {
+    while (true) {
         TickType_t last_wake_time = xTaskGetTickCount();
         temperature_hal_read(&dev);
         ESP_LOGD(TAG, "Temperature readings (degrees C): sample %d", ++sample_count);
