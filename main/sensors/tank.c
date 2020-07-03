@@ -5,12 +5,12 @@
 
 #include "esp_log.h"
 
+#include "buses.h"
 #include "context.h"
 #include "error.h"
 #include "tank.h"
 
 #define NO_OF_SAMPLES 32
-#define TANK_A ADC1_CHANNEL_0
 
 static const char *TAG = "tank";
 
@@ -26,7 +26,7 @@ static void tank_task(void *arg) {
         TickType_t last_wake_time = xTaskGetTickCount();
         float tank_a = 0.f;
         for (int i = 0; i < NO_OF_SAMPLES; i++) {
-            tank_a += (float) adc1_get_raw(TANK_A);
+            tank_a += (float) adc1_get_raw(TANK_A_CHANNEL);
         }
         tank_a /= NO_OF_SAMPLES;
 
@@ -44,7 +44,7 @@ static void tank_task(void *arg) {
 esp_err_t tank_init(context_t *context) {
     // Setup the ADC.
     adc1_config_width(ADC_WIDTH_BIT_12);
-    adc1_config_channel_atten(TANK_A, ADC_ATTEN_DB_11);
+    adc1_config_channel_atten(TANK_A_CHANNEL, ADC_ATTEN_DB_11);
 
     xTaskCreatePinnedToCore(tank_task, "tank", 2560, context, 15, NULL, tskNO_AFFINITY);
     return ESP_OK;

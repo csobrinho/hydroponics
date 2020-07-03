@@ -1,6 +1,7 @@
 #ifndef HYDROPONICS_BUSES_H
 #define HYDROPONICS_BUSES_H
 
+#include "driver/adc.h"
 #include "driver/i2c.h"
 
 #define I2C_MASTER_NUM I2C_NUM_1             /*!< I2C port number for master dev. */
@@ -41,6 +42,8 @@ typedef enum {
 #define LCD_RD    GPIO_NUM_NC
 #define LCD_RST   GPIO_NUM_NC
 #endif
+
+#define TANK_A_CHANNEL ADC1_CHANNEL_0        /*!< GPIO36 Tank A water level analog pin. */
 
 typedef enum {
     BUSES_I2C_NO_STOP = 0x0,                 /*!< I2C don't send stop command. */
