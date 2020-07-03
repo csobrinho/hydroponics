@@ -30,12 +30,32 @@
     "mode": "NULLABLE"
   },
   {
-    "name": "ec_value",
+    "name": "eca_value",
     "type": "FLOAT64",
     "mode": "NULLABLE"
   },
   {
-    "name": "ph_value",
+    "name": "ecb_value",
+    "type": "FLOAT64",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "pha_value",
+    "type": "FLOAT64",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "phb_value",
+    "type": "FLOAT64",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "tanka_value",
+    "type": "FLOAT64",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "tankb_value",
     "type": "FLOAT64",
     "mode": "NULLABLE"
   }

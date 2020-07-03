@@ -24,8 +24,10 @@ message Controller {
     float max = 3;
     Pid pid = 4;
   }
-  Entry ec = 1;
-  Entry ph = 2;
+  Entry eca = 1;
+  Entry pha = 2;
+  Entry ecb = 3;
+  Entry phb = 4;
 }
 
 message Task {

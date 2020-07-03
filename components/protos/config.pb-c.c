@@ -449,27 +449,51 @@ const ProtobufCMessageDescriptor hydroponics__controller__entry__descriptor =
   (ProtobufCMessageInit) hydroponics__controller__entry__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor hydroponics__controller__field_descriptors[2] =
+static const ProtobufCFieldDescriptor hydroponics__controller__field_descriptors[4] =
 {
   {
-    "ec",
+    "eca",
     1,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     0,   /* quantifier_offset */
-    offsetof(Hydroponics__Controller, ec),
+    offsetof(Hydroponics__Controller, eca),
     &hydroponics__controller__entry__descriptor,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "ph",
+    "pha",
     2,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     0,   /* quantifier_offset */
-    offsetof(Hydroponics__Controller, ph),
+    offsetof(Hydroponics__Controller, pha),
+    &hydroponics__controller__entry__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "ecb",
+    3,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__Controller, ecb),
+    &hydroponics__controller__entry__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "phb",
+    4,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__Controller, phb),
     &hydroponics__controller__entry__descriptor,
     NULL,
     0,             /* flags */
@@ -477,13 +501,15 @@ static const ProtobufCFieldDescriptor hydroponics__controller__field_descriptors
   },
 };
 static const unsigned hydroponics__controller__field_indices_by_name[] = {
-  0,   /* field[0] = ec */
-  1,   /* field[1] = ph */
+  0,   /* field[0] = eca */
+  2,   /* field[2] = ecb */
+  1,   /* field[1] = pha */
+  3,   /* field[3] = phb */
 };
 static const ProtobufCIntRange hydroponics__controller__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 2 }
+  { 0, 4 }
 };
 const ProtobufCMessageDescriptor hydroponics__controller__descriptor =
 {
@@ -493,7 +519,7 @@ const ProtobufCMessageDescriptor hydroponics__controller__descriptor =
   "Hydroponics__Controller",
   "hydroponics",
   sizeof(Hydroponics__Controller),
-  2,
+  4,
   hydroponics__controller__field_descriptors,
   hydroponics__controller__field_indices_by_name,
   1,  hydroponics__controller__number_ranges,

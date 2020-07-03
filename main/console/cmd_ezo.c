@@ -25,16 +25,16 @@ static struct {
 } cmd_pause_args;
 
 static ezo_sensor_t *
-find_sensor(int argc, char **argv, void **argtable, struct arg_end *end, const char *type, esp_err_t *err) {
+find_sensor(int argc, char **argv, void **argtable, struct arg_end *end, const char *desc, esp_err_t *err) {
     int errors = arg_parse(argc, argv, argtable);
     if (errors != 0) {
         arg_print_errors(stderr, end, argv[0]);
         *err = ESP_ERR_INVALID_ARG;
         return NULL;
     }
-    ezo_sensor_t *sensor = ezo_find(type);
+    ezo_sensor_t *sensor = ezo_find(desc);
     if (sensor == NULL) {
-        printf("Unknown module named '%s'\n", type);
+        printf("Unknown module named '%s'\n", desc);
         *err = ESP_ERR_INVALID_ARG;
         return NULL;
     }

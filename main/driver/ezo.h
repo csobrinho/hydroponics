@@ -11,6 +11,8 @@
 #define EZO_DELAY_MS_SLOWEST 900
 #define EZO_MAX_RETRIES 4
 
+#define EZO_INVALID_ADDRESS 0xff
+
 typedef enum {
     EZO_SENSOR_RESPONSE_UNKNOWN = 0,
     EZO_SENSOR_RESPONSE_SUCCESS = 1,
@@ -45,7 +47,8 @@ typedef enum {
 } ezo_status_t;
 
 typedef struct {
-    const char *probe;
+    const char probe[8];
+    const char desc[8];
     const uint8_t address;
     const uint16_t delay_ms;
     const uint16_t delay_read_ms;
@@ -58,7 +61,7 @@ typedef struct {
     ezo_sensor_response_t status;
     xSemaphoreHandle lock;
     bool pause;
-#ifdef CONFIG_ESP_SIMULATE_SENSORS
+#ifdef CONFIG_ESP_SENSOR_SIMULATE
     float simulate;
     float threshold;
 #endif
@@ -68,17 +71,17 @@ esp_err_t ezo_init(ezo_sensor_t *sensor);
 
 esp_err_t ezo_free(ezo_sensor_t *sensor);
 
-ezo_sensor_t *ezo_find(const char *type);
+ezo_sensor_t *ezo_find(const char *desc);
 
-esp_err_t ezo_send_command(ezo_sensor_t *sensor, uint16_t delay_ms, const char *cmd_fmt, ...)
-__printflike(3, 4);
+esp_err_t ezo_send_command(ezo_sensor_t *sensor, uint16_t delay_ms, const char *cmd_fmt, ...) __printflike(3, 4);
 
-esp_err_t ezo_parse_response(ezo_sensor_t *sensor, uint8_t fields, const char *response_fmt, ...)
-__scanflike(3, 4);
+esp_err_t ezo_parse_response(ezo_sensor_t *sensor, uint8_t fields, const char *response_fmt, ...) __scanflike(3, 4);
 
 esp_err_t ezo_read(ezo_sensor_t *sensor, float *value);
 
 esp_err_t ezo_read_temperature(ezo_sensor_t *sensor, float *value, float temp);
+
+float ezo_read_and_print(ezo_sensor_t *sensor, float temp, char id, int precision, const char *unit);
 
 esp_err_t ezo_device_info(ezo_sensor_t *sensor);
 

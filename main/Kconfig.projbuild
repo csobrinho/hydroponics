@@ -70,6 +70,12 @@ menu "Project config"
             help
                 Set the sampling rate for water temperature readings in ms.
 
+        config ESP_SAMPLING_TANK_MS
+            int "Tank"
+            default 2000
+            help
+                Set the sampling rate for the tank levels in ms.
+
         config ESP_SAMPLING_EC_MS
             int "EC Probe"
             default 1500
@@ -90,12 +96,54 @@ menu "Project config"
 
     endmenu
 
-    menu "Simulate"
-        config ESP_SIMULATE_SENSORS
-            bool "Sensors"
+    menu "Sensors"
+        config ESP_SENSOR_TANKS
+            int "Number of tanks"
+            default 2
+            range 1 2
+            help
+                Set the number of tanks.
+
+        config ESP_SENSOR_RTD_ADDR
+            hex "RTD Probe I2C Address"
+            default 0x66
+            range 0x00 0xff
+            help
+                Set the RTD probe I2C address.
+
+        config ESP_SENSOR_EC_TANK_A_ADDR
+            hex "Tank A EC Probe I2C Address"
+            default 0x64
+            range 0x00 0xff
+            help
+                Set the tank A EC probe I2C address.
+
+        config ESP_SENSOR_EC_TANK_B_ADDR
+            hex "Tank B EC Probe I2C Address"
+            default 0x74
+            range 0x00 0xff
+            help
+                Set the tank B EC probe I2C address.
+
+        config ESP_SENSOR_PH_TANK_A_ADDR
+            hex "Tank A PH Probe I2C Address"
+            default 0x63
+            range 0x00 0xff
+            help
+                Set the tank A PH probe I2C address.
+
+        config ESP_SENSOR_PH_TANK_B_ADDR
+            hex "Tank B PH Probe I2C Address"
+            default 0x73
+            range 0x00 0xff
+            help
+                Set the tank B PH probe I2C address.
+
+        config ESP_SENSOR_SIMULATE
+            bool "Simulate the sensors"
             default n
             help
-                Simulate a real sensor instead of reading their data.
+                Simulate the sensor data instead of using the real hardware.
     endmenu
 endmenu
 

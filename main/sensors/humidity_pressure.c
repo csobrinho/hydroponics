@@ -32,7 +32,7 @@ static void humidity_pressure_task(void *arg) {
     ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
 
     struct bme280_data comp_data;
-    while (1) {
+    while (true) {
         TickType_t last_wake_time = xTaskGetTickCount();
 
         int8_t ret;

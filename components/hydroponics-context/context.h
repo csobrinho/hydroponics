@@ -34,6 +34,7 @@ typedef enum {
     CONTEXT_EVENT_IOT = BIT15,           /*!< Updated iot state. */
     CONTEXT_EVENT_STATE = BIT16,         /*!< Updated state state. */
     CONTEXT_EVENT_NETWORK_ERROR = BIT17, /*!< Updated network error state. */
+    CONTEXT_EVENT_TANK = BIT18,          /*!< Updated tanks level state. */
 } context_event_t;
 
 typedef struct {
@@ -62,12 +63,15 @@ typedef struct {
             volatile float value;
             volatile float target_min;
             volatile float target_max;
-        } ec;
+        } ec[CONFIG_ESP_SENSOR_TANKS];
         struct {
             volatile float value;
             volatile float target_min;
             volatile float target_max;
-        } ph;
+        } ph[CONFIG_ESP_SENSOR_TANKS];
+        struct {
+            volatile float value;
+        } tank[CONFIG_ESP_SENSOR_TANKS];
     } sensors;
 
     struct {
@@ -112,13 +116,15 @@ esp_err_t context_set_temp_water(context_t *context, float temp);
 
 esp_err_t context_set_temp_probe(context_t *context, float temp);
 
-esp_err_t context_set_ec(context_t *context, float value);
+esp_err_t context_set_ec(context_t *context, int tank, float value);
 
-esp_err_t context_set_ec_target(context_t *context, float target_min, float target_max);
+esp_err_t context_set_ec_target(context_t *context, int tank, float target_min, float target_max);
 
-esp_err_t context_set_ph(context_t *context, float value);
+esp_err_t context_set_ph(context_t *context, int tank, float value);
 
-esp_err_t context_set_ph_target(context_t *context, float target_min, float target_max);
+esp_err_t context_set_ph_target(context_t *context, int tank, float target_min, float target_max);
+
+esp_err_t context_set_tank(context_t *context, int tank, float value);
 
 esp_err_t context_set_rotary(context_t *context, rotary_encoder_state_t state);
 

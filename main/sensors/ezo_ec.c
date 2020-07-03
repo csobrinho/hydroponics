@@ -8,17 +8,29 @@
 #include "error.h"
 #include "driver/ezo.h"
 
-#define EZO_EC_ADDR 0x64  /*!< Slave address for Atlas EZO EC module. */
-
 static const char *TAG = "ezo_ec";
-static ezo_sensor_t ec = {
+static ezo_sensor_t eca = {
         .probe = "CS150",
-        .address = EZO_EC_ADDR,
+        .desc = "eca",
+        .address = CONFIG_ESP_SENSOR_EC_TANK_A_ADDR, /*!< Slave address for Atlas EZO EC module for tank A. */
         .delay_ms = EZO_DELAY_MS_SHORT,
         .delay_read_ms = EZO_DELAY_MS_SLOW,
         .delay_calibration_ms = EZO_DELAY_MS_SLOWEST,
         .calibration = EZO_CALIBRATION_MODE_TWO_POINTS,
-#ifdef CONFIG_ESP_SIMULATE_SENSORS
+#ifdef CONFIG_ESP_SENSOR_SIMULATE
+        .simulate = 1500.f,
+        .threshold = 15.f,
+#endif
+};
+static ezo_sensor_t ecb = {
+        .probe = "CS150",
+        .desc = "ecb",
+        .address = CONFIG_ESP_SENSOR_EC_TANK_B_ADDR, /*!< Slave address for Atlas EZO EC module for tank B. */
+        .delay_ms = EZO_DELAY_MS_SHORT,
+        .delay_read_ms = EZO_DELAY_MS_SLOW,
+        .delay_calibration_ms = EZO_DELAY_MS_SLOWEST,
+        .calibration = EZO_CALIBRATION_MODE_TWO_POINTS,
+#ifdef CONFIG_ESP_SENSOR_SIMULATE
         .simulate = 1900.f,
         .threshold = 15.f,
 #endif
@@ -27,26 +39,20 @@ static ezo_sensor_t ec = {
 static void ezo_ec_task(void *arg) {
     context_t *context = (context_t *) arg;
     ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
-    ESP_ERROR_CHECK(ezo_init(&ec));
+    ESP_ERROR_CHECK(ezo_init(&eca));
+    ESP_ERROR_CHECK(ezo_init(&ecb));
 
-    float last_temp = 25.0f;
-    float value = 0.f;
-    while (1) {
-        if (ec.pause) {
+    while (true) {
+        if (eca.pause | ecb.pause) {
             vTaskDelay(pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_EC_MS));
             continue;
         }
         TickType_t last_wake_time = xTaskGetTickCount();
         float temp = context->sensors.temp.probe;
-        if (last_temp != temp && CONTEXT_VALUE_IS_VALID(temp)) {
-            last_temp = temp;
-            ESP_ERROR_CHECK(ezo_read_temperature(&ec, &value, last_temp));
-        } else {
-            ESP_ERROR_CHECK(ezo_read(&ec, &value));
-        }
-        ESP_LOGD(TAG, "EC %.2f uS/cm", value);
-        ESP_ERROR_CHECK(context_set_ec(context, value));
-
+        ESP_ERROR_CHECK(context_set_ec(context, 0, ezo_read_and_print(&eca, temp, 'A', 0, "uS/cm")));
+#if CONFIG_ESP_SENSOR_TANKS == 2
+        ESP_ERROR_CHECK(context_set_ec(context, 1, ezo_read_and_print(&ecb, temp, 'B', 0, "uS/cm")));
+#endif
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_EC_MS));
     }
 }

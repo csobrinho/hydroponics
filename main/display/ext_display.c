@@ -47,13 +47,13 @@ static void ext_display_task(void *arg) {
     ESP_ERROR_CHECK(ucg_rm68090_init(&dev, &ucg));
     ESP_ERROR_CHECK(ext_main_init(context, &dev, &ucg));
 
-    while (1) {
+    while (true) {
         ESP_ERROR_CHECK(ext_main_draw(context, &ucg));
         vTaskDelay(pdMS_TO_TICKS(1500));
     }
 }
 
 esp_err_t ext_display_init(context_t *context) {
-    xTaskCreatePinnedToCore(ext_display_task, "ext_display", 4096, context, 15, NULL, tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(ext_display_task, "ext_display", 3072, context, 15, NULL, tskNO_AFFINITY);
     return ESP_OK;
 }

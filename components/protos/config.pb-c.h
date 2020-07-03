@@ -99,12 +99,14 @@ struct  _Hydroponics__Controller__Entry
 struct  _Hydroponics__Controller
 {
   ProtobufCMessage base;
-  Hydroponics__Controller__Entry *ec;
-  Hydroponics__Controller__Entry *ph;
+  Hydroponics__Controller__Entry *eca;
+  Hydroponics__Controller__Entry *pha;
+  Hydroponics__Controller__Entry *ecb;
+  Hydroponics__Controller__Entry *phb;
 };
 #define HYDROPONICS__CONTROLLER__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&hydroponics__controller__descriptor) \
-    , NULL, NULL }
+    , NULL, NULL, NULL, NULL }
 
 
 struct  _Hydroponics__Task__Cron

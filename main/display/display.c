@@ -20,9 +20,9 @@ static const EventBits_t clear_bits = CONTEXT_EVENT_TEMP_INDOOR | CONTEXT_EVENT_
 static const EventBits_t wait_bits = clear_bits | CONTEXT_EVENT_NETWORK | CONTEXT_EVENT_TIME | CONTEXT_EVENT_IOT;
 static u8g2_t u8g2;
 
-static size_t snprintf_append(char *buf, size_t len, size_t max_size, float value) {
+static size_t snprintf_append(char *buf, size_t len, size_t max_size, const char *format, float value) {
     if (CONTEXT_VALUE_IS_VALID(value)) {
-        return snprintf(buf + len, max_size - len, " %.1f", value);
+        return snprintf(buf + len, max_size - len, format, value);
     }
     return snprintf(buf + len, max_size - len, " ??");
 }
@@ -46,24 +46,39 @@ static esp_err_t display_draw(context_t *context, bool connected, bool time_upda
     float indoor = context->sensors.temp.indoor;
     float probe = context->sensors.temp.probe;
     float humidity = context->sensors.humidity;
-    float ec = context->sensors.ec.value;
-    float ph = context->sensors.ph.value;
+    float eca = context->sensors.ec[0].value;
+    float pha = context->sensors.ph[0].value;
+#if CONFIG_ESP_SENSOR_TANKS == 2
+    float ecb = context->sensors.ec[1].value;
+    float phb = context->sensors.ph[1].value;
+#endif
     context_unlock(context);
 
     size_t len = strlcpy(buf, "Tmp:", sizeof(buf));
-    len += snprintf_append(buf, len, sizeof(buf), indoor);
+    len += snprintf_append(buf, len, sizeof(buf), " %.1f", indoor);
     len += snprintf(buf + len, sizeof(buf) - len, " |");
-    len += snprintf_append(buf, len, sizeof(buf), probe);
+    len += snprintf_append(buf, len, sizeof(buf), " %.1f", probe);
     snprintf(buf + len, sizeof(buf) - len, " \260C");
     u8g2_DrawStr(&u8g2, 0, 7, buf);
 
     snprintf_value(buf, sizeof(buf), "Hum: %.f %%", "Hum: ?? %%", humidity);
     u8g2_DrawStr(&u8g2, 0, 15, buf);
 
-    snprintf_value(buf, sizeof(buf), "EC: %.f uS/cm", "EC: ?? uS/cm", ec);
+    len = strlcpy(buf, "EC:", sizeof(buf));
+    len += snprintf_append(buf, len, sizeof(buf), " %.f", eca);
+#if CONFIG_ESP_SENSOR_TANKS == 2
+    len += snprintf(buf + len, sizeof(buf) - len, " |");
+    len += snprintf_append(buf, len, sizeof(buf), " %.f", ecb);
+#endif
+    snprintf(buf + len, sizeof(buf) - len, " uS/cm");
     u8g2_DrawStr(&u8g2, 0, 23, buf);
 
-    snprintf_value(buf, sizeof(buf), "PH: %.2f", "PH: ??", ph);
+    len = strlcpy(buf, "PH:", sizeof(buf));
+    len += snprintf_append(buf, len, sizeof(buf), " %.2f", pha);
+#if CONFIG_ESP_SENSOR_TANKS == 2
+    len += snprintf(buf + len, sizeof(buf) - len, " |");
+    snprintf_append(buf, len, sizeof(buf), " %.2f", phb);
+#endif
     u8g2_DrawStr(&u8g2, 0, 31, buf);
 
     snprintf(buf, sizeof(buf), "%c%c%c", connected ? 'W' : '*', time_updated ? 'T' : '*', iot_connected ? 'G' : '*');
@@ -99,7 +114,7 @@ static void display_task(void *arg) {
     u8g2_ClearBuffer(&u8g2);
     u8g2_SendBuffer(&u8g2);
 
-    while (1) {
+    while (true) {
         EventBits_t bits = xEventGroupWaitBits(context->event_group, wait_bits, pdFALSE, pdFALSE, portMAX_DELAY);
         // Even though we wait for some status bits like network/time/etc, these are used elsewhere as a form of
         // synchronization between tasks so make sure we don't clear them!

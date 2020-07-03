@@ -127,6 +127,6 @@ esp_err_t wifi_init(context_t *context, const char *ssid, const char *password) 
     args.ssid = ssid;
     args.password = password;
 
-    xTaskCreatePinnedToCore(wifi_task, "nwifi", 4096, context, configMAX_PRIORITIES - 7, NULL, tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(wifi_task, "nwifi", 3072, context, configMAX_PRIORITIES - 7, NULL, tskNO_AFFINITY);
     return ESP_OK;
 }

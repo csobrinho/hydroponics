@@ -20,8 +20,6 @@ typedef struct log {
 } log_t;
 typedef TAILQ_HEAD(log_head, log) log_head_t;
 
-static const char *TAG = "ext_main";
-
 static const lcd_rgb_t COLOR_BACKGROUND = {0x3f, 0x3c, 0x49};
 static const lcd_rgb_t COLOR_PRIMARY[] = {
         {0x58, 0xa0, 0xfd}, // COLOR_PRIMARY1
@@ -80,9 +78,9 @@ static void draw_graph_frame(ucg_t *ucg) {
     ucg_DrawString(ucg, 9, 200, 0, "5.0");
 
     ucg_SetColor(ucg, 0, COLOR_PRIMARY[1].r, COLOR_PRIMARY[1].g, COLOR_PRIMARY[1].b);
-    ucg_DrawString(ucg, 287, 100, 0, "2000");
-    ucg_DrawString(ucg, 287, 150, 0, "1750");
-    ucg_DrawString(ucg, 287, 200, 0, "1500");
+    ucg_DrawString(ucg, 287, 100, 0, "1750");
+    ucg_DrawString(ucg, 287, 150, 0, "1500");
+    ucg_DrawString(ucg, 287, 200, 0, "1250");
 }
 
 static void draw_graph(ucg_t *ucg) {
@@ -93,7 +91,7 @@ static void draw_graph(ucg_t *ucg) {
 
     lerp_t mxb[MAX_VALUES] = {
             lerp(6.f, 5.f, 100.f, 196.f),
-            lerp(2000.f, 1500.f, 100.f, 196.f),
+            lerp(1750.f, 1250.f, 100.f, 196.f),
     };
     for (int i = 0; i < MAX_VALUES; ++i) {
         ucg_SetColor(ucg, 0, COLOR_PRIMARY[i].r, COLOR_PRIMARY[i].g, COLOR_PRIMARY[i].b);
@@ -169,15 +167,19 @@ static void draw_labels(ucg_t *ucg) {
 
 static void draw_values(context_t *context, ucg_t *ucg) {
     context_lock(context);
-    float ph = context->sensors.ph.value;
-    float ec = context->sensors.ec.value;
+    float pha = context->sensors.ph[0].value;
+    float eca = context->sensors.ec[0].value;
     float temp = context->sensors.temp.probe;
+#if CONFIG_ESP_SENSOR_TANKS == 2
+    float ecb = context->sensors.ec[1].value;
+    float phb = context->sensors.ph[1].value;
+#endif
     context_unlock(context);
 
     log_t *entry = calloc(1, sizeof(log_t));
     entry->timestamp = time(NULL);
-    entry->values[0] = ph;
-    entry->values[1] = ec;
+    entry->values[0] = pha;
+    entry->values[1] = eca;
     TAILQ_INSERT_HEAD(&head, entry, next);
 
     ucg_SetFont(ucg, ucg_font_helvB18_tr);
@@ -186,10 +188,10 @@ static void draw_values(context_t *context, ucg_t *ucg) {
     ucg_DrawBox(ucg, 32, 70 - font_height, 3 * COLUMN - 6, font_height);
 
     ucg_SetColor(ucg, 0, COLOR_PRIMARY[0].r, COLOR_PRIMARY[0].g, COLOR_PRIMARY[0].b);
-    ucg_DrawString(ucg, 32, 70, 0, render_value("%.2f", ph, "??"));
+    ucg_DrawString(ucg, 32, 70, 0, render_value("%.2f", pha, "??"));
 
     ucg_SetColor(ucg, 0, COLOR_PRIMARY[1].r, COLOR_PRIMARY[1].g, COLOR_PRIMARY[1].b);
-    ucg_DrawString(ucg, 32 + COLUMN, 70, 0, render_value("%.f", ec, "??"));
+    ucg_DrawString(ucg, 32 + COLUMN, 70, 0, render_value("%.f", eca, "??"));
 
     ucg_SetColor(ucg, 0, COLOR_PRIMARY[2].r, COLOR_PRIMARY[2].g, COLOR_PRIMARY[2].b);
     ucg_DrawString(ucg, 32 + 2 * COLUMN, 70, 0, render_value("%.1f", temp, "??"));

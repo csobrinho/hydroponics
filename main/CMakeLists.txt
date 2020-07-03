@@ -1,6 +1,6 @@
 set(exclude_srcs)
 
-if (CONFIG_ESP_SIMULATE_SENSORS)
+if (CONFIG_ESP_SENSOR_SIMULATE)
     list(APPEND exclude_srcs
             "driver/ezo_hw.c"
             "sensors/humidity_pressure_hw.c"

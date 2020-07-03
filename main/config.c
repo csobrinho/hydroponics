@@ -74,6 +74,19 @@ esp_err_t config_update(context_t *context, const uint8_t *data, size_t size) {
     return ESP_OK;
 }
 
+static void config_print_controller_entry(FILE *stream, int precision, const Hydroponics__Controller__Entry *entry) {
+    if (entry != NULL) {
+        fprintf(stream, "  target: %.*f  [%.*f, %.*f]\n", precision, entry->target, precision, entry->min, precision,
+                entry->max);
+        if (entry->pid != NULL) {
+            fprintf(stream, "  PID sampling: %d ms\n", entry->pid->sampling);
+            fprintf(stream, "  PID p: %.2f   i: %.2f   d: %.2f\n", entry->pid->p, entry->pid->i, entry->pid->d);
+        }
+    } else {
+        fprintf(stream, "  none\n");
+    }
+}
+
 esp_err_t config_dump(const Hydroponics__Config *config) {
     if (config == NULL) {
         return ESP_OK;
@@ -97,32 +110,14 @@ esp_err_t config_dump(const Hydroponics__Config *config) {
         fprintf(stream, "  none\n");
     }
     if (config->controller != NULL) {
-        fprintf(stream, "Controller EC:\n");
-        if (config->controller->ec != NULL) {
-            fprintf(stream, "  target: %.0f  [%.0f, %.0f]\n", config->controller->ec->target,
-                    config->controller->ec->min,
-                    config->controller->ec->max);
-            if (config->controller->ec->pid != NULL) {
-                fprintf(stream, "  PID sampling: %d ms\n", config->controller->ec->pid->sampling);
-                fprintf(stream, "  PID p: %.2f   i: %.2f   d: %.2f\n", config->controller->ec->pid->p,
-                        config->controller->ec->pid->i, config->controller->ec->pid->d);
-            }
-        } else {
-            fprintf(stream, "  none\n");
-        }
-        fprintf(stream, "Controller PH:\n");
-        if (config->controller->ph != NULL) {
-            fprintf(stream, "  target: %.2f  [%.2f, %.2f]\n", config->controller->ph->target,
-                    config->controller->ph->min,
-                    config->controller->ph->max);
-            if (config->controller->ph->pid != NULL) {
-                fprintf(stream, "  PID sampling: %d ms\n", config->controller->ph->pid->sampling);
-                fprintf(stream, "  PID p: %.2f   i: %.2f   d: %.2f\n", config->controller->ph->pid->p,
-                        config->controller->ph->pid->i, config->controller->ph->pid->d);
-            }
-        } else {
-            fprintf(stream, "  none\n");
-        }
+        fprintf(stream, "Controller EC A:\n");
+        config_print_controller_entry(stream, 0, config->controller->eca);
+        fprintf(stream, "Controller EC B:\n");
+        config_print_controller_entry(stream, 0, config->controller->ecb);
+        fprintf(stream, "Controller PH A:\n");
+        config_print_controller_entry(stream, 2, config->controller->pha);
+        fprintf(stream, "Controller PH B:\n");
+        config_print_controller_entry(stream, 2, config->controller->phb);
     }
     fprintf(stream, "Tasks:\n");
     if (config->n_task > 0 && config->task != NULL) {

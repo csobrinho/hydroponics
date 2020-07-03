@@ -6,8 +6,12 @@
 // {device_id} document
 //   telemetry			collection
 //     {timestamp}  document
-//       ec
-//       ph
+//       ec.a
+//       ec.b
+//       ph.a
+//       ph.b
+//       tank.a
+//       tank.b
 //       temp.indoor
 //       temp.probe
 //       humidity
@@ -37,12 +41,16 @@ type pubSubMessage struct {
 
 type event struct {
 	Timestamp  time.Time `firestore:"timestamp" json:-`
-	TempIndoor float64 `firestore:"temp.indoor" json:"sensors.temp.indoor"`
-	TempProbe  float64 `firestore:"temp.probe" json:"sensors.temp.probe"`
-	Humidity   float64 `firestore:"humidity" json:"sensors.humidity"`
-	Pressure   float64 `firestore:"pressure" json:"sensors.pressure"`
-	EcValue    float64 `firestore:"ec" json:"sensors.ec.value"`
-	PhValue    float64 `firestore:"ph" json:"sensors.ph.value"`
+	TempIndoor float64   `firestore:"temp.indoor" json:"sensors.temp.indoor"`
+	TempProbe  float64   `firestore:"temp.probe" json:"sensors.temp.probe"`
+	Humidity   float64   `firestore:"humidity" json:"sensors.humidity"`
+	Pressure   float64   `firestore:"pressure" json:"sensors.pressure"`
+	EcaValue   float64   `firestore:"ec.a" json:"sensors.eca.value"`
+	EcbValue   float64   `firestore:"ec.b" json:"sensors.ecb.value"`
+	PhaValue   float64   `firestore:"ph.a" json:"sensors.pha.value"`
+	PhbValue   float64   `firestore:"ph.b" json:"sensors.phb.value"`
+	TankaValue float64   `firestore:"tank.a" json:"sensors.tanka.value"`
+	TankbValue float64   `firestore:"tank.b" json:"sensors.tankb.value"`
 }
 
 // FirestorePubSub consumes a Pub/Sub message and insert those values into the Firestore database.

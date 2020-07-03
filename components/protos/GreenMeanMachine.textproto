@@ -8,10 +8,10 @@ sampling {
   ph_probe: 1500
 }
 controller: {
-  ec: {
-    target: 2000
-    min: 1900
-    max: 2100
+  eca: {
+    target: 1500
+    min: 1400
+    max: 1600
     pid: {
       sampling: 20
       p: 1.0
@@ -19,10 +19,21 @@ controller: {
       d: 0.0
     }
   }
-  ph: {
-    target: 6.2
-    min: 6.1
-    max: 6.35
+  pha: {
+    target: 5.5
+    min: 5.35
+    max: 6.00
+    pid: {
+      sampling: 20
+      p: 1.0
+      i: 0.0
+      d: 0.0
+    }
+  }
+  ecb: {
+    target: 1600
+    min: 1500
+    max: 1700
     pid: {
       sampling: 20
       p: 1.0
@@ -37,12 +48,12 @@ task: {
   cron: {
     action: ON,
     # On at xx:00, every 2 seconds.
-    expression: "0/2 * * * * *"
+    expression: "0/30 * * * * *"
   }
   cron: {
     action: OFF,
     # On at xx:01, every 2 seconds.
-    expression: "1/2 * * * * *"
+    expression: "30/30 * * * * *"
   }
 }
 task: {

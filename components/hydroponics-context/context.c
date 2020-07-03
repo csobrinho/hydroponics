@@ -44,13 +44,17 @@ context_t *context_create(void) {
     context->sensors.humidity = CONTEXT_UNKNOWN_VALUE;
     context->sensors.pressure = CONTEXT_UNKNOWN_VALUE;
 
-    context->sensors.ec.value = CONTEXT_UNKNOWN_VALUE;
-    context->sensors.ec.target_min = CONTEXT_UNKNOWN_VALUE;
-    context->sensors.ec.target_max = CONTEXT_UNKNOWN_VALUE;
+    for (int tank = 0; tank < CONFIG_ESP_SENSOR_TANKS; ++tank) {
+        context->sensors.ec[tank].value = CONTEXT_UNKNOWN_VALUE;
+        context->sensors.ec[tank].target_min = CONTEXT_UNKNOWN_VALUE;
+        context->sensors.ec[tank].target_max = CONTEXT_UNKNOWN_VALUE;
 
-    context->sensors.ph.value = CONTEXT_UNKNOWN_VALUE;
-    context->sensors.ph.target_min = CONTEXT_UNKNOWN_VALUE;
-    context->sensors.ph.target_max = CONTEXT_UNKNOWN_VALUE;
+        context->sensors.ph[tank].value = CONTEXT_UNKNOWN_VALUE;
+        context->sensors.ph[tank].target_min = CONTEXT_UNKNOWN_VALUE;
+        context->sensors.ph[tank].target_max = CONTEXT_UNKNOWN_VALUE;
+
+        context->sensors.tank[tank].value = CONTEXT_UNKNOWN_VALUE;
+    }
 
     return context;
 }
@@ -89,41 +93,52 @@ esp_err_t context_set_temp_probe(context_t *context, float temp) {
     return ESP_OK;
 }
 
-esp_err_t context_set_ec(context_t *context, float value) {
+esp_err_t context_set_ec(context_t *context, int tank, float value) {
     ARG_CHECK(context != NULL, ERR_PARAM_NULL);
-    context_set_single(context, context->sensors.ec.value, value, CONTEXT_EVENT_EC);
+    ARG_CHECK(tank < CONFIG_ESP_SENSOR_TANKS, "tank >= CONFIG_ESP_SENSOR_TANKS");
+    context_set_single(context, context->sensors.ec[tank].value, value, CONTEXT_EVENT_EC);
     return ESP_OK;
 }
 
-esp_err_t context_set_ec_target(context_t *context, float target_min, float target_max) {
+esp_err_t context_set_ec_target(context_t *context, int tank, float target_min, float target_max) {
     ARG_CHECK(context != NULL, ERR_PARAM_NULL);
+    ARG_CHECK(tank < CONFIG_ESP_SENSOR_TANKS, "tank >= CONFIG_ESP_SENSOR_TANKS");
 
     EventBits_t bitsToSet = 0U;
     context_lock(context);
-    context_set(context->sensors.ec.target_min, target_min, CONTEXT_EVENT_EC);
-    context_set(context->sensors.ec.target_max, target_max, CONTEXT_EVENT_EC);
+    context_set(context->sensors.ec[tank].target_min, target_min, CONTEXT_EVENT_EC);
+    context_set(context->sensors.ec[tank].target_max, target_max, CONTEXT_EVENT_EC);
     context_unlock(context);
 
     if (bitsToSet) xEventGroupSetBits(context->event_group, bitsToSet);
     return ESP_OK;
 }
 
-esp_err_t context_set_ph(context_t *context, float value) {
+esp_err_t context_set_ph(context_t *context, int tank, float value) {
     ARG_CHECK(context != NULL, ERR_PARAM_NULL);
-    context_set_single(context, context->sensors.ph.value, value, CONTEXT_EVENT_PH);
+    ARG_CHECK(tank < CONFIG_ESP_SENSOR_TANKS, "tank >= CONFIG_ESP_SENSOR_TANKS");
+    context_set_single(context, context->sensors.ph[tank].value, value, CONTEXT_EVENT_PH);
     return ESP_OK;
 }
 
-esp_err_t context_set_ph_target(context_t *context, float target_min, float target_max) {
+esp_err_t context_set_ph_target(context_t *context, int tank, float target_min, float target_max) {
     ARG_CHECK(context != NULL, ERR_PARAM_NULL);
+    ARG_CHECK(tank < CONFIG_ESP_SENSOR_TANKS, "tank >= CONFIG_ESP_SENSOR_TANKS");
 
     EventBits_t bitsToSet = 0U;
     context_lock(context);
-    context_set(context->sensors.ph.target_min, target_min, CONTEXT_EVENT_PH);
-    context_set(context->sensors.ph.target_max, target_max, CONTEXT_EVENT_PH);
+    context_set(context->sensors.ph[tank].target_min, target_min, CONTEXT_EVENT_PH);
+    context_set(context->sensors.ph[tank].target_max, target_max, CONTEXT_EVENT_PH);
     context_unlock(context);
 
     if (bitsToSet) xEventGroupSetBits(context->event_group, bitsToSet);
+    return ESP_OK;
+}
+
+esp_err_t context_set_tank(context_t *context, int tank, float value) {
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
+    ARG_CHECK(tank < CONFIG_ESP_SENSOR_TANKS, "tank >= CONFIG_ESP_SENSOR_TANKS");
+    context_set_single(context, context->sensors.tank[tank].value, value, CONTEXT_EVENT_TANK);
     return ESP_OK;
 }
 

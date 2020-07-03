@@ -132,6 +132,6 @@ esp_err_t syslog_init(context_t *context) {
     dest_addr.sin_port = htons(context->config.syslog_port);
     dest_addr.sin_addr.s_addr = inet_addr(context->config.syslog_hostname);
 
-    xTaskCreatePinnedToCore(syslog_task, "syslog", 4096, context, 5, NULL, tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(syslog_task, "syslog", 2048, context, 5, NULL, tskNO_AFFINITY);
     return ESP_OK;
 }

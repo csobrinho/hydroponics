@@ -9,14 +9,14 @@ import (
 	"strings"
 	"time"
 
-  "cloud.google.com/go/bigquery"
-  "cloud.google.com/go/functions/metadata"
+	"cloud.google.com/go/bigquery"
+	"cloud.google.com/go/functions/metadata"
 )
 
 // PubSubMessage is the payload of a Pub/Sub event.
 type pubSubMessage struct {
 	Attributes struct {
-		DeviceId string `json:"deviceId"`
+		DeviceId  string `json:"deviceId"`
 		ProjectId string `json:"projectId"`
 	} `json:"attributes"`
 	Data []byte `json:"data"`
@@ -29,8 +29,12 @@ type event struct {
 	TempProbe  float64   `bigquery:"temp_probe" json:"sensors.temp.probe"`
 	Humidity   float64   `bigquery:"humidity" json:"sensors.humidity"`
 	Pressure   float64   `bigquery:"pressure" json:"sensors.pressure"`
-	EcValue    float64   `bigquery:"ec_value" json:"sensors.ec.value"`
-	PhValue    float64   `bigquery:"ph_value" json:"sensors.ph.value"`
+	EcaValue   float64   `bigquery:"eca_value" json:"sensors.eca.value"`
+	EcbValue   float64   `bigquery:"ecb_value" json:"sensors.ecb.value"`
+	PhaValue   float64   `bigquery:"pha_value" json:"sensors.pha.value"`
+	PhbValue   float64   `bigquery:"phb_value" json:"sensors.phb.value"`
+	TankaValue float64   `bigquery:"tanka_value" json:"sensors.tanka.value"`
+	TankbValue float64   `bigquery:"tankb_value" json:"sensors.tankb.value"`
 }
 
 var datasetName = os.Getenv("DATASET")
@@ -51,7 +55,7 @@ func BigqueryPubSub(ctx context.Context, m pubSubMessage) error {
 	}
 	e := event{
 		DeviceId: m.Attributes.DeviceId,
-		Time: meta.Timestamp,
+		Time:     meta.Timestamp,
 	}
 	if err := json.Unmarshal(m.Data, &e); err != nil {
 		return err
