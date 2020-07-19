@@ -63,3 +63,17 @@ void safe_delay_ms(uint32_t delay_ms) {
     }
     vTaskDelay(pdMS_TO_TICKS(delay_ms));
 }
+
+double lin_regression(const double coeff[], size_t coeff_size, double value) {
+    double ret = 0;
+    double x = 1;
+    for (int i = 0; i < coeff_size; ++i) {
+        ret += coeff[coeff_size - 1 - i] * x;
+        if (i == 0) {
+            x = value;
+        } else {
+            x *= value;
+        }
+    }
+    return ret;
+}

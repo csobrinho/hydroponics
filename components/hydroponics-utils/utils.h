@@ -24,4 +24,6 @@ void safe_delay_us(uint32_t delay_us);
 
 void safe_delay_ms(uint32_t delay_ms);
 
+double lin_regression(const double coeff[], size_t size, double value);
+
 #endif //HYDROPONICS_UTILS_H
