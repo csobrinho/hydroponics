@@ -16,7 +16,7 @@ static const char *TAG = "tank";
 
 // Based on https://docs.google.com/spreadsheets/d/1LZo2zjm7wT2C7UeA40zMUXK-daBry_TDRjhAEd-a5a8/view
 //                                             x^3                  x^2                x             b
-static const double regression[] = {-0.0000000008986077278, 0.000004383302109, -0.007671056876, 5.622311802};
+static const double regression[] = {-0.0000000002555018004, 0.000001006700948, -0.001994376124, 2.602979801};
 
 static void tank_task(void *arg) {
     context_t *context = (context_t *) arg;
