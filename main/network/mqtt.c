@@ -88,7 +88,7 @@ static void mqtt_publish_telemetry_event(iotc_context_handle_t context_handle, i
     size_t size = 0;
     ESP_ERROR_CHECK(mqtt_config->handle_publish_telemetry(context, &msg, &size));
     if (msg != NULL) {
-        ESP_LOGI(TAG, "Publishing topic: '%s' with message:\n%*s", publish_topic_event, size, msg);
+        ESP_LOGI(TAG, "Publishing topic: '%s' with message:\n%.*s", publish_topic_event, size, msg);
         iotc_publish_data(context_handle, publish_topic_event, msg, size, mqtt_qos, /* callback= */ NULL,
                 /* user_data= */ NULL);
         SAFE_FREE(msg);
@@ -97,7 +97,7 @@ static void mqtt_publish_telemetry_event(iotc_context_handle_t context_handle, i
     /* Now try to publish the state if available. */
     ESP_ERROR_CHECK(mqtt_config->handle_publish_state(context, &msg, &size));
     if (msg != NULL) {
-        ESP_LOGI(TAG, "Publishing topic: '%s' with message:\n%*s", publish_topic_state, size, msg);
+        ESP_LOGI(TAG, "Publishing topic: '%s' with message:\n%.*s", publish_topic_state, size, msg);
         iotc_publish_data(context_handle, publish_topic_state, msg, size, mqtt_qos, /* callback= */ NULL,
                 /* user_data= */ NULL);
         SAFE_FREE(msg);
@@ -151,7 +151,7 @@ static void mqtt_subscribe_callback(iotc_context_handle_t in_context_handle, iot
                 ESP_LOGI(TAG, "Config payload: %d bytes", params->message.temporary_payload_data_length);
                 ESP_ERROR_CHECK(mqtt_config->handle_config(context, payload, payload_size));
             } else if (strcmp(subscribe_topic_command, params->message.topic) == 0) {
-                ESP_LOGI(TAG, "Message payload: %*s", payload_size, payload);
+                ESP_LOGI(TAG, "Message payload: %.*s", payload_size, payload);
                 ESP_ERROR_CHECK(mqtt_config->handle_command(context, payload, payload_size));
             }
             break;

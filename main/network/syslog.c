@@ -85,7 +85,7 @@ static int syslog_printf(const char *fmt, va_list va) {
             .msg = buf,
             .msg_len = len,
     };
-    printf("%*s", len, buf);
+    printf("%.*s", len, buf);
     while (xQueueSend(queue, &msg, 0) != pdTRUE) {
         // If we fail, just pop one from the queue to get space.
         syslog_entry_t tmp = {0};

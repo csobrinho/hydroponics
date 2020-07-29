@@ -141,7 +141,7 @@ esp_err_t config_dump(const Hydroponics__Config *config) {
         fprintf(stream, "  none\n");
     }
     fclose(stream);
-    ESP_LOGI(TAG, "%*s", len, buf);
+    ESP_LOGI(TAG, "%.*s", len, buf);
     SAFE_FREE(buf);
     return ESP_OK;
 }
