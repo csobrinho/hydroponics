@@ -29,7 +29,7 @@ uint16_t clamp(uint16_t value, uint16_t min, uint16_t max) {
 }
 
 size_t round_up(size_t len, uint16_t block_size) {
-    return len + (len % block_size);
+    return ((len + block_size - 1) & (-block_size));
 }
 
 static esp_err_t aes128(int mode, const uint8_t *src, size_t src_len, uint8_t *dst, size_t dst_len,
@@ -40,13 +40,13 @@ static esp_err_t aes128(int mode, const uint8_t *src, size_t src_len, uint8_t *d
     ARG_CHECK(src_len > 0, ERR_PARAM_LE_ZERO);
     ARG_CHECK(dst_len >= src_len, "dst_len must be >= src_len");
     if (mode == MBEDTLS_AES_DECRYPT) {
-        ARG_CHECK(src_len % AES128_BLOCK_SIZE == 0, "src_len must be a multiple of %d", AES128_BLOCK_SIZE);
+        ARG_CHECK(src_len % AES128_BLOCK_SIZE == 0, "src_len: %d must be a multiple of %d", src_len, AES128_BLOCK_SIZE);
     } else {
-        ARG_CHECK(dst_len % AES128_BLOCK_SIZE == 0, "dst_len must be a multiple of %d", AES128_BLOCK_SIZE);
+        ARG_CHECK(dst_len % AES128_BLOCK_SIZE == 0, "dst_len: %d must be a multiple of %d", dst_len, AES128_BLOCK_SIZE);
     }
-    ESP_LOGI(TAG, "mode:    %s", mode == MBEDTLS_AES_DECRYPT ? "DECRYPT" : "ENCRYPT");
-    ESP_LOGI(TAG, "src_len: %d", src_len);
-    ESP_LOGI(TAG, "dst_len: %d", dst_len);
+    ESP_LOGD(TAG, "mode:    %s", mode == MBEDTLS_AES_DECRYPT ? "DECRYPT" : "ENCRYPT");
+    ESP_LOGD(TAG, "src_len: %d", src_len);
+    ESP_LOGD(TAG, "dst_len: %d", dst_len);
 
     mbedtls_aes_context ctx;
     mbedtls_aes_init(&ctx);
@@ -55,23 +55,25 @@ static esp_err_t aes128(int mode, const uint8_t *src, size_t src_len, uint8_t *d
         ESP_LOGW(TAG, "mbedtls_aes_setkey_enc, error: %d", err);
         goto fail;
     }
-
-    int len = src_len;
-    const uint8_t *psrc = src;
-    uint8_t *pdst = dst;
+    ssize_t len = src_len;
+    uint8_t tmp[AES128_BLOCK_SIZE];
     while (len > 0) {
-        err = mbedtls_aes_crypt_ecb(&ctx, mode, psrc, pdst);
-        ESP_LOGI(TAG, "Encrypt %d / %d to go, error: %d", (int) (psrc - src), len, err);
+        err = mbedtls_aes_crypt_ecb(&ctx, mode, src, dst);
         if (err != 0) {
             ESP_LOGW(TAG, "mbedtls_aes_crypt_ecb, error: %d", err);
             goto fail;
         }
         len -= AES128_BLOCK_SIZE;
-        psrc += AES128_BLOCK_SIZE;
-        pdst += AES128_BLOCK_SIZE;
+        src += AES128_BLOCK_SIZE;
+        dst += AES128_BLOCK_SIZE;
+        if (mode == MBEDTLS_AES_ENCRYPT && len > 0 && len < AES128_BLOCK_SIZE) {
+            for (int i = 0; i < len; ++i) {
+                tmp[i] = src[i];
+            }
+            ESP_ERROR_CHECK(pkcs_7_add_padding(tmp, (size_t *) &len, AES128_BLOCK_SIZE));
+            src = tmp;
+        }
     }
-    ESP_LOGI(TAG, "Adding PKCS #7 padding. src_len: %d dstr_len: %d", src_len, dst_len);
-    ESP_ERROR_CHECK(pkcs_7_add_padding(dst, &src_len, dst_len));
     mbedtls_aes_free(&ctx);
     return ESP_OK;
     fail:
@@ -119,10 +121,10 @@ esp_err_t pkcs_7_add_padding(uint8_t *buf, size_t *len, size_t max_size) {
     ARG_CHECK(max_size >= round_up(*len, AES128_BLOCK_SIZE), "max_size < round_up(*len, AES128_BLOCK_SIZE)");
     size_t padding = *len % AES128_BLOCK_SIZE;
     if (padding == 0) {
-        ESP_LOGI(TAG, "No padding necessary");
+        ESP_LOGD(TAG, "No padding necessary");
         return ESP_OK;
     }
-    ESP_LOGI(TAG, "Adding %d bytes of padding", padding);
+    ESP_LOGD(TAG, "Adding %d bytes of padding", padding);
     buf += *len;
     for (int i = 0; i < padding; ++i) {
         *buf++ = padding;
