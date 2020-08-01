@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+    <configuration default="false" name="protos" type="CMakeRunConfiguration" factoryName="Application"
+                   REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="hydroponics" TARGET_NAME="protos"
+                   CONFIG_NAME="Default" RUN_PATH="/bin/echo">
+        <method v="2">
+            <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask"
+                    enabled="true"/>
+        </method>
+    </configuration>
+</component>
