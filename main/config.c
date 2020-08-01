@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <sys/queue.h>
 
 #include "esp_err.h"
 #include "esp_log.h"
@@ -15,7 +16,15 @@
 #define CONFIG_KEY_PASSWORD   "wifi_password"
 #define CONFIG_KEY_IOT_CONFIG "iot_config"
 
+typedef struct entry {
+    config_callback_t callback;
+    TAILQ_ENTRY(entry) next;
+} entry_t;
+
+typedef TAILQ_HEAD(head, entry) head_t;
+
 static const char *TAG = "config";
+static head_t head;
 
 static esp_err_t config_load_from_storage(context_t *context) {
     uint8_t *data = NULL;
@@ -52,6 +61,15 @@ static esp_err_t config_save_to_storage(const uint8_t *data, size_t size, bool *
     return ESP_OK;
 }
 
+static void config_updated_dispatch(context_t *context) {
+    entry_t *e = NULL;
+    TAILQ_FOREACH(e, &head, next) {
+        const Hydroponics__Config *config = NULL;
+        ESP_ERROR_CHECK(context_get_config(context, &config));
+        e->callback(config);
+    }
+}
+
 esp_err_t config_update(context_t *context, const uint8_t *data, size_t size) {
     ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
@@ -59,18 +77,19 @@ esp_err_t config_update(context_t *context, const uint8_t *data, size_t size) {
     ESP_ERROR_CHECK(config_save_to_storage(data, size, &updated));
     if (data == NULL || size <= 0) {
         ESP_ERROR_CHECK(context_set_config(context, NULL));
+        config_updated_dispatch(context);
         return ESP_OK;
     }
     if (updated || context->config.config == NULL) {
-        Hydroponics__Config *config = hydroponics__config__unpack(NULL, size, data);
+        const Hydroponics__Config *config = hydroponics__config__unpack(NULL, size, data);
         ESP_ERROR_CHECK(context_set_config(context, config));
+        config_updated_dispatch(context);
         if (config == NULL) {
             ESP_LOGE(TAG, "Failed to parse the config proto.");
             return ESP_FAIL;
         }
         ESP_ERROR_CHECK(config_dump(config));
     }
-
     return ESP_OK;
 }
 
@@ -122,19 +141,45 @@ esp_err_t config_dump(const Hydroponics__Config *config) {
     fprintf(stream, "Tasks:\n");
     if (config->n_task > 0 && config->task != NULL) {
         for (int i = 0; i < config->n_task; ++i) {
-            fprintf(stream, "  [%*d] name: %s\n", config->n_task >= 10 ? 2 : 1, i, config->task[i]->name);
-            for (int j = 0; j < config->task[i]->n_output; ++j) {
-                Hydroponics__Task__Output output = config->task[i]->output[j];
-                fprintf(stream, "      output: %s\n", enum_from_value(&hydroponics__task__output__descriptor, output));
+            Hydroponics__Task *t = config->task[i];
+            fprintf(stream, "  [%*d] name: %s\n", config->n_task >= 10 ? 2 : 1, i, t->name);
+            for (int j = 0; j < t->n_output; ++j) {
+                Hydroponics__Output output = t->output[j];
+                fprintf(stream, "      output: %s\n", enum_from_value(&hydroponics__output__descriptor, output));
             }
-            for (int j = 0; j < config->task[i]->n_cron; ++j) {
-                Hydroponics__Task__Cron *cron = config->task[i]->cron[j];
-                Hydroponics__Task__OutputAction action = cron->action;
+            for (int j = 0; j < t->n_cron; ++j) {
+                Hydroponics__Task__Cron *cron = t->cron[j];
                 for (int k = 0; k < cron->n_expression; ++k) {
                     fprintf(stream, "      cron %s: %s\n",
-                            enum_from_value(&hydroponics__task__output_action__descriptor, action),
+                            enum_from_value(&hydroponics__output_state__descriptor, cron->state),
                             cron->expression[k]);
                 }
+            }
+        }
+    } else {
+        fprintf(stream, "  none\n");
+    }
+    fprintf(stream, "HardwareId:\n");
+    if (config->n_hardware_id > 0 && config->hardware_id != NULL) {
+        for (int i = 0; i < config->n_hardware_id; ++i) {
+            Hydroponics__HardwareId *hid = config->hardware_id[i];
+            fprintf(stream, "  [%*d] name: %s\n", config->n_hardware_id >= 10 ? 2 : 1, i, hid->name);
+            fprintf(stream, "      dev_id: %s\n", hid->dev_id);
+            fprintf(stream, "      dps_id: %d\n", hid->dps_id);
+            fprintf(stream, "      output: %s\n", enum_from_value(&hydroponics__output__descriptor, hid->output));
+        }
+    } else {
+        fprintf(stream, "  none\n");
+    }
+    fprintf(stream, "StartupState:\n");
+    if (config->n_startup_state > 0 && config->startup_state != NULL) {
+        for (int i = 0; i < config->n_startup_state; ++i) {
+            Hydroponics__StartupState *s = config->startup_state[i];
+            fprintf(stream, "  [%*d] state: %s\n", config->n_startup_state >= 10 ? 2 : 1, i,
+                    enum_from_value(&hydroponics__output__descriptor, s->state));
+            for (int j = 0; j < s->n_output; ++j) {
+                Hydroponics__Output output = s->output[j];
+                fprintf(stream, "      output: %s\n", enum_from_value(&hydroponics__output__descriptor, output));
             }
         }
     } else {
@@ -147,6 +192,7 @@ esp_err_t config_dump(const Hydroponics__Config *config) {
 }
 
 esp_err_t config_init(context_t *context) {
+    TAILQ_INIT(&head);
     char *device_id = CONFIG_GIOT_DEVICE_ID;
     char *ssid = CONFIG_ESP_WIFI_SSID;
     char *password = CONFIG_ESP_WIFI_PASSWORD;
@@ -159,5 +205,29 @@ esp_err_t config_init(context_t *context) {
     ESP_LOGI(TAG, "  device_id: %s", device_id);
     ESP_LOGI(TAG, "  ssid:      %s", ssid);
     ESP_ERROR_CHECK(config_dump(context->config.config));
+    return ESP_OK;
+}
+
+esp_err_t config_register(config_callback_t callback) {
+    ARG_CHECK(callback != NULL, ERR_PARAM_NULL);
+    entry_t *e = NULL, *tmp = NULL;
+    TAILQ_FOREACH_SAFE(e, &head, next, tmp) {
+        ARG_CHECK(e->callback != callback, "callback was already registered");
+    }
+    e = calloc(1, sizeof(entry_t));
+    CHECK_NO_MEM(e);
+    TAILQ_INSERT_TAIL(&head, e, next);
+    return ESP_OK;
+}
+
+esp_err_t config_unregister(config_callback_t callback) {
+    ARG_CHECK(callback != NULL, ERR_PARAM_NULL);
+    entry_t *e = NULL, *tmp = NULL;
+    TAILQ_FOREACH_SAFE(e, &head, next, tmp) {
+        if (e->callback == callback) {
+            TAILQ_REMOVE(&head, e, next);
+            SAFE_FREE(e);
+        }
+    }
     return ESP_OK;
 }
