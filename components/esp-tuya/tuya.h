@@ -21,11 +21,11 @@ typedef enum {
     TUYA_CONNECTION_TCP = SOCK_STREAM,
 } tuya_connection_type_t;
 
-typedef const struct {
-    tuya_connection_type_t type;
+typedef struct {
+    const tuya_connection_type_t type;
     char ip[16];
     uint8_t key[AES128_BLOCK_SIZE];
-    struct timeval timeout;
+    const struct timeval timeout;
 } tuya_connection_t;
 
 typedef struct {

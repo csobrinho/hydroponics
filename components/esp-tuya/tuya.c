@@ -112,7 +112,7 @@ static esp_err_t tuya_decrypt_payload(const tuya_connection_t *conn, const uint8
     }
 
     msg->payload.len = to_decode_len;
-    msg->payload.data = calloc(1, to_decode_len);
+    msg->payload.data = calloc(1, to_decode_len + 1); // We always set the last one to '\0'.
     msg->payload.allocated = true;
 
     const uint8_t *keys[16] = {conn->key, UDP_KEY};
@@ -123,6 +123,7 @@ static esp_err_t tuya_decrypt_payload(const tuya_connection_t *conn, const uint8
             continue;
         }
         ESP_ERROR_CHECK(pkcs_7_strip_padding(msg->payload.data, &msg->payload.len));
+        msg->payload.data[msg->payload.len] = '\0';
         return ESP_OK;
     }
     return ESP_FAIL;
