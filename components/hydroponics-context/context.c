@@ -227,7 +227,7 @@ esp_err_t context_set_config(context_t *context, const Hydroponics__Config *conf
     return ESP_OK;
 }
 
-esp_err_t context_get_config(context_t *context, Hydroponics__Config **config) {
+esp_err_t context_get_config(context_t *context, const Hydroponics__Config **config) {
     ARG_CHECK(context != NULL, ERR_PARAM_NULL);
     ARG_CHECK(config != NULL, ERR_PARAM_NULL);
 
@@ -236,23 +236,19 @@ esp_err_t context_get_config(context_t *context, Hydroponics__Config **config) {
     uint8_t *data = NULL;
     *config = NULL;
     if (context->config.config == NULL) {
-        goto end;
+        goto fail;
     }
     size_t size = hydroponics__config__get_packed_size(context->config.config);
     if (size <= 0) {
-        goto end;
+        goto fail;
     }
     data = malloc(size);
-    if (data == NULL) {
-        ret = ESP_ERR_NO_MEM;
-        goto end;
-    }
+    FAIL_IF_NO_MEM(data);
 
     hydroponics__config__pack(context->config.config, data);
     *config = hydroponics__config__unpack(NULL, size, data);
-    goto end;
 
-    end:
+    fail:
     SAFE_FREE(data);
     context_unlock(context);
     return ret;

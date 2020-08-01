@@ -6,6 +6,7 @@
 #define EXT_GPIO_ADDRESS 0x20
 
 typedef enum {
+    // I2C Expander.
     EXT_GPIO_A_0 = GPIO_NUM_0,
     EXT_GPIO_A_1 = GPIO_NUM_1,
     EXT_GPIO_A_2 = GPIO_NUM_2,
