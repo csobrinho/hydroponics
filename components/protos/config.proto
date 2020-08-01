@@ -30,34 +30,38 @@ message Controller {
   Entry phb = 4;
 }
 
+// Directly matches "ext_gpio_num_t" enumeration.
+enum Output {
+  EXT_GPIO_A_0 = 0;
+  EXT_GPIO_A_1 = 1;
+  EXT_GPIO_A_2 = 2;
+  EXT_GPIO_A_3 = 3;
+  EXT_GPIO_A_4 = 4;
+  EXT_GPIO_A_5 = 5;
+  EXT_GPIO_A_6 = 6;
+  EXT_GPIO_A_7 = 7;
+  EXT_GPIO_B_0 = 8;
+  EXT_GPIO_B_1 = 9;
+  EXT_GPIO_B_2 = 10;
+  EXT_GPIO_B_3 = 11;
+  EXT_GPIO_B_4 = 12;
+  EXT_GPIO_B_5 = 13;
+  EXT_GPIO_B_6 = 14;
+  EXT_GPIO_B_7 = 15;
+
+  EXT_TUYA_OUT_1 = 101;
+  EXT_TUYA_OUT_2 = 102;
+  EXT_TUYA_OUT_3 = 103;
+};
+
+enum OutputState {
+  OFF = 0;
+  ON = 1;
+}
+
 message Task {
-  // Directly matches "ext_gpio_num_t" enumeration.
-  enum Output {
-    EXT_GPIO_A_0 = 0;
-    EXT_GPIO_A_1 = 1;
-    EXT_GPIO_A_2 = 2;
-    EXT_GPIO_A_3 = 3;
-    EXT_GPIO_A_4 = 4;
-    EXT_GPIO_A_5 = 5;
-    EXT_GPIO_A_6 = 6;
-    EXT_GPIO_A_7 = 7;
-    EXT_GPIO_B_0 = 8;
-    EXT_GPIO_B_1 = 9;
-    EXT_GPIO_B_2 = 10;
-    EXT_GPIO_B_3 = 11;
-    EXT_GPIO_B_4 = 12;
-    EXT_GPIO_B_5 = 13;
-    EXT_GPIO_B_6 = 14;
-    EXT_GPIO_B_7 = 15;
-  };
-
-  enum OutputAction {
-    OFF = 0;
-    ON = 1;
-  }
-
   message Cron {
-    OutputAction action = 1;
+    OutputState state = 1;
     repeated string expression = 2;
   }
 
@@ -66,8 +70,22 @@ message Task {
   repeated Cron cron = 3;
 }
 
+message HardwareId {
+  string name = 1;
+  string dev_id = 2;
+  int32 dps_id = 3;
+  Output output = 4;
+}
+
+message StartupState {
+  OutputState state = 1;
+  repeated Output output = 2;
+}
+
 message Config {
   Sampling sampling = 1;
   Controller controller = 2;
   repeated Task task = 3;
+  repeated HardwareId hardware_id = 4;
+  repeated StartupState startup_state = 5;
 }

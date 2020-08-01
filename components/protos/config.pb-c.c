@@ -160,6 +160,96 @@ void   hydroponics__task__free_unpacked
   assert(message->base.descriptor == &hydroponics__task__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+void   hydroponics__hardware_id__init
+                     (Hydroponics__HardwareId         *message)
+{
+  static const Hydroponics__HardwareId init_value = HYDROPONICS__HARDWARE_ID__INIT;
+  *message = init_value;
+}
+size_t hydroponics__hardware_id__get_packed_size
+                     (const Hydroponics__HardwareId *message)
+{
+  assert(message->base.descriptor == &hydroponics__hardware_id__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t hydroponics__hardware_id__pack
+                     (const Hydroponics__HardwareId *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &hydroponics__hardware_id__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t hydroponics__hardware_id__pack_to_buffer
+                     (const Hydroponics__HardwareId *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &hydroponics__hardware_id__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+Hydroponics__HardwareId *
+       hydroponics__hardware_id__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (Hydroponics__HardwareId *)
+     protobuf_c_message_unpack (&hydroponics__hardware_id__descriptor,
+                                allocator, len, data);
+}
+void   hydroponics__hardware_id__free_unpacked
+                     (Hydroponics__HardwareId *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &hydroponics__hardware_id__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   hydroponics__startup_state__init
+                     (Hydroponics__StartupState         *message)
+{
+  static const Hydroponics__StartupState init_value = HYDROPONICS__STARTUP_STATE__INIT;
+  *message = init_value;
+}
+size_t hydroponics__startup_state__get_packed_size
+                     (const Hydroponics__StartupState *message)
+{
+  assert(message->base.descriptor == &hydroponics__startup_state__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t hydroponics__startup_state__pack
+                     (const Hydroponics__StartupState *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &hydroponics__startup_state__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t hydroponics__startup_state__pack_to_buffer
+                     (const Hydroponics__StartupState *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &hydroponics__startup_state__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+Hydroponics__StartupState *
+       hydroponics__startup_state__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (Hydroponics__StartupState *)
+     protobuf_c_message_unpack (&hydroponics__startup_state__descriptor,
+                                allocator, len, data);
+}
+void   hydroponics__startup_state__free_unpacked
+                     (Hydroponics__StartupState *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &hydroponics__startup_state__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 void   hydroponics__config__init
                      (Hydroponics__Config         *message)
 {
@@ -529,13 +619,13 @@ const ProtobufCMessageDescriptor hydroponics__controller__descriptor =
 static const ProtobufCFieldDescriptor hydroponics__task__cron__field_descriptors[2] =
 {
   {
-    "action",
+    "state",
     1,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_ENUM,
     0,   /* quantifier_offset */
-    offsetof(Hydroponics__Task__Cron, action),
-    &hydroponics__task__output_action__descriptor,
+    offsetof(Hydroponics__Task__Cron, state),
+    &hydroponics__output_state__descriptor,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
@@ -554,8 +644,8 @@ static const ProtobufCFieldDescriptor hydroponics__task__cron__field_descriptors
   },
 };
 static const unsigned hydroponics__task__cron__field_indices_by_name[] = {
-  0,   /* field[0] = action */
   1,   /* field[1] = expression */
+  0,   /* field[0] = state */
 };
 static const ProtobufCIntRange hydroponics__task__cron__number_ranges[1 + 1] =
 {
@@ -576,90 +666,6 @@ const ProtobufCMessageDescriptor hydroponics__task__cron__descriptor =
   1,  hydroponics__task__cron__number_ranges,
   (ProtobufCMessageInit) hydroponics__task__cron__init,
   NULL,NULL,NULL    /* reserved[123] */
-};
-static const ProtobufCEnumValue hydroponics__task__output__enum_values_by_number[16] =
-{
-  { "EXT_GPIO_A_0", "HYDROPONICS__TASK__OUTPUT__EXT_GPIO_A_0", 0 },
-  { "EXT_GPIO_A_1", "HYDROPONICS__TASK__OUTPUT__EXT_GPIO_A_1", 1 },
-  { "EXT_GPIO_A_2", "HYDROPONICS__TASK__OUTPUT__EXT_GPIO_A_2", 2 },
-  { "EXT_GPIO_A_3", "HYDROPONICS__TASK__OUTPUT__EXT_GPIO_A_3", 3 },
-  { "EXT_GPIO_A_4", "HYDROPONICS__TASK__OUTPUT__EXT_GPIO_A_4", 4 },
-  { "EXT_GPIO_A_5", "HYDROPONICS__TASK__OUTPUT__EXT_GPIO_A_5", 5 },
-  { "EXT_GPIO_A_6", "HYDROPONICS__TASK__OUTPUT__EXT_GPIO_A_6", 6 },
-  { "EXT_GPIO_A_7", "HYDROPONICS__TASK__OUTPUT__EXT_GPIO_A_7", 7 },
-  { "EXT_GPIO_B_0", "HYDROPONICS__TASK__OUTPUT__EXT_GPIO_B_0", 8 },
-  { "EXT_GPIO_B_1", "HYDROPONICS__TASK__OUTPUT__EXT_GPIO_B_1", 9 },
-  { "EXT_GPIO_B_2", "HYDROPONICS__TASK__OUTPUT__EXT_GPIO_B_2", 10 },
-  { "EXT_GPIO_B_3", "HYDROPONICS__TASK__OUTPUT__EXT_GPIO_B_3", 11 },
-  { "EXT_GPIO_B_4", "HYDROPONICS__TASK__OUTPUT__EXT_GPIO_B_4", 12 },
-  { "EXT_GPIO_B_5", "HYDROPONICS__TASK__OUTPUT__EXT_GPIO_B_5", 13 },
-  { "EXT_GPIO_B_6", "HYDROPONICS__TASK__OUTPUT__EXT_GPIO_B_6", 14 },
-  { "EXT_GPIO_B_7", "HYDROPONICS__TASK__OUTPUT__EXT_GPIO_B_7", 15 },
-};
-static const ProtobufCIntRange hydroponics__task__output__value_ranges[] = {
-{0, 0},{0, 16}
-};
-static const ProtobufCEnumValueIndex hydroponics__task__output__enum_values_by_name[16] =
-{
-  { "EXT_GPIO_A_0", 0 },
-  { "EXT_GPIO_A_1", 1 },
-  { "EXT_GPIO_A_2", 2 },
-  { "EXT_GPIO_A_3", 3 },
-  { "EXT_GPIO_A_4", 4 },
-  { "EXT_GPIO_A_5", 5 },
-  { "EXT_GPIO_A_6", 6 },
-  { "EXT_GPIO_A_7", 7 },
-  { "EXT_GPIO_B_0", 8 },
-  { "EXT_GPIO_B_1", 9 },
-  { "EXT_GPIO_B_2", 10 },
-  { "EXT_GPIO_B_3", 11 },
-  { "EXT_GPIO_B_4", 12 },
-  { "EXT_GPIO_B_5", 13 },
-  { "EXT_GPIO_B_6", 14 },
-  { "EXT_GPIO_B_7", 15 },
-};
-const ProtobufCEnumDescriptor hydroponics__task__output__descriptor =
-{
-  PROTOBUF_C__ENUM_DESCRIPTOR_MAGIC,
-  "hydroponics.Task.Output",
-  "Output",
-  "Hydroponics__Task__Output",
-  "hydroponics",
-  16,
-  hydroponics__task__output__enum_values_by_number,
-  16,
-  hydroponics__task__output__enum_values_by_name,
-  1,
-  hydroponics__task__output__value_ranges,
-  NULL,NULL,NULL,NULL   /* reserved[1234] */
-};
-static const ProtobufCEnumValue hydroponics__task__output_action__enum_values_by_number[2] =
-{
-  { "OFF", "HYDROPONICS__TASK__OUTPUT_ACTION__OFF", 0 },
-  { "ON", "HYDROPONICS__TASK__OUTPUT_ACTION__ON", 1 },
-};
-static const ProtobufCIntRange hydroponics__task__output_action__value_ranges[] = {
-{0, 0},{0, 2}
-};
-static const ProtobufCEnumValueIndex hydroponics__task__output_action__enum_values_by_name[2] =
-{
-  { "OFF", 0 },
-  { "ON", 1 },
-};
-const ProtobufCEnumDescriptor hydroponics__task__output_action__descriptor =
-{
-  PROTOBUF_C__ENUM_DESCRIPTOR_MAGIC,
-  "hydroponics.Task.OutputAction",
-  "OutputAction",
-  "Hydroponics__Task__OutputAction",
-  "hydroponics",
-  2,
-  hydroponics__task__output_action__enum_values_by_number,
-  2,
-  hydroponics__task__output_action__enum_values_by_name,
-  1,
-  hydroponics__task__output_action__value_ranges,
-  NULL,NULL,NULL,NULL   /* reserved[1234] */
 };
 static const ProtobufCFieldDescriptor hydroponics__task__field_descriptors[3] =
 {
@@ -682,7 +688,7 @@ static const ProtobufCFieldDescriptor hydroponics__task__field_descriptors[3] =
     PROTOBUF_C_TYPE_ENUM,
     offsetof(Hydroponics__Task, n_output),
     offsetof(Hydroponics__Task, output),
-    &hydroponics__task__output__descriptor,
+    &hydroponics__output__descriptor,
     NULL,
     0 | PROTOBUF_C_FIELD_FLAG_PACKED,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
@@ -725,7 +731,135 @@ const ProtobufCMessageDescriptor hydroponics__task__descriptor =
   (ProtobufCMessageInit) hydroponics__task__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor hydroponics__config__field_descriptors[3] =
+static const ProtobufCFieldDescriptor hydroponics__hardware_id__field_descriptors[4] =
+{
+  {
+    "name",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__HardwareId, name),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "dev_id",
+    2,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__HardwareId, dev_id),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "dps_id",
+    3,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_INT32,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__HardwareId, dps_id),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "output",
+    4,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_ENUM,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__HardwareId, output),
+    &hydroponics__output__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned hydroponics__hardware_id__field_indices_by_name[] = {
+  1,   /* field[1] = dev_id */
+  2,   /* field[2] = dps_id */
+  0,   /* field[0] = name */
+  3,   /* field[3] = output */
+};
+static const ProtobufCIntRange hydroponics__hardware_id__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 4 }
+};
+const ProtobufCMessageDescriptor hydroponics__hardware_id__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "hydroponics.HardwareId",
+  "HardwareId",
+  "Hydroponics__HardwareId",
+  "hydroponics",
+  sizeof(Hydroponics__HardwareId),
+  4,
+  hydroponics__hardware_id__field_descriptors,
+  hydroponics__hardware_id__field_indices_by_name,
+  1,  hydroponics__hardware_id__number_ranges,
+  (ProtobufCMessageInit) hydroponics__hardware_id__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor hydroponics__startup_state__field_descriptors[2] =
+{
+  {
+    "state",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_ENUM,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__StartupState, state),
+    &hydroponics__output_state__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "output",
+    2,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_ENUM,
+    offsetof(Hydroponics__StartupState, n_output),
+    offsetof(Hydroponics__StartupState, output),
+    &hydroponics__output__descriptor,
+    NULL,
+    0 | PROTOBUF_C_FIELD_FLAG_PACKED,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned hydroponics__startup_state__field_indices_by_name[] = {
+  1,   /* field[1] = output */
+  0,   /* field[0] = state */
+};
+static const ProtobufCIntRange hydroponics__startup_state__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 2 }
+};
+const ProtobufCMessageDescriptor hydroponics__startup_state__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "hydroponics.StartupState",
+  "StartupState",
+  "Hydroponics__StartupState",
+  "hydroponics",
+  sizeof(Hydroponics__StartupState),
+  2,
+  hydroponics__startup_state__field_descriptors,
+  hydroponics__startup_state__field_indices_by_name,
+  1,  hydroponics__startup_state__number_ranges,
+  (ProtobufCMessageInit) hydroponics__startup_state__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor hydroponics__config__field_descriptors[5] =
 {
   {
     "sampling",
@@ -763,16 +897,42 @@ static const ProtobufCFieldDescriptor hydroponics__config__field_descriptors[3] 
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "hardware_id",
+    4,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(Hydroponics__Config, n_hardware_id),
+    offsetof(Hydroponics__Config, hardware_id),
+    &hydroponics__hardware_id__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "startup_state",
+    5,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(Hydroponics__Config, n_startup_state),
+    offsetof(Hydroponics__Config, startup_state),
+    &hydroponics__startup_state__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned hydroponics__config__field_indices_by_name[] = {
   1,   /* field[1] = controller */
+  3,   /* field[3] = hardware_id */
   0,   /* field[0] = sampling */
+  4,   /* field[4] = startup_state */
   2,   /* field[2] = task */
 };
 static const ProtobufCIntRange hydroponics__config__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 3 }
+  { 0, 5 }
 };
 const ProtobufCMessageDescriptor hydroponics__config__descriptor =
 {
@@ -782,10 +942,100 @@ const ProtobufCMessageDescriptor hydroponics__config__descriptor =
   "Hydroponics__Config",
   "hydroponics",
   sizeof(Hydroponics__Config),
-  3,
+  5,
   hydroponics__config__field_descriptors,
   hydroponics__config__field_indices_by_name,
   1,  hydroponics__config__number_ranges,
   (ProtobufCMessageInit) hydroponics__config__init,
   NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCEnumValue hydroponics__output__enum_values_by_number[19] =
+{
+  { "EXT_GPIO_A_0", "HYDROPONICS__OUTPUT__EXT_GPIO_A_0", 0 },
+  { "EXT_GPIO_A_1", "HYDROPONICS__OUTPUT__EXT_GPIO_A_1", 1 },
+  { "EXT_GPIO_A_2", "HYDROPONICS__OUTPUT__EXT_GPIO_A_2", 2 },
+  { "EXT_GPIO_A_3", "HYDROPONICS__OUTPUT__EXT_GPIO_A_3", 3 },
+  { "EXT_GPIO_A_4", "HYDROPONICS__OUTPUT__EXT_GPIO_A_4", 4 },
+  { "EXT_GPIO_A_5", "HYDROPONICS__OUTPUT__EXT_GPIO_A_5", 5 },
+  { "EXT_GPIO_A_6", "HYDROPONICS__OUTPUT__EXT_GPIO_A_6", 6 },
+  { "EXT_GPIO_A_7", "HYDROPONICS__OUTPUT__EXT_GPIO_A_7", 7 },
+  { "EXT_GPIO_B_0", "HYDROPONICS__OUTPUT__EXT_GPIO_B_0", 8 },
+  { "EXT_GPIO_B_1", "HYDROPONICS__OUTPUT__EXT_GPIO_B_1", 9 },
+  { "EXT_GPIO_B_2", "HYDROPONICS__OUTPUT__EXT_GPIO_B_2", 10 },
+  { "EXT_GPIO_B_3", "HYDROPONICS__OUTPUT__EXT_GPIO_B_3", 11 },
+  { "EXT_GPIO_B_4", "HYDROPONICS__OUTPUT__EXT_GPIO_B_4", 12 },
+  { "EXT_GPIO_B_5", "HYDROPONICS__OUTPUT__EXT_GPIO_B_5", 13 },
+  { "EXT_GPIO_B_6", "HYDROPONICS__OUTPUT__EXT_GPIO_B_6", 14 },
+  { "EXT_GPIO_B_7", "HYDROPONICS__OUTPUT__EXT_GPIO_B_7", 15 },
+  { "EXT_TUYA_OUT_1", "HYDROPONICS__OUTPUT__EXT_TUYA_OUT_1", 101 },
+  { "EXT_TUYA_OUT_2", "HYDROPONICS__OUTPUT__EXT_TUYA_OUT_2", 102 },
+  { "EXT_TUYA_OUT_3", "HYDROPONICS__OUTPUT__EXT_TUYA_OUT_3", 103 },
+};
+static const ProtobufCIntRange hydroponics__output__value_ranges[] = {
+{0, 0},{101, 16},{0, 19}
+};
+static const ProtobufCEnumValueIndex hydroponics__output__enum_values_by_name[19] =
+{
+  { "EXT_GPIO_A_0", 0 },
+  { "EXT_GPIO_A_1", 1 },
+  { "EXT_GPIO_A_2", 2 },
+  { "EXT_GPIO_A_3", 3 },
+  { "EXT_GPIO_A_4", 4 },
+  { "EXT_GPIO_A_5", 5 },
+  { "EXT_GPIO_A_6", 6 },
+  { "EXT_GPIO_A_7", 7 },
+  { "EXT_GPIO_B_0", 8 },
+  { "EXT_GPIO_B_1", 9 },
+  { "EXT_GPIO_B_2", 10 },
+  { "EXT_GPIO_B_3", 11 },
+  { "EXT_GPIO_B_4", 12 },
+  { "EXT_GPIO_B_5", 13 },
+  { "EXT_GPIO_B_6", 14 },
+  { "EXT_GPIO_B_7", 15 },
+  { "EXT_TUYA_OUT_1", 16 },
+  { "EXT_TUYA_OUT_2", 17 },
+  { "EXT_TUYA_OUT_3", 18 },
+};
+const ProtobufCEnumDescriptor hydroponics__output__descriptor =
+{
+  PROTOBUF_C__ENUM_DESCRIPTOR_MAGIC,
+  "hydroponics.Output",
+  "Output",
+  "Hydroponics__Output",
+  "hydroponics",
+  19,
+  hydroponics__output__enum_values_by_number,
+  19,
+  hydroponics__output__enum_values_by_name,
+  2,
+  hydroponics__output__value_ranges,
+  NULL,NULL,NULL,NULL   /* reserved[1234] */
+};
+static const ProtobufCEnumValue hydroponics__output_state__enum_values_by_number[2] =
+{
+  { "OFF", "HYDROPONICS__OUTPUT_STATE__OFF", 0 },
+  { "ON", "HYDROPONICS__OUTPUT_STATE__ON", 1 },
+};
+static const ProtobufCIntRange hydroponics__output_state__value_ranges[] = {
+{0, 0},{0, 2}
+};
+static const ProtobufCEnumValueIndex hydroponics__output_state__enum_values_by_name[2] =
+{
+  { "OFF", 0 },
+  { "ON", 1 },
+};
+const ProtobufCEnumDescriptor hydroponics__output_state__descriptor =
+{
+  PROTOBUF_C__ENUM_DESCRIPTOR_MAGIC,
+  "hydroponics.OutputState",
+  "OutputState",
+  "Hydroponics__OutputState",
+  "hydroponics",
+  2,
+  hydroponics__output_state__enum_values_by_number,
+  2,
+  hydroponics__output_state__enum_values_by_name,
+  1,
+  hydroponics__output_state__value_ranges,
+  NULL,NULL,NULL,NULL   /* reserved[1234] */
 };

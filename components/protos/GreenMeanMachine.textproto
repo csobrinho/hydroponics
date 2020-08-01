@@ -42,17 +42,35 @@ controller: {
     }
   }
 }
+hardware_id {
+  name: "NA"
+  dev_id: "37517103d8f15be34e2c"
+  dps_id: 1,
+  output: EXT_TUYA_OUT_1
+}
+hardware_id {
+  name: "Strawberries"
+  dev_id: "37517103d8f15be34e2c"
+  dps_id: 2,
+  output: EXT_TUYA_OUT_2
+}
+hardware_id {
+  name: "Lettuce"
+  dev_id: "37517103d8f15be34e2c"
+  dps_id: 3,
+  output: EXT_TUYA_OUT_3
+}
 task: {
   name: "FooBar0"
   output: EXT_GPIO_B_0
   cron: {
-    action: ON,
-    # On at xx:00, every 2 seconds.
+    state: ON,
+    # On at xx:00, every 30 seconds.
     expression: "0/30 * * * * *"
   }
   cron: {
-    action: OFF,
-    # On at xx:01, every 2 seconds.
+    state: OFF,
+    # On at xx:30, every 30 seconds.
     expression: "30/30 * * * * *"
   }
 }
@@ -60,13 +78,38 @@ task: {
   name: "FooBar1"
   output: EXT_GPIO_A_7
   cron: {
-    action: ON,
+    state: ON,
     # On every two minutes at xx:15.
     expression: "15 */2 * * * *"
   }
   cron: {
-    action: OFF,
+    state: OFF,
     # Off every two minutes at xx:45.
     expression: "45 */2 * * * *"
   }
+}
+startup_state {
+  state: OFF
+  output: EXT_GPIO_A_0
+  output: EXT_GPIO_A_1
+  output: EXT_GPIO_A_2
+  output: EXT_GPIO_A_3
+  output: EXT_GPIO_A_4
+  output: EXT_GPIO_A_5
+  output: EXT_GPIO_A_6
+  output: EXT_GPIO_A_7
+  output: EXT_GPIO_B_0
+  output: EXT_GPIO_B_1
+  output: EXT_GPIO_B_2
+  output: EXT_GPIO_B_3
+  output: EXT_GPIO_B_4
+  output: EXT_GPIO_B_5
+  output: EXT_GPIO_B_6
+  output: EXT_GPIO_B_7
+}
+startup_state {
+  state: ON
+  output: EXT_TUYA_OUT_1
+  output: EXT_TUYA_OUT_2
+  output: EXT_TUYA_OUT_3
 }

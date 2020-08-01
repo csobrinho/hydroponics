@@ -21,6 +21,8 @@ typedef struct _Hydroponics__Controller__Entry Hydroponics__Controller__Entry;
 typedef struct _Hydroponics__Controller__Entry__Pid Hydroponics__Controller__Entry__Pid;
 typedef struct _Hydroponics__Task Hydroponics__Task;
 typedef struct _Hydroponics__Task__Cron Hydroponics__Task__Cron;
+typedef struct _Hydroponics__HardwareId Hydroponics__HardwareId;
+typedef struct _Hydroponics__StartupState Hydroponics__StartupState;
 typedef struct _Hydroponics__Config Hydroponics__Config;
 
 
@@ -29,30 +31,33 @@ typedef struct _Hydroponics__Config Hydroponics__Config;
 /*
  * Directly matches "ext_gpio_num_t" enumeration.
  */
-typedef enum _Hydroponics__Task__Output {
-  HYDROPONICS__TASK__OUTPUT__EXT_GPIO_A_0 = 0,
-  HYDROPONICS__TASK__OUTPUT__EXT_GPIO_A_1 = 1,
-  HYDROPONICS__TASK__OUTPUT__EXT_GPIO_A_2 = 2,
-  HYDROPONICS__TASK__OUTPUT__EXT_GPIO_A_3 = 3,
-  HYDROPONICS__TASK__OUTPUT__EXT_GPIO_A_4 = 4,
-  HYDROPONICS__TASK__OUTPUT__EXT_GPIO_A_5 = 5,
-  HYDROPONICS__TASK__OUTPUT__EXT_GPIO_A_6 = 6,
-  HYDROPONICS__TASK__OUTPUT__EXT_GPIO_A_7 = 7,
-  HYDROPONICS__TASK__OUTPUT__EXT_GPIO_B_0 = 8,
-  HYDROPONICS__TASK__OUTPUT__EXT_GPIO_B_1 = 9,
-  HYDROPONICS__TASK__OUTPUT__EXT_GPIO_B_2 = 10,
-  HYDROPONICS__TASK__OUTPUT__EXT_GPIO_B_3 = 11,
-  HYDROPONICS__TASK__OUTPUT__EXT_GPIO_B_4 = 12,
-  HYDROPONICS__TASK__OUTPUT__EXT_GPIO_B_5 = 13,
-  HYDROPONICS__TASK__OUTPUT__EXT_GPIO_B_6 = 14,
-  HYDROPONICS__TASK__OUTPUT__EXT_GPIO_B_7 = 15
-    PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(HYDROPONICS__TASK__OUTPUT)
-} Hydroponics__Task__Output;
-typedef enum _Hydroponics__Task__OutputAction {
-  HYDROPONICS__TASK__OUTPUT_ACTION__OFF = 0,
-  HYDROPONICS__TASK__OUTPUT_ACTION__ON = 1
-    PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(HYDROPONICS__TASK__OUTPUT_ACTION)
-} Hydroponics__Task__OutputAction;
+typedef enum _Hydroponics__Output {
+  HYDROPONICS__OUTPUT__EXT_GPIO_A_0 = 0,
+  HYDROPONICS__OUTPUT__EXT_GPIO_A_1 = 1,
+  HYDROPONICS__OUTPUT__EXT_GPIO_A_2 = 2,
+  HYDROPONICS__OUTPUT__EXT_GPIO_A_3 = 3,
+  HYDROPONICS__OUTPUT__EXT_GPIO_A_4 = 4,
+  HYDROPONICS__OUTPUT__EXT_GPIO_A_5 = 5,
+  HYDROPONICS__OUTPUT__EXT_GPIO_A_6 = 6,
+  HYDROPONICS__OUTPUT__EXT_GPIO_A_7 = 7,
+  HYDROPONICS__OUTPUT__EXT_GPIO_B_0 = 8,
+  HYDROPONICS__OUTPUT__EXT_GPIO_B_1 = 9,
+  HYDROPONICS__OUTPUT__EXT_GPIO_B_2 = 10,
+  HYDROPONICS__OUTPUT__EXT_GPIO_B_3 = 11,
+  HYDROPONICS__OUTPUT__EXT_GPIO_B_4 = 12,
+  HYDROPONICS__OUTPUT__EXT_GPIO_B_5 = 13,
+  HYDROPONICS__OUTPUT__EXT_GPIO_B_6 = 14,
+  HYDROPONICS__OUTPUT__EXT_GPIO_B_7 = 15,
+  HYDROPONICS__OUTPUT__EXT_TUYA_OUT_1 = 101,
+  HYDROPONICS__OUTPUT__EXT_TUYA_OUT_2 = 102,
+  HYDROPONICS__OUTPUT__EXT_TUYA_OUT_3 = 103
+    PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(HYDROPONICS__OUTPUT)
+} Hydroponics__Output;
+typedef enum _Hydroponics__OutputState {
+  HYDROPONICS__OUTPUT_STATE__OFF = 0,
+  HYDROPONICS__OUTPUT_STATE__ON = 1
+    PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(HYDROPONICS__OUTPUT_STATE)
+} Hydroponics__OutputState;
 
 /* --- messages --- */
 
@@ -112,13 +117,13 @@ struct  _Hydroponics__Controller
 struct  _Hydroponics__Task__Cron
 {
   ProtobufCMessage base;
-  Hydroponics__Task__OutputAction action;
+  Hydroponics__OutputState state;
   size_t n_expression;
   char **expression;
 };
 #define HYDROPONICS__TASK__CRON__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&hydroponics__task__cron__descriptor) \
-    , HYDROPONICS__TASK__OUTPUT_ACTION__OFF, 0,NULL }
+    , HYDROPONICS__OUTPUT_STATE__OFF, 0,NULL }
 
 
 struct  _Hydroponics__Task
@@ -126,13 +131,38 @@ struct  _Hydroponics__Task
   ProtobufCMessage base;
   char *name;
   size_t n_output;
-  Hydroponics__Task__Output *output;
+  Hydroponics__Output *output;
   size_t n_cron;
   Hydroponics__Task__Cron **cron;
 };
 #define HYDROPONICS__TASK__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&hydroponics__task__descriptor) \
     , (char *)protobuf_c_empty_string, 0,NULL, 0,NULL }
+
+
+struct  _Hydroponics__HardwareId
+{
+  ProtobufCMessage base;
+  char *name;
+  char *dev_id;
+  int32_t dps_id;
+  Hydroponics__Output output;
+};
+#define HYDROPONICS__HARDWARE_ID__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&hydroponics__hardware_id__descriptor) \
+    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, 0, HYDROPONICS__OUTPUT__EXT_GPIO_A_0 }
+
+
+struct  _Hydroponics__StartupState
+{
+  ProtobufCMessage base;
+  Hydroponics__OutputState state;
+  size_t n_output;
+  Hydroponics__Output *output;
+};
+#define HYDROPONICS__STARTUP_STATE__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&hydroponics__startup_state__descriptor) \
+    , HYDROPONICS__OUTPUT_STATE__OFF, 0,NULL }
 
 
 struct  _Hydroponics__Config
@@ -142,10 +172,14 @@ struct  _Hydroponics__Config
   Hydroponics__Controller *controller;
   size_t n_task;
   Hydroponics__Task **task;
+  size_t n_hardware_id;
+  Hydroponics__HardwareId **hardware_id;
+  size_t n_startup_state;
+  Hydroponics__StartupState **startup_state;
 };
 #define HYDROPONICS__CONFIG__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&hydroponics__config__descriptor) \
-    , NULL, NULL, 0,NULL }
+    , NULL, NULL, 0,NULL, 0,NULL, 0,NULL }
 
 
 /* Hydroponics__Sampling methods */
@@ -214,6 +248,44 @@ Hydroponics__Task *
 void   hydroponics__task__free_unpacked
                      (Hydroponics__Task *message,
                       ProtobufCAllocator *allocator);
+/* Hydroponics__HardwareId methods */
+void   hydroponics__hardware_id__init
+                     (Hydroponics__HardwareId         *message);
+size_t hydroponics__hardware_id__get_packed_size
+                     (const Hydroponics__HardwareId   *message);
+size_t hydroponics__hardware_id__pack
+                     (const Hydroponics__HardwareId   *message,
+                      uint8_t             *out);
+size_t hydroponics__hardware_id__pack_to_buffer
+                     (const Hydroponics__HardwareId   *message,
+                      ProtobufCBuffer     *buffer);
+Hydroponics__HardwareId *
+       hydroponics__hardware_id__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   hydroponics__hardware_id__free_unpacked
+                     (Hydroponics__HardwareId *message,
+                      ProtobufCAllocator *allocator);
+/* Hydroponics__StartupState methods */
+void   hydroponics__startup_state__init
+                     (Hydroponics__StartupState         *message);
+size_t hydroponics__startup_state__get_packed_size
+                     (const Hydroponics__StartupState   *message);
+size_t hydroponics__startup_state__pack
+                     (const Hydroponics__StartupState   *message,
+                      uint8_t             *out);
+size_t hydroponics__startup_state__pack_to_buffer
+                     (const Hydroponics__StartupState   *message,
+                      ProtobufCBuffer     *buffer);
+Hydroponics__StartupState *
+       hydroponics__startup_state__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   hydroponics__startup_state__free_unpacked
+                     (Hydroponics__StartupState *message,
+                      ProtobufCAllocator *allocator);
 /* Hydroponics__Config methods */
 void   hydroponics__config__init
                      (Hydroponics__Config         *message);
@@ -253,6 +325,12 @@ typedef void (*Hydroponics__Task__Cron_Closure)
 typedef void (*Hydroponics__Task_Closure)
                  (const Hydroponics__Task *message,
                   void *closure_data);
+typedef void (*Hydroponics__HardwareId_Closure)
+                 (const Hydroponics__HardwareId *message,
+                  void *closure_data);
+typedef void (*Hydroponics__StartupState_Closure)
+                 (const Hydroponics__StartupState *message,
+                  void *closure_data);
 typedef void (*Hydroponics__Config_Closure)
                  (const Hydroponics__Config *message,
                   void *closure_data);
@@ -262,14 +340,16 @@ typedef void (*Hydroponics__Config_Closure)
 
 /* --- descriptors --- */
 
+extern const ProtobufCEnumDescriptor    hydroponics__output__descriptor;
+extern const ProtobufCEnumDescriptor    hydroponics__output_state__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__sampling__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__controller__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__controller__entry__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__controller__entry__pid__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__task__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__task__cron__descriptor;
-extern const ProtobufCEnumDescriptor    hydroponics__task__output__descriptor;
-extern const ProtobufCEnumDescriptor    hydroponics__task__output_action__descriptor;
+extern const ProtobufCMessageDescriptor hydroponics__hardware_id__descriptor;
+extern const ProtobufCMessageDescriptor hydroponics__startup_state__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__config__descriptor;
 
 PROTOBUF_C__END_DECLS
