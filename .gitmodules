@@ -30,3 +30,7 @@
 	path = components/ucglib
 	url = https://github.com/olikraus/ucglib
 	update = merge
+[submodule "components/esp32-ads1115"]
+	path = components/esp32-ads1115
+	url = https://github.com/schroedermarius/esp32-ads1115.git
+	branch = master

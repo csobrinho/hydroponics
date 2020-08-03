@@ -9,6 +9,7 @@
 #define I2C_MASTER_RX_BUF_DISABLE 0          /*!< I2C master do not need buffer. */
 #define I2C_MASTER_FREQ_HZ 350000            /*!< I2C master clock frequency. */
 #define I2C_TIMEOUT_MS 500                   /*!< I2C max timeout in ms. */
+#define I2C_NO_DEVICE 0xff                   /*!< I2C no device address. */
 
 typedef enum {
     I2C_WRITE_ACK_CHECK = true,              /*!< I2C enable ack check for a master write. */
