@@ -64,14 +64,14 @@ task: {
   name: "FooBar0"
   output: EXT_GPIO_B_0
   cron: {
-    state: ON,
-    # On at xx:00, every 30 seconds.
-    expression: "0/30 * * * * *"
+    state: OFF,
+    # Off at xx:00.
+    expression: "0 * * * * *"
   }
   cron: {
-    state: OFF,
-    # On at xx:30, every 30 seconds.
-    expression: "30/30 * * * * *"
+    state: ON,
+    # On at xx:58.
+    expression: "58 * * * * *"
   }
 }
 task: {
