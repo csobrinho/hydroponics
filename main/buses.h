@@ -4,6 +4,8 @@
 #include "driver/adc.h"
 #include "driver/i2c.h"
 
+#include "config.pb-c.h"
+
 #define I2C_MASTER_NUM I2C_NUM_1             /*!< I2C port number for master dev. */
 #define I2C_MASTER_TX_BUF_DISABLE 0          /*!< I2C master do not need buffer. */
 #define I2C_MASTER_RX_BUF_DISABLE 0          /*!< I2C master do not need buffer. */
@@ -51,6 +53,14 @@ typedef enum {
     BUSES_I2C_STOP = 0x1,                    /*!< I2C send stop command. */
     BUSES_I2C_STOP_MAX,
 } buses_i2c_stop_t;
+
+#define EXT_GPIO_START HYDROPONICS__OUTPUT__EXT_GPIO_A_0
+#define EXT_GPIO_END   HYDROPONICS__OUTPUT__EXT_GPIO_B_7
+#define EXT_TUYA_START HYDROPONICS__OUTPUT__EXT_TUYA_OUT_1
+#define EXT_TUYA_END   HYDROPONICS__OUTPUT__EXT_TUYA_OUT_3
+
+#define IS_EXT_GPIO(num) ((num) >= EXT_GPIO_START && (num) <= EXT_GPIO_END)
+#define IS_EXT_TUYA(num) ((num) >= EXT_TUYA_START && (num) <= EXT_TUYA_END)
 
 void buses_init(void);
 

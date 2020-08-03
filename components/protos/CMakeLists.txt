@@ -33,4 +33,4 @@ add_custom_command(
         OUTPUT "${CONFIG_TEXTPROTO_OUT}"
         COMMENT "Generating hydroponics.Config for ${CONFIG_TEXTPROTO_SRC}."
         VERBATIM)
-add_custom_target(config_protos DEPENDS "${CONFIG_TEXTPROTO_OUT}")
+add_custom_target(config_protos DEPENDS "${CONFIG_TEXTPROTO_OUT}" protos)

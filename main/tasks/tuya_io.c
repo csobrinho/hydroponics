@@ -9,6 +9,7 @@
 
 #include "esp_err.h"
 
+#include "buses.h"
 #include "config.h"
 #include "context.h"
 #include "error.h"
@@ -81,8 +82,8 @@ static esp_err_t tuya_io_udp_listen(void) {
     FAIL_IF(elem == NULL, "Unable to parse the UDP Json payload, missing \"ip\"");
     ESP_LOGI(TAG, "Found tuya device %s at %s", gwid, LOCAL.ip);
 
-    char storage_key[128] = {0};
-    snprintf(storage_key, sizeof(storage_key) - 1, "tuya_key_%s", gwid);
+    char storage_key[20] = {0};
+    snprintf(storage_key, sizeof(storage_key) - 1, "key_%.10s", gwid); // NVS key max length < 16!
     size_t len = 0;
     ret = storage_get_string(storage_key, &key, &len);
     FAIL_IF(ret != ESP_OK, "Unable to fetch '%s' from storage, error: %d", storage_key, ret);
@@ -124,7 +125,6 @@ static esp_err_t tuya_io_control(int sequence, const Hydroponics__HardwareId *hi
     ARG_CHECK(payload_len > 0, "tuya_control payload, error: %d", payload_len);
 
     tuya_msg_t rx = {0};
-    // TODO: LOCAL -> Get the right connection.
     ESP_LOGI(TAG, "Setting tuya {\"%d\":%s}", hid->dps_id, value ? "true" : "false");
     esp_err_t ret = tuya_send(&LOCAL, sequence, TUYA_COMMAND_CONTROL, payload, payload_len, &rx);
     FAIL_IF(ret != ESP_OK, "tuya_send, error: %d", ret);
@@ -135,6 +135,23 @@ static esp_err_t tuya_io_control(int sequence, const Hydroponics__HardwareId *hi
     fail:
     ESP_ERROR_CHECK(tuya_free(&rx));
     return ESP_FAIL;
+}
+
+static void tuya_io_set_default_state() {
+    if (config == NULL || config->n_startup_state <= 0) {
+        return;
+    }
+    // Remove all upcoming messages to avoid getting stuck if the queue is not big enough.
+    xQueueReset(queue);
+    for (int i = 0; i < config->n_startup_state; ++i) {
+        Hydroponics__StartupState *s = config->startup_state[i];
+        bool state = s->state == HYDROPONICS__OUTPUT_STATE__ON ? true : false;
+        for (int j = 0; j < s->n_output; ++j) {
+            if (IS_EXT_TUYA(s->output[i])) {
+                tuya_io_set(s->output[j], state);
+            }
+        }
+    }
 }
 
 static void tuya_task(void *arg) {
@@ -168,7 +185,7 @@ static void tuya_task(void *arg) {
                         hydroponics__config__free_unpacked((Hydroponics__Config *) config, NULL);
                     }
                     config = op.config.config;
-                    // TODO(sobrinho): Apply a default state to all ports?
+                    tuya_io_set_default_state();
                     break;
                 }
                 case TUYA_OP_SET: { // Change the status of a Tuya IO.
