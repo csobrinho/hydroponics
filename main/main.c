@@ -20,6 +20,7 @@
 #include "tasks/cron.h"
 #include "tasks/io.h"
 #include "tasks/monitor.h"
+#include "tasks/tuya_io.h"
 
 #ifdef CONFIG_IDF_TARGET_ESP32
 #include "display/display.h"
@@ -53,5 +54,6 @@ void app_main() {
     ESP_ERROR_CHECK(ntp_init(context));
     ESP_ERROR_CHECK(iot_init(context));
     ESP_ERROR_CHECK(monitor_init(context));
+    ESP_ERROR_CHECK(tuya_io_init(context));
     ESP_ERROR_CHECK(console_init());
 }
