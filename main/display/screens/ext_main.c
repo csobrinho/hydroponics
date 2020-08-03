@@ -90,7 +90,7 @@ static void draw_graph(ucg_t *ucg) {
     ucg_DrawVLine(ucg, 280, 89, 122);
 
     lerp_t mxb[MAX_VALUES] = {
-            lerp(6.f, 5.f, 100.f, 196.f),
+            lerp(5.8f, 6.8f, 100.f, 196.f),
             lerp(1750.f, 1250.f, 100.f, 196.f),
     };
     for (int i = 0; i < MAX_VALUES; ++i) {
