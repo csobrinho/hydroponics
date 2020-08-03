@@ -71,6 +71,7 @@ static esp_err_t syslog_send(syslog_entry_t *msg) {
 static inline void syslog_free(syslog_entry_t *msg) {
     if (msg != NULL) {
         free((char *) msg->msg);
+        msg->msg = NULL;
     }
 }
 
