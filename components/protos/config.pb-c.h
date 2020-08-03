@@ -43,6 +43,9 @@ typedef enum _Hydroponics__Firmware__Arch {
  * Directly matches "ext_gpio_num_t" enumeration.
  */
 typedef enum _Hydroponics__Output {
+  /*
+   * EXT_GPIO_START
+   */
   HYDROPONICS__OUTPUT__EXT_GPIO_A_0 = 0,
   HYDROPONICS__OUTPUT__EXT_GPIO_A_1 = 1,
   HYDROPONICS__OUTPUT__EXT_GPIO_A_2 = 2,
@@ -58,9 +61,18 @@ typedef enum _Hydroponics__Output {
   HYDROPONICS__OUTPUT__EXT_GPIO_B_4 = 12,
   HYDROPONICS__OUTPUT__EXT_GPIO_B_5 = 13,
   HYDROPONICS__OUTPUT__EXT_GPIO_B_6 = 14,
+  /*
+   * EXT_GPIO_END
+   */
   HYDROPONICS__OUTPUT__EXT_GPIO_B_7 = 15,
+  /*
+   * EXT_TUYA_START
+   */
   HYDROPONICS__OUTPUT__EXT_TUYA_OUT_1 = 101,
   HYDROPONICS__OUTPUT__EXT_TUYA_OUT_2 = 102,
+  /*
+   * EXT_TUYA_END
+   */
   HYDROPONICS__OUTPUT__EXT_TUYA_OUT_3 = 103
     PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(HYDROPONICS__OUTPUT)
 } Hydroponics__Output;

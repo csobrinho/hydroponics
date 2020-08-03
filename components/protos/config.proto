@@ -32,7 +32,7 @@ message Controller {
 
 // Directly matches "ext_gpio_num_t" enumeration.
 enum Output {
-  EXT_GPIO_A_0 = 0;
+  EXT_GPIO_A_0 = 0; // EXT_GPIO_START
   EXT_GPIO_A_1 = 1;
   EXT_GPIO_A_2 = 2;
   EXT_GPIO_A_3 = 3;
@@ -47,11 +47,11 @@ enum Output {
   EXT_GPIO_B_4 = 12;
   EXT_GPIO_B_5 = 13;
   EXT_GPIO_B_6 = 14;
-  EXT_GPIO_B_7 = 15;
+  EXT_GPIO_B_7 = 15; // EXT_GPIO_END
 
-  EXT_TUYA_OUT_1 = 101;
+  EXT_TUYA_OUT_1 = 101; // EXT_TUYA_START
   EXT_TUYA_OUT_2 = 102;
-  EXT_TUYA_OUT_3 = 103;
+  EXT_TUYA_OUT_3 = 103; // EXT_TUYA_END
 };
 
 enum OutputState {
