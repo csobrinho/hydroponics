@@ -113,3 +113,8 @@ startup_state {
   output: EXT_TUYA_OUT_2
   output: EXT_TUYA_OUT_3
 }
+firmware {
+  type: RELEASE
+  arch: ESP32
+  version: "0.1"
+}

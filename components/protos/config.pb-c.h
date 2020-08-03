@@ -23,11 +23,22 @@ typedef struct _Hydroponics__Task Hydroponics__Task;
 typedef struct _Hydroponics__Task__Cron Hydroponics__Task__Cron;
 typedef struct _Hydroponics__HardwareId Hydroponics__HardwareId;
 typedef struct _Hydroponics__StartupState Hydroponics__StartupState;
+typedef struct _Hydroponics__Firmware Hydroponics__Firmware;
 typedef struct _Hydroponics__Config Hydroponics__Config;
 
 
 /* --- enums --- */
 
+typedef enum _Hydroponics__Firmware__Type {
+  HYDROPONICS__FIRMWARE__TYPE__TEST = 0,
+  HYDROPONICS__FIRMWARE__TYPE__RELEASE = 1
+    PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(HYDROPONICS__FIRMWARE__TYPE)
+} Hydroponics__Firmware__Type;
+typedef enum _Hydroponics__Firmware__Arch {
+  HYDROPONICS__FIRMWARE__ARCH__ESP32 = 0,
+  HYDROPONICS__FIRMWARE__ARCH__ESP32_S2 = 1
+    PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(HYDROPONICS__FIRMWARE__ARCH)
+} Hydroponics__Firmware__Arch;
 /*
  * Directly matches "ext_gpio_num_t" enumeration.
  */
@@ -165,6 +176,20 @@ struct  _Hydroponics__StartupState
     , HYDROPONICS__OUTPUT_STATE__OFF, 0,NULL }
 
 
+struct  _Hydroponics__Firmware
+{
+  ProtobufCMessage base;
+  Hydroponics__Firmware__Type type;
+  Hydroponics__Firmware__Arch arch;
+  char *version;
+  char *id;
+  char *url;
+};
+#define HYDROPONICS__FIRMWARE__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&hydroponics__firmware__descriptor) \
+    , HYDROPONICS__FIRMWARE__TYPE__TEST, HYDROPONICS__FIRMWARE__ARCH__ESP32, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string }
+
+
 struct  _Hydroponics__Config
 {
   ProtobufCMessage base;
@@ -176,10 +201,12 @@ struct  _Hydroponics__Config
   Hydroponics__HardwareId **hardware_id;
   size_t n_startup_state;
   Hydroponics__StartupState **startup_state;
+  size_t n_firmware;
+  Hydroponics__Firmware **firmware;
 };
 #define HYDROPONICS__CONFIG__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&hydroponics__config__descriptor) \
-    , NULL, NULL, 0,NULL, 0,NULL, 0,NULL }
+    , NULL, NULL, 0,NULL, 0,NULL, 0,NULL, 0,NULL }
 
 
 /* Hydroponics__Sampling methods */
@@ -286,6 +313,25 @@ Hydroponics__StartupState *
 void   hydroponics__startup_state__free_unpacked
                      (Hydroponics__StartupState *message,
                       ProtobufCAllocator *allocator);
+/* Hydroponics__Firmware methods */
+void   hydroponics__firmware__init
+                     (Hydroponics__Firmware         *message);
+size_t hydroponics__firmware__get_packed_size
+                     (const Hydroponics__Firmware   *message);
+size_t hydroponics__firmware__pack
+                     (const Hydroponics__Firmware   *message,
+                      uint8_t             *out);
+size_t hydroponics__firmware__pack_to_buffer
+                     (const Hydroponics__Firmware   *message,
+                      ProtobufCBuffer     *buffer);
+Hydroponics__Firmware *
+       hydroponics__firmware__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   hydroponics__firmware__free_unpacked
+                     (Hydroponics__Firmware *message,
+                      ProtobufCAllocator *allocator);
 /* Hydroponics__Config methods */
 void   hydroponics__config__init
                      (Hydroponics__Config         *message);
@@ -331,6 +377,9 @@ typedef void (*Hydroponics__HardwareId_Closure)
 typedef void (*Hydroponics__StartupState_Closure)
                  (const Hydroponics__StartupState *message,
                   void *closure_data);
+typedef void (*Hydroponics__Firmware_Closure)
+                 (const Hydroponics__Firmware *message,
+                  void *closure_data);
 typedef void (*Hydroponics__Config_Closure)
                  (const Hydroponics__Config *message,
                   void *closure_data);
@@ -350,6 +399,9 @@ extern const ProtobufCMessageDescriptor hydroponics__task__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__task__cron__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__hardware_id__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__startup_state__descriptor;
+extern const ProtobufCMessageDescriptor hydroponics__firmware__descriptor;
+extern const ProtobufCEnumDescriptor    hydroponics__firmware__type__descriptor;
+extern const ProtobufCEnumDescriptor    hydroponics__firmware__arch__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__config__descriptor;
 
 PROTOBUF_C__END_DECLS

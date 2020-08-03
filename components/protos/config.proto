@@ -82,10 +82,27 @@ message StartupState {
   repeated Output output = 2;
 }
 
+message Firmware {
+  enum Type {
+    TEST = 0;
+    RELEASE = 1;
+  }
+  enum Arch {
+    ESP32 = 0;
+    ESP32_S2 = 1;
+  }
+  Type type = 1;
+  Arch arch = 2;
+  string version = 3;
+  string id = 4;
+  string url = 5;
+}
+
 message Config {
   Sampling sampling = 1;
   Controller controller = 2;
   repeated Task task = 3;
   repeated HardwareId hardware_id = 4;
   repeated StartupState startup_state = 5;
+  repeated Firmware firmware = 6;
 }
