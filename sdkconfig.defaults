@@ -12,9 +12,8 @@ CONFIG_GIOT_REGISTRY_ID="registry"
 # LCD mode.
 CONFIG_BIT_MODE_8BIT=y
 
-# Enable logs dumping.
+# Enable logs dumping via UDP broadcast.
 CONFIG_ESP_SYSLOG_ENABLE=y
-CONFIG_ESP_SYSLOG_IPV4_ADDR="10.0.0.10"
 
 # FreeRtos options.
 CONFIG_FREERTOS_USE_TRACE_FACILITY=y

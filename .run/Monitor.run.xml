@@ -1,0 +1,5 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Monitor" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="&quot;$CMakeCurrentBuildTypeName$&quot; monitor" REDIRECT_INPUT="false" WORKING_DIR="file://$ProjectFileDir$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="hydroponics" TARGET_NAME="monitor" CONFIG_NAME="Default (ESP32-S2)" RUN_PATH="$PROJECT_DIR$/tools/custom_idf.sh">
+    <method v="2" />
+  </configuration>
+</component>
