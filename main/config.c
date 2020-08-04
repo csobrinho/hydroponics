@@ -176,7 +176,7 @@ esp_err_t config_dump(const Hydroponics__Config *config) {
         for (int i = 0; i < config->n_startup_state; ++i) {
             Hydroponics__StartupState *s = config->startup_state[i];
             fprintf(stream, "  [%*d] state: %s\n", config->n_startup_state >= 10 ? 2 : 1, i,
-                    enum_from_value(&hydroponics__output__descriptor, s->state));
+                    enum_from_value(&hydroponics__output_state__descriptor, s->state));
             for (int j = 0; j < s->n_output; ++j) {
                 Hydroponics__Output output = s->output[j];
                 fprintf(stream, "      output: %s\n", enum_from_value(&hydroponics__output__descriptor, output));
