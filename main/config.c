@@ -216,6 +216,7 @@ esp_err_t config_register(config_callback_t callback) {
     }
     e = calloc(1, sizeof(entry_t));
     CHECK_NO_MEM(e);
+    e->callback = callback;
     TAILQ_INSERT_TAIL(&head, e, next);
     return ESP_OK;
 }
