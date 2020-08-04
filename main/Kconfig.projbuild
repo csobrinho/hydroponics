@@ -42,7 +42,7 @@ menu "Project config"
 
         config ESP_SYSLOG_IPV4_ADDR
             string "IPV4 Address"
-            default "10.0.0.10"
+            default "255.255.255.255"
             depends on ESP_SYSLOG_ENABLE
             help
                 IPV4 address to which the syslog client will send data.
