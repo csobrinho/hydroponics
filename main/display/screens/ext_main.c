@@ -171,8 +171,8 @@ static void draw_values(context_t *context, ucg_t *ucg) {
     float eca = context->sensors.ec[0].value;
     float temp = context->sensors.temp.probe;
 #if CONFIG_ESP_SENSOR_TANKS == 2
-    float ecb = context->sensors.ec[1].value;
-    float phb = context->sensors.ph[1].value;
+    // float ecb = context->sensors.ec[1].value;
+    // float phb = context->sensors.ph[1].value;
 #endif
     context_unlock(context);
 
