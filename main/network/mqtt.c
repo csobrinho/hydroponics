@@ -113,8 +113,7 @@ static void mqtt_create_jwt_token(void) {
         ESP_LOGE(TAG, "Failed to create a jwt token, error: %d", err);
         ESP_ERROR_CHECK(ESP_ERR_INVALID_STATE);
     }
-    time_t now;
-    time(&now);
+    time_t now = time(NULL);
     struct tm t = {0};
     localtime_r(&now, &t);
     char buf[64] = {0};
