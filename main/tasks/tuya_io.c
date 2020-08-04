@@ -19,12 +19,12 @@
 #include "utils.h"
 
 typedef enum {
-    TUYA_OP_CONFIG = 1,
-    TUYA_OP_SET = 2,
-} tuya_op_type_t;
+    OP_CONFIG = 1,
+    OP_SET = 2,
+} op_type_t;
 
 typedef struct {
-    tuya_op_type_t type;
+    op_type_t type;
     union {
         struct {
             const Hydroponics__Config *config;
@@ -34,7 +34,7 @@ typedef struct {
             bool value;
         } set;
     };
-} tuya_op_t;
+} op_t;
 
 static const char *TAG = "tuya_io";
 //                                               dev_id          dev_id                    timestamp      id   value
@@ -52,15 +52,6 @@ static tuya_connection_t LOCAL = {
         .key = "cb94da2311895bbc",
         .timeout = {.tv_sec = 5},
 };
-
-static void tuya_config_callback(const Hydroponics__Config *new_config) {
-    ESP_LOGI(TAG, "Applying config...");
-    if (config == new_config) {
-        return;
-    }
-    const tuya_op_t cmd = {.type = TUYA_OP_CONFIG, .config = {.config = new_config}};
-    xQueueSend(queue, &cmd, portMAX_DELAY);
-}
 
 static esp_err_t tuya_io_udp_listen(void) {
     tuya_msg_t rx = {0};
@@ -87,8 +78,8 @@ static esp_err_t tuya_io_udp_listen(void) {
     size_t len = 0;
     ret = storage_get_string(storage_key, &key, &len);
     FAIL_IF(ret != ESP_OK, "Unable to fetch '%s' from storage, error: %d", storage_key, ret);
-    FAIL_IF(len != sizeof(LOCAL.key), "'%s' should be exactly %zu chars", storage_key, sizeof(LOCAL.key));
-    strlcpy((char *) LOCAL.key, key, sizeof(LOCAL.key));
+    FAIL_IF(len - 1 != sizeof(LOCAL.key), "'%s' should be exactly %zu chars", storage_key, sizeof(LOCAL.key));
+    memcpy(LOCAL.key, key, sizeof(LOCAL.key));
 
     ESP_ERROR_CHECK(tuya_free(&rx));
     cJSON_Delete(root);
@@ -177,10 +168,10 @@ static void tuya_task(void *arg) {
                 continue;
             }
         }
-        tuya_op_t op = {0};
+        op_t op = {0};
         if (xQueueReceive(queue, &op, portMAX_DELAY) == pdTRUE) {
             switch (op.type) {
-                case TUYA_OP_CONFIG: { // Re-load config.
+                case OP_CONFIG: { // Re-load config.
                     if (config != NULL) {
                         hydroponics__config__free_unpacked((Hydroponics__Config *) config, NULL);
                     }
@@ -188,7 +179,7 @@ static void tuya_task(void *arg) {
                     tuya_io_set_default_state();
                     break;
                 }
-                case TUYA_OP_SET: { // Change the status of a Tuya IO.
+                case OP_SET: { // Change the status of a Tuya IO.
                     const Hydroponics__HardwareId *hid = tuya_io_find_hardware_io(op.set.output);
                     FAIL_IF(hid == NULL, "Could not find the HardwareId for output %d", op.set.output);
                     esp_err_t ret = tuya_io_control(sequence++, hid, op.set.value);
@@ -207,8 +198,17 @@ static void tuya_task(void *arg) {
     }
 }
 
+static void tuya_config_callback(const Hydroponics__Config *new_config) {
+    ESP_LOGI(TAG, "Applying config...");
+    if (config == new_config) {
+        return;
+    }
+    const op_t cmd = {.type = OP_CONFIG, .config = {.config = new_config}};
+    xQueueSend(queue, &cmd, portMAX_DELAY);
+}
+
 esp_err_t tuya_io_init(context_t *context) {
-    queue = xQueueCreate(10, sizeof(tuya_command_t));
+    queue = xQueueCreate(10, sizeof(op_t));
     CHECK_NO_MEM(queue);
 
     config_register(tuya_config_callback);
@@ -217,6 +217,6 @@ esp_err_t tuya_io_init(context_t *context) {
 }
 
 esp_err_t tuya_io_set(Hydroponics__Output output, bool value) {
-    const tuya_op_t cmd = {.type = TUYA_OP_SET, .set = {.output = output, .value = value}};
+    const op_t cmd = {.type = OP_SET, .set = {.output = output, .value = value}};
     return xQueueSend(queue, &cmd, portMAX_DELAY) == pdPASS ? ESP_OK : ESP_FAIL;
 }
