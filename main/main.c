@@ -54,6 +54,6 @@ void app_main() {
     ESP_ERROR_CHECK(ntp_init(context));
     ESP_ERROR_CHECK(iot_init(context));
     ESP_ERROR_CHECK(monitor_init(context));
-    // ESP_ERROR_CHECK(tuya_io_init(context));
+    ESP_ERROR_CHECK(tuya_io_init(context));
     ESP_ERROR_CHECK(console_init());
 }
