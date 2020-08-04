@@ -3,7 +3,7 @@
 #include <sys/socket.h>
 
 #include "freertos/FreeRTOS.h"
-#include "freertos/queue.h"
+#include "freertos/semphr.h"
 
 #include "esp_err.h"
 
@@ -11,121 +11,153 @@
 #include "error.h"
 #include "syslog.h"
 
-#define SYSLOG_NILVALUE "-"
-
-#define SYSLOG_PRIMASK 0x07  /* mask to extract priority part (internal) */
-/* extract priority */
-#define SYSLOG_PRI(p)  ((p) & SYSLOG_PRIMASK)
-#define SYSLOG_MAKEPRI(fac, pri) (((fac) << 3) | (pri))
-
-#define SYSLOG_NFACILITIES 24  /* current number of facilities */
-#define SYSLOG_FACMASK 0x03f8  /* mask to extract facility part */
-/* facility of pri */
-#define SYSLOG_FAC(p)  (((p) & SYSLOG_FACMASK) >> 3)
-
-#define SYSLOG_MASK(pri) (1 << (pri))            /* mask for one priority */
-#define SYSLOG_UPTO(pri) ((1 << ((pri)+1)) - 1)  /* all priorities through pri */
-
-#define SYSLOG_QUEUE_SIZE 128
+#define SYSLOG_BUF_MAX_SIZE    (4 * 1024)
+#define SYSLOG_SOCKET_MAX_SIZE 1024
+#define SYSLOG_WAIT_TIME_MS    2000
 
 static const char *TAG = "syslog";
-static QueueHandle_t queue;
-static struct sockaddr_in dest_addr = {0};
-static int socket_fd = INT32_MIN;
+static SemaphoreHandle_t lock;
+static FILE *stream;
+static char *stream_buf = NULL;
+static size_t stream_len = 0;
 
-#define ESP_LOGDE(tag, format, ...) do {                                        \
-        printf(LOG_FORMAT(E, format), esp_log_timestamp(), tag, ##__VA_ARGS__); \
+static struct sockaddr_in dest_addr = {0};
+static int socket_fd = -1;
+
+#define LOCAL_LOG(level, format, ...) do {                                          \
+        printf(LOG_FORMAT(level, format), esp_log_timestamp(), TAG, ##__VA_ARGS__); \
     } while(0)
 
 static esp_err_t syslog_disconnect() {
-    if (socket_fd != INT32_MIN) {
-        ESP_LOGDE(TAG, "Shutting down socket and restarting...");
-        shutdown(socket_fd, 0);
-        close(socket_fd);
-        socket_fd = INT32_MIN;
+    if (socket_fd < 0) {
+        return ESP_OK;
     }
+    LOCAL_LOG(E, "Shutting down socket and restarting...");
+    shutdown(socket_fd, 0);
+    close(socket_fd);
+    socket_fd = -1;
     return ESP_OK;
 }
 
 static esp_err_t syslog_connect() {
+    if (socket_fd >= 0) {
+        return ESP_OK;
+    }
     socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
-    if (socket_fd != -1) {
-        struct timeval send_timeout = {.tv_sec=1, .tv_usec=0};
+    if (socket_fd >= 0) {
+        const struct timeval send_timeout = {.tv_sec=2, .tv_usec=0};
         if (setsockopt(socket_fd, SOL_SOCKET, SO_SNDTIMEO, (const char *) &send_timeout, sizeof(send_timeout)) < 0) {
-            ESP_LOGDE(TAG, "Failed to set SO_SNDTIMEO: %s", strerror(errno));
+            LOCAL_LOG(E, "Failed to set SO_SNDTIMEO: %s", strerror(errno));
+        }
+        int val = 1;
+        if (setsockopt(socket_fd, SOL_SOCKET, SO_BROADCAST, &val, sizeof(val)) < 0) {
+            LOCAL_LOG(E, "Failed to set SO_BROADCAST: %s", strerror(errno));
+        }
+        if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val)) < 0) {
+            LOCAL_LOG(E, "Failed to set SO_REUSEADDR: %s", strerror(errno));
         }
         return ESP_OK;
     }
-    ESP_LOGDE(TAG, "Unable to create socket: %s", strerror(errno));
+    LOCAL_LOG(E, "Unable to create socket: %s", strerror(errno));
     return ESP_ERR_INVALID_STATE;
 }
 
-static esp_err_t syslog_send(syslog_entry_t *msg) {
-    if (sendto(socket_fd, msg->msg, msg->msg_len, 0, (struct sockaddr *) &dest_addr, sizeof(dest_addr)) >= 0) {
+static esp_err_t syslog_send(const char *buf, size_t len) {
+    if (sendto(socket_fd, buf, len, 0, (struct sockaddr *) &dest_addr, sizeof(dest_addr)) >= 0) {
         return ESP_OK;
     }
-    ESP_LOGDE(TAG, "Error occurred during sending: %s", strerror(errno));
+    LOCAL_LOG(E, "Error occurred during sending: %s", strerror(errno));
     return ESP_ERR_INVALID_STATE;
 }
 
-static inline void syslog_free(syslog_entry_t *msg) {
-    if (msg != NULL) {
-        free((char *) msg->msg);
-        msg->msg = NULL;
-    }
+static void syslog_remove_start(size_t to_remove) {
+    off_t eob = ftello(stream);
+    fseek(stream, -to_remove, SEEK_CUR);
+    memmove(stream_buf, &stream_buf[to_remove], eob - to_remove);
+    fflush(stream);
 }
 
 static int syslog_printf(const char *fmt, va_list va) {
     time_t now = 0;
     time(&now);
-    char *buf = NULL;
-    size_t len = vasprintf(&buf, fmt, va);
-    const syslog_entry_t msg = {
-            .priority = SYSLOG_PRIORITY_INFO,
-            .timestamp = now,
-            .msg = buf,
-            .msg_len = len,
-    };
-    printf("%.*s", len, buf);
-    while (xQueueSend(queue, &msg, 0) != pdTRUE) {
-        // If we fail, just pop one from the queue to get space.
-        syslog_entry_t tmp = {0};
-        if (xQueueReceive(queue, &tmp, 0) == pdTRUE) {
-            syslog_free(&tmp);
-        }
+
+    TickType_t start = xTaskGetTickCount();
+    xSemaphoreTake(lock, portMAX_DELAY);
+    TickType_t end = xTaskGetTickCount();
+    if (pdTICKS_TO_MS(end - start) > 50) {
+        LOCAL_LOG(W, "BLOCKED for %d ms", pdTICKS_TO_MS(end - start));
     }
-    return len;
+
+    off_t eob = ftello(stream);
+    size_t written = vfprintf(stream, fmt, va);
+    fflush(stream);
+    printf("%.*s", written, &stream_buf[eob]);
+    eob = ftello(stream);
+    if (eob > SYSLOG_BUF_MAX_SIZE) {
+        syslog_remove_start(eob - SYSLOG_BUF_MAX_SIZE);
+    }
+    xSemaphoreGive(lock);
+    return written;
 }
 
 static void syslog_task(void *arg) {
     context_t *context = (context_t *) arg;
     ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
 
-    syslog_entry_t msg;
+    // Wait until the base config is loaded to get the syslog hostname and port.
+    xEventGroupWaitBits(context->event_group, CONTEXT_EVENT_BASE_CONFIG, pdFALSE, pdTRUE, portMAX_DELAY);
+
     while (true) {
-        syslog_disconnect();
-        xEventGroupWaitBits(context->event_group, CONTEXT_EVENT_BASE_CONFIG | CONTEXT_EVENT_NETWORK, pdFALSE, pdTRUE,
-                            portMAX_DELAY);
-        syslog_connect();
+        // Wait for the network to be up.
+        xEventGroupWaitBits(context->event_group, CONTEXT_EVENT_NETWORK, pdFALSE, pdTRUE, portMAX_DELAY);
+
+        TickType_t last_wake_time = xTaskGetTickCount();
+
+        // If needed, connect to the socket,
+        ESP_ERROR_CHECK(syslog_connect());
+
         while (true) {
-            if (xQueueReceive(queue, &msg, portMAX_DELAY) == pdTRUE) {
-                esp_err_t err = syslog_send(&msg);
-                syslog_free(&msg);
-                if (err != ESP_OK) {
-                    // Something went wrong so just wait a few seconds and wait for config/network to be ready again
-                    vTaskDelay(pdMS_TO_TICKS(5000));
-                    break;
-                }
+            // Lock and fetch the current stream bytes.
+            xSemaphoreTake(lock, portMAX_DELAY);
+            fflush(stream);
+            off_t eob = ftello(stream);
+            if (eob <= 0) {
+                // Nothing in the stream, try again in a few seconds.
+                xSemaphoreGive(lock);
+                break;
             }
+            size_t to_send = eob > SYSLOG_SOCKET_MAX_SIZE ? SYSLOG_SOCKET_MAX_SIZE : eob;
+            esp_err_t err = syslog_send(stream_buf, to_send);
+            if (err != ESP_OK) {
+                // Disconnect and try again in a few seconds.
+                syslog_disconnect();
+                xSemaphoreGive(lock);
+                break;
+            }
+            if (eob <= SYSLOG_SOCKET_MAX_SIZE) {
+                // Send was successful and the whole buffer should be flushed, so rewind the stream to 0.
+                fseeko(stream, 0, SEEK_SET);
+                fflush(stream);
+            } else {
+                // Truncate the start.
+                syslog_remove_start(SYSLOG_SOCKET_MAX_SIZE);
+            }
+            xSemaphoreGive(lock);
         }
+        // Try again in a few seconds.
+        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(SYSLOG_WAIT_TIME_MS));
     }
 }
 
 esp_err_t syslog_init(context_t *context) {
-    queue = xQueueCreate(SYSLOG_QUEUE_SIZE, sizeof(syslog_entry_t));
-    if (queue == NULL) {
-        return ESP_ERR_NO_MEM;
-    }
+    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
+
+    lock = xSemaphoreCreateMutex();
+    CHECK_NO_MEM(lock);
+
+    stream = open_memstream(&stream_buf, &stream_len);
+    CHECK_NO_MEM(stream);
+
     // Setup the new remote logging.
     esp_log_set_vprintf(syslog_printf);
 
