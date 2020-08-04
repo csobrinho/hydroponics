@@ -71,7 +71,7 @@ task: {
   cron: {
     state: ON,
     # On at xx:58.
-    expression: "58 * * * * *"
+    expression: "55 * * * * *"
   }
 }
 task: {
