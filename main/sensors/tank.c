@@ -43,8 +43,8 @@ static struct {
                         .name = "Tank A",
                         .device_mux = ADS1115_MUX_0_1,
                         // From https://docs.google.com/spreadsheets/d/1LZo2zjm7wT2C7UeA40zMUXK-daBry_TDRjhAEd-a5a8/view
-                        //                        x^3                  x^2                x             b
-                        .regression = {-0.0000000002555018004, 0.000001006700948, -0.001994376124, 2.602979801},
+                        //                      x^3                  x^2               x               b
+                        .regression = {0.0000000006782326059, -0.000002020506081, 0.002691129616, -0.4459319977},
                 },
                 {0},
         },
