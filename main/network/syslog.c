@@ -16,6 +16,7 @@
 #define SYSLOG_WAIT_TIME_MS    2000
 
 static const char *TAG = "syslog";
+static const char SNIP[] = "<SNIP>";
 static SemaphoreHandle_t lock;
 static FILE *stream;
 static char *stream_buf = NULL;
@@ -71,10 +72,13 @@ static esp_err_t syslog_send(const char *buf, size_t len) {
 }
 
 static void syslog_remove_start(size_t to_remove) {
+    // When we seek and flush, the current position is replaced by '\0' and the original 'char' is saved.
+    // By adding an extra '\0', that char is restored.
+    // fputc(0, stream);
     off_t eob = ftello(stream);
-    fseek(stream, -to_remove, SEEK_CUR);
-    memmove(stream_buf, &stream_buf[to_remove], eob - to_remove);
     fflush(stream);
+    memmove(stream_buf, &stream_buf[to_remove], eob - to_remove);
+    fseek(stream, -to_remove, SEEK_CUR);
 }
 
 static int syslog_printf(const char *fmt, va_list va) {
@@ -89,13 +93,14 @@ static int syslog_printf(const char *fmt, va_list va) {
     }
 
     off_t eob = ftello(stream);
+    if (eob > SYSLOG_BUF_MAX_SIZE) {
+        syslog_remove_start(eob - SYSLOG_BUF_MAX_SIZE);
+        memcpy(stream_buf, SNIP, sizeof(SNIP));
+        eob = ftello(stream);
+    }
     size_t written = vfprintf(stream, fmt, va);
     fflush(stream);
     printf("%.*s", written, &stream_buf[eob]);
-    eob = ftello(stream);
-    if (eob > SYSLOG_BUF_MAX_SIZE) {
-        syslog_remove_start(eob - SYSLOG_BUF_MAX_SIZE);
-    }
     xSemaphoreGive(lock);
     return written;
 }
@@ -106,6 +111,9 @@ static void syslog_task(void *arg) {
 
     // Wait until the base config is loaded to get the syslog hostname and port.
     xEventGroupWaitBits(context->event_group, CONTEXT_EVENT_BASE_CONFIG, pdFALSE, pdTRUE, portMAX_DELAY);
+    dest_addr.sin_family = AF_INET;
+    dest_addr.sin_port = htons(context->config.syslog_port);
+    dest_addr.sin_addr.s_addr = inet_addr(context->config.syslog_hostname);
 
     while (true) {
         // Wait for the network to be up.
@@ -135,7 +143,7 @@ static void syslog_task(void *arg) {
                 break;
             }
             if (eob <= SYSLOG_SOCKET_MAX_SIZE) {
-                // Send was successful and the whole buffer should be flushed, so rewind the stream to 0.
+                // Send was successful and the whole buffer should be discarded, so rewind the stream to 0.
                 fseeko(stream, 0, SEEK_SET);
                 fflush(stream);
             } else {
@@ -160,10 +168,6 @@ esp_err_t syslog_init(context_t *context) {
 
     // Setup the new remote logging.
     esp_log_set_vprintf(syslog_printf);
-
-    dest_addr.sin_family = AF_INET;
-    dest_addr.sin_port = htons(context->config.syslog_port);
-    dest_addr.sin_addr.s_addr = inet_addr(context->config.syslog_hostname);
 
     xTaskCreatePinnedToCore(syslog_task, "syslog", 2048, context, 5, NULL, tskNO_AFFINITY);
     return ESP_OK;
