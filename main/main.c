@@ -31,13 +31,13 @@ static context_t *context;
 
 void app_main() {
     context = context_create();
+    ESP_ERROR_CHECK(syslog_init(context));
     buses_init();
     ESP_ERROR_CHECK(storage_init(context));
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     ESP_ERROR_CHECK(config_init(context));
     ESP_ERROR_CHECK(cron_init(context));
-    ESP_ERROR_CHECK(syslog_init(context));
     ESP_ERROR_CHECK(ext_gpio_init());
     ESP_ERROR_CHECK(io_init(context));
 #ifdef CONFIG_IDF_TARGET_ESP32
