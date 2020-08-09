@@ -32,7 +32,16 @@ esp_err_t ezo_send_command(ezo_sensor_t *sensor, uint16_t delay_ms, const char *
     ESP_ERROR_CHECK(i2c_master_write(handle, (uint8_t *) sensor->buf, strlen(sensor->buf), I2C_WRITE_ACK_CHECK));
     ESP_ERROR_CHECK(i2c_master_stop(handle));
 
-    ESP_ERROR_CHECK(i2c_master_cmd_begin(I2C_MASTER_NUM, handle, pdMS_TO_TICKS(I2C_TIMEOUT_MS)));
+    esp_err_t err = ESP_OK;
+    for (int i = 0; i < I2C_MAX_TRIES; ++i) {
+        err = i2c_master_cmd_begin(I2C_MASTER_NUM, handle, pdMS_TO_TICKS(I2C_TIMEOUT_MS));
+        if (err == ESP_OK) {
+            break;
+        }
+        LOG(TAG, "[0x%.2x] send_command err: %s [%d/%d]", sensor->address, esp_err_to_name(err), i + 1, I2C_MAX_TRIES);
+        vTaskDelay(pdMS_TO_TICKS(50));
+    }
+    ESP_ERROR_CHECK(err);
     i2c_cmd_link_delete(handle);
 
     if (delay_ms > 0) {
@@ -48,9 +57,9 @@ esp_err_t ezo_send_command(ezo_sensor_t *sensor, uint16_t delay_ms, const char *
         i2c_master_read_byte(handle, (uint8_t *) &sensor->status, I2C_MASTER_ACK);
         i2c_master_read(handle, (uint8_t *) sensor->buf, EZO_MAX_BUFFER_LEN - 1, I2C_MASTER_LAST_NACK);
         i2c_master_stop(handle);
-        esp_err_t err = i2c_master_cmd_begin(I2C_MASTER_NUM, handle, pdMS_TO_TICKS(I2C_TIMEOUT_MS));
+        err = i2c_master_cmd_begin(I2C_MASTER_NUM, handle, pdMS_TO_TICKS(I2C_TIMEOUT_MS));
         i2c_cmd_link_delete(handle);
-        LOG(TAG, "[0x%.2x] send_command err: 0x%02x status: %d", sensor->address, err, sensor->status);
+        LOG(TAG, "[0x%.2x] send_command err: %s status: %d", sensor->address, esp_err_to_name(err), sensor->status);
 
         if (sensor->status == EZO_SENSOR_RESPONSE_PROCESSING) {
             LOG(TAG, "[0x%.2x] send_command (retrying)", sensor->address);
