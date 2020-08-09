@@ -4,6 +4,12 @@ set -o errexit
 TARGET=${1:-"Default (ESP32-S2)"}
 export IDF_TARGET="$(awk -F'[\(|\)]' '{ gsub("-", ""); print tolower($2) }' <<<$TARGET)"
 
+if [[ "${IDF_TARGET}" == "esp32" ]]; then
+  export ESPBAUD=921600
+else
+  export ESPBAUD=3000000
+fi
+
 echo "==========================================================================="
 echo "                           Building for: ${IDF_TARGET}"
 echo "==========================================================================="
