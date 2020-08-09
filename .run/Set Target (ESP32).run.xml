@@ -2,7 +2,7 @@
   <configuration default="false" name="Set Target (ESP32)" type="ShConfigurationType" activateToolWindowBeforeRun="false">
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
     <option name="SCRIPT_PATH" value="$PROJECT_DIR$/tools/custom_idf.sh" />
-    <option name="SCRIPT_OPTIONS" value="set-target esp32" />
+    <option name="SCRIPT_OPTIONS" value="&quot;Default (ESP32)&quot; set-target esp32" />
     <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
     <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$" />
     <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
