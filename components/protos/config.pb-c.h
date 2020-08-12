@@ -118,10 +118,12 @@ struct  _Hydroponics__Controller__Entry
   float min;
   float max;
   Hydroponics__Controller__Entry__Pid *pid;
+  float min_graph;
+  float max_graph;
 };
 #define HYDROPONICS__CONTROLLER__ENTRY__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&hydroponics__controller__entry__descriptor) \
-    , 0, 0, 0, NULL }
+    , 0, 0, 0, NULL, 0, 0 }
 
 
 struct  _Hydroponics__Controller

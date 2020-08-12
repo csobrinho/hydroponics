@@ -507,7 +507,7 @@ const ProtobufCMessageDescriptor hydroponics__controller__entry__pid__descriptor
   (ProtobufCMessageInit) hydroponics__controller__entry__pid__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor hydroponics__controller__entry__field_descriptors[4] =
+static const ProtobufCFieldDescriptor hydroponics__controller__entry__field_descriptors[6] =
 {
   {
     "target",
@@ -557,17 +557,43 @@ static const ProtobufCFieldDescriptor hydroponics__controller__entry__field_desc
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "min_graph",
+    5,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_FLOAT,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__Controller__Entry, min_graph),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "max_graph",
+    6,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_FLOAT,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__Controller__Entry, max_graph),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned hydroponics__controller__entry__field_indices_by_name[] = {
   2,   /* field[2] = max */
+  5,   /* field[5] = max_graph */
   1,   /* field[1] = min */
+  4,   /* field[4] = min_graph */
   3,   /* field[3] = pid */
   0,   /* field[0] = target */
 };
 static const ProtobufCIntRange hydroponics__controller__entry__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 4 }
+  { 0, 6 }
 };
 const ProtobufCMessageDescriptor hydroponics__controller__entry__descriptor =
 {
@@ -577,7 +603,7 @@ const ProtobufCMessageDescriptor hydroponics__controller__entry__descriptor =
   "Hydroponics__Controller__Entry",
   "hydroponics",
   sizeof(Hydroponics__Controller__Entry),
-  4,
+  6,
   hydroponics__controller__entry__field_descriptors,
   hydroponics__controller__entry__field_indices_by_name,
   1,  hydroponics__controller__entry__number_ranges,

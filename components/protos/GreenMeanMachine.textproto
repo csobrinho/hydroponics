@@ -12,6 +12,8 @@ controller: {
     target: 1500
     min: 1400
     max: 1600
+    min_graph: 1250
+    max_graph: 1750
     pid: {
       sampling: 20
       p: 1.0
@@ -20,9 +22,11 @@ controller: {
     }
   }
   pha: {
-    target: 5.5
-    min: 5.35
-    max: 6.00
+    target: 6.3
+    min: 6.15
+    max: 6.45
+    min_graph: 5.8
+    max_graph: 6.8
     pid: {
       sampling: 20
       p: 1.0
@@ -34,6 +38,21 @@ controller: {
     target: 1600
     min: 1500
     max: 1700
+    min_graph: 1450
+    max_graph: 1950
+    pid: {
+      sampling: 20
+      p: 1.0
+      i: 0.0
+      d: 0.0
+    }
+  }
+  phb: {
+    target: 6.0
+    min: 5.85
+    max: 6.15
+    min_graph: 5.8
+    max_graph: 6.8
     pid: {
       sampling: 20
       p: 1.0
@@ -76,16 +95,16 @@ task: {
 }
 task: {
   name: "FooBar1"
-  output: EXT_GPIO_A_7
+  output: EXT_GPIO_A_0
   cron: {
     state: ON,
-    # On every two minutes at xx:15.
-    expression: "15 */2 * * * *"
+    # On every minute at xx:00.
+    expression: "0 * * * * *"
   }
   cron: {
     state: OFF,
-    # Off every two minutes at xx:45.
-    expression: "45 */2 * * * *"
+    # Off every minute at xx:05.
+    expression: "5 * * * * *"
   }
 }
 startup_state {

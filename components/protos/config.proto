@@ -23,6 +23,8 @@ message Controller {
     float min = 2;
     float max = 3;
     Pid pid = 4;
+    float min_graph = 5;
+    float max_graph = 6;
   }
   Entry eca = 1;
   Entry pha = 2;
