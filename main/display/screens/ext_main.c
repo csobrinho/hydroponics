@@ -1,21 +1,49 @@
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include <sys/queue.h>
+
+#include "iot_button.h"
 
 #include "esp_err.h"
 
 #include "ucg.h"
 
 #include "context.h"
+#include "config.h"
 #include "ext_main.h"
 #include "error.h"
 #include "lcd.h"
 #include "utils.h"
 
-#define MAX_VALUES 2
+typedef enum {
+    VALUE_PH_A = 0,
+    VALUE_EC_A,
+    VALUE_PH_B,
+    VALUE_EC_B,
+    VALUE_MAX,
+} value_t;
+
+typedef enum {
+    TANK_A = 0,
+    TANK_B = 1,
+} tank_t;
+
+typedef struct {
+    float min;
+    float max;
+    float m;
+    float b;
+    struct {
+        char min[6];
+        char mid[6];
+        char max[6];
+    } str;
+} lerp_t;
+
 typedef struct log {
     time_t timestamp;
-    float values[MAX_VALUES];
+    float values[VALUE_MAX];
     TAILQ_ENTRY(log) next;
 } log_t;
 typedef TAILQ_HEAD(log_head, log) log_head_t;
@@ -34,18 +62,53 @@ static const uint8_t COLUMN = 72;
 static char buf[128] = {0};
 static log_head_t head;
 
-typedef struct {
-    float min;
-    float max;
-    float m;
-    float b;
-} lerp_t;
+static tank_t current = TANK_A;
+static button_handle_t button;
+static lerp_t mxb[VALUE_MAX] = {0};
 
-static lerp_t lerp(float x1, float x2, float y1, float y2) {
-    lerp_t ret = {.min = x1, .max = x2};
-    ret.m = (y2 - y1) / (x2 - x1);
-    ret.b = y1 - ret.m * x1;
-    return ret;
+static const char *TAG = "ext_main";
+
+static void lerp(lerp_t *s, float x1, float x2, float y1, float y2, const char *fmt) {
+    s->min = x1;
+    s->max = x2;
+    s->m = (y2 - y1) / (x2 - x1);
+    s->b = y1 - s->m * x1;
+    memset(s->str.min, 0, sizeof(s->str.min));
+    memset(s->str.mid, 0, sizeof(s->str.mid));
+    memset(s->str.max, 0, sizeof(s->str.max));
+    snprintf(s->str.min, sizeof(s->str.min) - 1, fmt, s->min);
+    snprintf(s->str.mid, sizeof(s->str.mid) - 1, fmt, (s->max + s->min) / 2);
+    snprintf(s->str.max, sizeof(s->str.max) - 1, fmt, s->max);
+}
+
+#define SWAP(a, b) do { typeof(a) temp = a; a = b; b = temp; } while (0)
+#define IS_PH(t) (t == VALUE_PH_A || t == VALUE_PH_B)
+
+static void setup_lerp(value_t type, Hydroponics__Controller__Entry *entry, float min, float max) {
+    if (entry != NULL && entry->min_graph != 0.f && entry->max_graph != 0.f) {
+        min = entry->min_graph;
+        max = entry->max_graph;
+    }
+    lerp(&mxb[type], min, max, 100.f, 196.f, IS_PH(type) ? "%.2f" : "%.f");
+}
+
+static void config_callback(const Hydroponics__Config *config) {
+    if (config == NULL) {
+        return;
+    }
+    if (config->controller != NULL) {
+        setup_lerp(VALUE_PH_A, config->controller->pha, 5.8f, 6.8f);
+        setup_lerp(VALUE_EC_A, config->controller->eca, 1000.f, 2000.f);
+        setup_lerp(VALUE_PH_B, config->controller->phb, 5.8f, 6.8f);
+        setup_lerp(VALUE_EC_B, config->controller->ecb, 1000.f, 2000.f);
+    }
+    hydroponics__config__free_unpacked((Hydroponics__Config *) config, NULL);
+}
+
+static void button_callback(void *data) {
+    ARG_UNUSED(data);
+    current = current == TANK_A ? TANK_B : TANK_A;
+    ESP_LOGI(TAG, "Button pressed. Now showing Tank %c", current == TANK_A ? 'A' : 'B');
 }
 
 static const char *render_value(const char *fmt, float value, const char *na) {
@@ -71,16 +134,18 @@ static void draw_graph_frame(ucg_t *ucg) {
     ucg_DrawVLine(ucg, 280, 89, 122);
     ucg_DrawHLine(ucg, 30, 210, 250);
 
+    lerp_t current_mxb = mxb[current * 2];
     ucg_SetFont(ucg, ucg_font_helvR08_tr);
     ucg_SetColor(ucg, 0, COLOR_PRIMARY[0].r, COLOR_PRIMARY[0].g, COLOR_PRIMARY[0].b);
-    ucg_DrawString(ucg, 9, 100, 0, "6.0");
-    ucg_DrawString(ucg, 9, 150, 0, "5.5");
-    ucg_DrawString(ucg, 9, 200, 0, "5.0");
+    ucg_DrawString(ucg, 9, 100, 0, current_mxb.str.max);
+    ucg_DrawString(ucg, 9, 150, 0, current_mxb.str.mid);
+    ucg_DrawString(ucg, 9, 200, 0, current_mxb.str.min);
 
+    current_mxb = mxb[current * 2 + 1];
     ucg_SetColor(ucg, 0, COLOR_PRIMARY[1].r, COLOR_PRIMARY[1].g, COLOR_PRIMARY[1].b);
-    ucg_DrawString(ucg, 287, 100, 0, "1750");
-    ucg_DrawString(ucg, 287, 150, 0, "1500");
-    ucg_DrawString(ucg, 287, 200, 0, "1250");
+    ucg_DrawString(ucg, 287, 100, 0, current_mxb.str.max);
+    ucg_DrawString(ucg, 287, 150, 0, current_mxb.str.mid);
+    ucg_DrawString(ucg, 287, 200, 0, current_mxb.str.min);
 }
 
 static void draw_graph(ucg_t *ucg) {
@@ -89,11 +154,8 @@ static void draw_graph(ucg_t *ucg) {
     ucg_SetColor(ucg, 0, COLOR_INACTIVE.r, COLOR_INACTIVE.g, COLOR_INACTIVE.b);
     ucg_DrawVLine(ucg, 280, 89, 122);
 
-    lerp_t mxb[MAX_VALUES] = {
-            lerp(5.8f, 6.8f, 100.f, 196.f),
-            lerp(1750.f, 1250.f, 100.f, 196.f),
-    };
-    for (int i = 0; i < MAX_VALUES; ++i) {
+    int start = current * 2;
+    for (int i = start; i < start + 2; ++i) {
         ucg_SetColor(ucg, 0, COLOR_PRIMARY[i].r, COLOR_PRIMARY[i].g, COLOR_PRIMARY[i].b);
         log_t *e = NULL;
         log_t *tmp = NULL;
@@ -122,11 +184,13 @@ static void draw_graph(ucg_t *ucg) {
 
 static void draw_indicators(ucg_t *ucg) {
     ucg_SetFont(ucg, ucg_font_helvB14_tr);
-    ucg_SetColor(ucg, 0, COLOR_ACTIVE.r, COLOR_ACTIVE.g, COLOR_ACTIVE.b);
+    lcd_rgb_t color_a = current == TANK_A ? COLOR_ACTIVE : COLOR_INACTIVE;
+    ucg_SetColor(ucg, 0, color_a.r, color_a.g, color_a.b);
     ucg_DrawFrame(ucg, 247, 50, 24, 24);
     ucg_DrawString(ucg, 252, 69, 0, "A");
 
-    ucg_SetColor(ucg, 0, COLOR_INACTIVE.r, COLOR_INACTIVE.g, COLOR_INACTIVE.b);
+    lcd_rgb_t color_b = current == TANK_B ? COLOR_ACTIVE : COLOR_INACTIVE;
+    ucg_SetColor(ucg, 0, color_b.r, color_b.g, color_b.b);
     ucg_DrawFrame(ucg, 280, 50, 24, 24);
     ucg_DrawString(ucg, 285, 69, 0, "B");
 }
@@ -167,19 +231,19 @@ static void draw_labels(ucg_t *ucg) {
 
 static void draw_values(context_t *context, ucg_t *ucg) {
     context_lock(context);
-    float pha = context->sensors.ph[0].value;
-    float eca = context->sensors.ec[0].value;
+    float pha = context->sensors.ph[TANK_A].value;
+    float eca = context->sensors.ec[TANK_A].value;
     float temp = context->sensors.temp.probe;
-#if CONFIG_ESP_SENSOR_TANKS == 2
-    // float ecb = context->sensors.ec[1].value;
-    // float phb = context->sensors.ph[1].value;
-#endif
+    float ecb = context->sensors.ec[TANK_B].value;
+    float phb = context->sensors.ph[TANK_B].value;
     context_unlock(context);
 
     log_t *entry = calloc(1, sizeof(log_t));
     entry->timestamp = time(NULL);
-    entry->values[0] = pha;
-    entry->values[1] = eca;
+    entry->values[VALUE_PH_A] = pha;
+    entry->values[VALUE_EC_A] = eca;
+    entry->values[VALUE_PH_B] = phb;
+    entry->values[VALUE_EC_B] = ecb;
     TAILQ_INSERT_HEAD(&head, entry, next);
 
     ucg_SetFont(ucg, ucg_font_helvB18_tr);
@@ -204,6 +268,16 @@ esp_err_t ext_main_init(context_t *context, lcd_dev_t *dev, ucg_t *ucg) {
     lcd_clear(dev, lcd_rgb565s(COLOR_BACKGROUND));
     draw_labels(ucg);
     draw_indicators(ucg);
+
+    button = iot_button_create(GPIO_NUM_35, BUTTON_ACTIVE_LOW);
+    CHECK_NO_MEM(button);
+    ESP_ERROR_CHECK(iot_button_set_evt_cb(button, BUTTON_CB_TAP, button_callback, NULL));
+
+    const Hydroponics__Config *config;
+    ESP_ERROR_CHECK(context_get_config(context, &config));
+    config_callback(config);
+    config_register(config_callback);
+
     draw_graph_frame(ucg);
 
     return ESP_OK;
