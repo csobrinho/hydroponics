@@ -152,6 +152,8 @@ static void mqtt_subscribe_callback(iotc_context_handle_t in_context_handle, iot
             } else if (strcmp(subscribe_topic_command, params->message.topic) == 0) {
                 ESP_LOGI(TAG, "Message payload: %.*s", payload_size, payload);
                 ESP_ERROR_CHECK(mqtt_config->handle_command(context, payload, payload_size));
+            } else {
+                ESP_LOGW(TAG, "Unknown topic: %s", params->message.topic);
             }
             break;
         }
