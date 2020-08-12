@@ -6,6 +6,7 @@
 #include "esp_err.h"
 #include "driver/gpio.h"
 
+#include "buses.h"
 #include "config.h"
 #include "context.h"
 #include "cron.h"
@@ -80,6 +81,23 @@ static void io_config_callback(const Hydroponics__Config *config) {
     xQueueSend(queue, &msg, portMAX_DELAY);
 }
 
+static void io_set_default_state(const Hydroponics__Config *config) {
+    if (config == NULL || config->n_startup_state <= 0) {
+        return;
+    }
+    // Remove all upcoming messages to avoid getting stuck if the queue is not big enough.
+    xQueueReset(queue);
+    for (int i = 0; i < config->n_startup_state; ++i) {
+        Hydroponics__StartupState *s = config->startup_state[i];
+        bool state = s->state == HYDROPONICS__OUTPUT_STATE__ON ? true : false;
+        for (int j = 0; j < s->n_output; ++j) {
+            if (IS_EXT_GPIO(s->output[i])) {
+                ESP_ERROR_CHECK(ext_gpio_set_level((ext_gpio_num_t) s->output[j], state));
+            }
+        }
+    }
+}
+
 static void io_apply_config(const Hydroponics__Config *config) {
     ESP_LOGI(TAG, "Applying config...");
 
@@ -90,6 +108,7 @@ static void io_apply_config(const Hydroponics__Config *config) {
         ESP_ERROR_CHECK(io_cron_args_destroy(e->cron_args));
         TAILQ_REMOVE(&head, e, next);
     }
+    io_set_default_state(config);
     if (config != NULL && config->n_task > 0) {
         // Register the new tasks.
         for (int i = 0; i < config->n_task; ++i) {
