@@ -13,12 +13,14 @@
 #include "driver/ext_gpio.h"
 #include "error.h"
 #include "io.h"
+#include "tasks/tuya_io.h"
 #include "utils.h"
 
 typedef struct {
     Hydroponics__OutputState state;
     size_t n_output;
     Hydroponics__Output *output;
+    bool single_shot;
 } io_cron_args_t;
 
 typedef struct entry {
@@ -29,9 +31,24 @@ typedef struct entry {
 
 typedef TAILQ_HEAD(head, entry) head_t;
 
+typedef enum {
+    OP_CONFIG = 1,
+    OP_SET = 2,
+} op_type_t;
+
 typedef struct {
-    const Hydroponics__Config *config;
-} io_op_t;
+    op_type_t type;
+    union {
+        struct {
+            const Hydroponics__Config *config;
+        } config;
+        struct {
+            const Hydroponics__Output output;
+            bool value;
+            uint16_t delay_ms;
+        } set;
+    };
+} op_t;
 
 static const char *TAG = "io";
 static QueueHandle_t queue;
@@ -64,6 +81,17 @@ static esp_err_t io_cron_args_destroy(io_cron_args_t *cron_args) {
     return ESP_OK;
 }
 
+static void io_generic_set(Hydroponics__Output output, Hydroponics__OutputState state) {
+    if (IS_EXT_GPIO(output)) {
+        uint32_t value = state == HYDROPONICS__OUTPUT_STATE__ON ? true : false;
+        ESP_ERROR_CHECK(ext_gpio_set_level((ext_gpio_num_t) output, value));
+    } else if (IS_EXT_TUYA(output)) {
+        ESP_ERROR_CHECK(tuya_io_set(output, state));
+    } else {
+        ESP_LOGE(TAG, "Unknown output: %d", output);
+    }
+}
+
 static void io_cron_callback(cron_handle_t handle, const char *name, void *data) {
     ARG_UNUSED(handle);
     io_cron_args_t *args = (io_cron_args_t *) data;
@@ -71,14 +99,27 @@ static void io_cron_callback(cron_handle_t handle, const char *name, void *data)
         ESP_LOGI(TAG, "io_cron_callback name: %s action: %3s output: %s", name,
                  enum_from_value(&hydroponics__output_state__descriptor, args->state),
                  enum_from_value(&hydroponics__output__descriptor, args->output[i]));
-        ESP_ERROR_CHECK(ext_gpio_set_level((ext_gpio_num_t) args->output[i],
-                                           args->state == HYDROPONICS__OUTPUT_STATE__ON ? true : false));
+        io_generic_set(args->output[i], args->state);
+    }
+    if (args->single_shot) {
+        entry_t *e = NULL, *tmp = NULL;
+        TAILQ_FOREACH_SAFE(e, &head, next, tmp) {
+            if (e->handle == handle) {
+                ESP_ERROR_CHECK(cron_delete(e->handle));
+                ESP_ERROR_CHECK(io_cron_args_destroy(e->cron_args));
+                TAILQ_REMOVE(&head, e, next);
+            }
+        }
+    }
+    if (args->single_shot) {
+        ESP_ERROR_CHECK(cron_delete(handle));
+        ESP_ERROR_CHECK(io_cron_args_destroy(args));
     }
 }
 
 static void io_config_callback(const Hydroponics__Config *config) {
-    io_op_t msg = {.config = config};
-    xQueueSend(queue, &msg, portMAX_DELAY);
+    const op_t cmd = {.type = OP_CONFIG, .config = {.config = config}};
+    xQueueSend(queue, &cmd, portMAX_DELAY);
 }
 
 static void io_set_default_state(const Hydroponics__Config *config) {
@@ -89,13 +130,33 @@ static void io_set_default_state(const Hydroponics__Config *config) {
     xQueueReset(queue);
     for (int i = 0; i < config->n_startup_state; ++i) {
         Hydroponics__StartupState *s = config->startup_state[i];
-        bool state = s->state == HYDROPONICS__OUTPUT_STATE__ON ? true : false;
         for (int j = 0; j < s->n_output; ++j) {
-            if (IS_EXT_GPIO(s->output[i])) {
-                ESP_ERROR_CHECK(ext_gpio_set_level((ext_gpio_num_t) s->output[j], state));
-            }
+            io_generic_set(s->output[j], s->state);
         }
     }
+}
+
+static esp_err_t io_cron_add(const char *name, const char *expression, const size_t n_output,
+                             const Hydroponics__Output *output, const Hydroponics__OutputState state,
+                             uint16_t delay_ms) {
+    io_cron_args_t *cron_args = NULL;
+    cron_handle_t handle = INVALID_CRON_HANDLE;
+    ESP_ERROR_CHECK(io_cron_args_create(&cron_args, n_output, output, state));
+    if (delay_ms > 0) {
+        ESP_ERROR_CHECK(cron_schedule_in(name, delay_ms, io_cron_callback, cron_args, &handle));
+    } else {
+        ESP_ERROR_CHECK(cron_create(name, expression, io_cron_callback, cron_args, &handle));
+    }
+    entry_t *e = calloc(1, sizeof(entry_t));
+    if (e == NULL) {
+        ESP_LOGE(TAG, "Error allocating entry_t for task %s", name);
+        ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
+    }
+    e->handle = handle;
+    e->cron_args = cron_args;
+    TAILQ_INSERT_HEAD(&head, e, next);
+
+    return ESP_OK;
 }
 
 static void io_apply_config(const Hydroponics__Config *config) {
@@ -104,7 +165,7 @@ static void io_apply_config(const Hydroponics__Config *config) {
     // Clear previous registrations.
     entry_t *e = NULL, *tmp = NULL;
     TAILQ_FOREACH_SAFE(e, &head, next, tmp) {
-        cron_delete(e->handle);
+        ESP_ERROR_CHECK(cron_delete(e->handle));
         ESP_ERROR_CHECK(io_cron_args_destroy(e->cron_args));
         TAILQ_REMOVE(&head, e, next);
     }
@@ -116,9 +177,6 @@ static void io_apply_config(const Hydroponics__Config *config) {
             for (int j = 0; j < task->n_cron; ++j) {
                 const Hydroponics__Task__Cron *cron = task->cron[j];
                 for (int k = 0; k < cron->n_expression; ++k) {
-                    io_cron_args_t *cron_args = NULL;
-                    cron_handle_t handle = INVALID_CRON_HANDLE;
-
                     for (int o = 0; o < task->n_output; ++o) {
                         const Hydroponics__Output output = task->output[o];
                         gpio_config_t cfg = {
@@ -128,18 +186,8 @@ static void io_apply_config(const Hydroponics__Config *config) {
                         };
                         ESP_ERROR_CHECK(ext_gpio_config(&cfg));
                     }
-
-                    ESP_ERROR_CHECK(io_cron_args_create(&cron_args, task->n_output, task->output, cron->state));
-                    ESP_ERROR_CHECK(cron_create(task->name, cron->expression[k], io_cron_callback, cron_args,
-                                                &handle));
-                    e = calloc(1, sizeof(entry_t));
-                    if (e == NULL) {
-                        ESP_LOGE(TAG, "Error allocating entry_t for task %s", task->name);
-                        ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
-                    }
-                    e->handle = handle;
-                    e->cron_args = cron_args;
-                    TAILQ_INSERT_HEAD(&head, e, next);
+                    ESP_ERROR_CHECK(io_cron_add(task->name, cron->expression[k], task->n_output, task->output,
+                                                cron->state, 0));
                 }
             }
         }
@@ -162,9 +210,23 @@ static void io_task(void *arg) {
         io_apply_config(config);
 
         while (true) {
-            io_op_t msg = {0};
-            if (xQueueReceive(queue, &msg, portMAX_DELAY) == pdTRUE) {
-                io_apply_config(msg.config);
+            op_t op = {0};
+            if (xQueueReceive(queue, &op, portMAX_DELAY) == pdTRUE) {
+                switch (op.type) {
+                    case OP_CONFIG: { // Re-load config.
+                        io_apply_config(op.config.config);
+                        break;
+                    }
+                    case OP_SET: {
+                        Hydroponics__OutputState state = op.set.value ? HYDROPONICS__OUTPUT_STATE__ON
+                                                                      : HYDROPONICS__OUTPUT_STATE__OFF;
+                        io_generic_set(op.set.output, state);
+                        if (op.set.delay_ms == 0) {
+                            break;
+                        }
+                        ESP_ERROR_CHECK(io_cron_add("STEP", NULL, 1, &op.set.output, !op.set.value, op.set.delay_ms));
+                    }
+                }
             }
         }
     }
@@ -173,10 +235,16 @@ static void io_task(void *arg) {
 esp_err_t io_init(context_t *context) {
     TAILQ_INIT(&head);
 
-    queue = xQueueCreate(10, sizeof(const Hydroponics__Config *));
+    queue = xQueueCreate(32, sizeof(op_t));
     CHECK_NO_MEM(queue);
 
     config_register(io_config_callback);
     xTaskCreatePinnedToCore(io_task, "io", 4096, context, tskIDLE_PRIORITY + 10, NULL, tskNO_AFFINITY);
+    return ESP_OK;
+}
+
+esp_err_t io_set_level(const Hydroponics__Output output, bool value, uint16_t delay_ms) {
+    const op_t cmd = {.type = OP_SET, .set = {.output = output, .value = value, .delay_ms = delay_ms}};
+    xQueueSend(queue, &cmd, portMAX_DELAY);
     return ESP_OK;
 }
