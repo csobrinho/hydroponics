@@ -48,7 +48,7 @@ static void ext_display_task(void *arg) {
     ESP_ERROR_CHECK(ext_main_init(context, &dev, &ucg));
 
     while (true) {
-        ESP_ERROR_CHECK(ext_main_draw(context, &ucg));
+        ESP_ERROR_CHECK(ext_main_draw(context, &dev, &ucg));
         vTaskDelay(pdMS_TO_TICKS(1500));
     }
 }

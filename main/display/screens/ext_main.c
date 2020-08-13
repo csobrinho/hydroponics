@@ -18,15 +18,15 @@
 
 typedef enum {
     VALUE_PH_A = 0,
-    VALUE_EC_A,
-    VALUE_PH_B,
-    VALUE_EC_B,
-    VALUE_MAX,
+    VALUE_EC_A = 1,
+    VALUE_PH_B = 2,
+    VALUE_EC_B = 3,
+    VALUE_MAX = 4,
 } value_t;
 
 typedef enum {
-    TANK_A = 0,
-    TANK_B = 1,
+    TANK_A = CONFIG_TANK_A,
+    TANK_B = CONFIG_TANK_B,
 } tank_t;
 
 typedef struct {
@@ -63,6 +63,7 @@ static char buf[128] = {0};
 static log_head_t head;
 
 static tank_t current = TANK_A;
+static bool refresh = true;
 static button_handle_t button;
 static lerp_t mxb[VALUE_MAX] = {0};
 
@@ -77,7 +78,7 @@ static void lerp(lerp_t *s, float x1, float x2, float y1, float y2, const char *
     memset(s->str.mid, 0, sizeof(s->str.mid));
     memset(s->str.max, 0, sizeof(s->str.max));
     snprintf(s->str.min, sizeof(s->str.min) - 1, fmt, s->min);
-    snprintf(s->str.mid, sizeof(s->str.mid) - 1, fmt, (s->max + s->min) / 2);
+    snprintf(s->str.mid, sizeof(s->str.mid) - 1, fmt, (s->max + s->min) / 2.f);
     snprintf(s->str.max, sizeof(s->str.max) - 1, fmt, s->max);
 }
 
@@ -93,6 +94,7 @@ static void setup_lerp(value_t type, Hydroponics__Controller__Entry *entry, floa
 }
 
 static void config_callback(const Hydroponics__Config *config) {
+    refresh = true;
     if (config == NULL) {
         return;
     }
@@ -263,11 +265,10 @@ static void draw_values(context_t *context, ucg_t *ucg) {
 
 esp_err_t ext_main_init(context_t *context, lcd_dev_t *dev, ucg_t *ucg) {
     ARG_UNUSED(context);
-    TAILQ_INIT(&head);
+    ARG_UNUSED(dev);
+    ARG_UNUSED(ucg);
 
-    lcd_clear(dev, lcd_rgb565s(COLOR_BACKGROUND));
-    draw_labels(ucg);
-    draw_indicators(ucg);
+    TAILQ_INIT(&head);
 
     button = iot_button_create(GPIO_NUM_35, BUTTON_ACTIVE_LOW);
     CHECK_NO_MEM(button);
@@ -278,12 +279,17 @@ esp_err_t ext_main_init(context_t *context, lcd_dev_t *dev, ucg_t *ucg) {
     config_callback(config);
     config_register(config_callback);
 
-    draw_graph_frame(ucg);
-
     return ESP_OK;
 }
 
-esp_err_t ext_main_draw(context_t *context, ucg_t *ucg) {
+esp_err_t ext_main_draw(context_t *context, lcd_dev_t *dev, ucg_t *ucg) {
+    if (refresh) {
+        lcd_clear(dev, lcd_rgb565s(COLOR_BACKGROUND));
+        draw_labels(ucg);
+        draw_indicators(ucg);
+        draw_graph_frame(ucg);
+        refresh = !refresh;
+    }
     draw_values(context, ucg);
     draw_graph(ucg);
     draw_statusbar(ucg);
