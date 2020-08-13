@@ -39,6 +39,7 @@ void app_main() {
     ESP_ERROR_CHECK(config_init(context));
     ESP_ERROR_CHECK(cron_init(context));
     ESP_ERROR_CHECK(ext_gpio_init());
+    ESP_ERROR_CHECK(tuya_io_init(context));
     ESP_ERROR_CHECK(io_init(context));
 #ifdef CONFIG_IDF_TARGET_ESP32
     ESP_ERROR_CHECK(status_init(context));
@@ -54,6 +55,5 @@ void app_main() {
     ESP_ERROR_CHECK(ntp_init(context));
     ESP_ERROR_CHECK(iot_init(context));
     ESP_ERROR_CHECK(monitor_init(context));
-    ESP_ERROR_CHECK(tuya_io_init(context));
     ESP_ERROR_CHECK(console_init());
 }
