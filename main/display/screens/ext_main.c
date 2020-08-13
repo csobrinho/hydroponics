@@ -9,6 +9,7 @@
 
 #include "ucg.h"
 
+#include "buses.h"
 #include "context.h"
 #include "config.h"
 #include "ext_main.h"
@@ -270,7 +271,7 @@ esp_err_t ext_main_init(context_t *context, lcd_dev_t *dev, ucg_t *ucg) {
 
     TAILQ_INIT(&head);
 
-    button = iot_button_create(GPIO_NUM_35, BUTTON_ACTIVE_LOW);
+    button = iot_button_create(LCD_BUTTON_GPIO, BUTTON_ACTIVE_LOW);
     CHECK_NO_MEM(button);
     ESP_ERROR_CHECK(iot_button_set_evt_cb(button, BUTTON_CB_TAP, button_callback, NULL));
 
