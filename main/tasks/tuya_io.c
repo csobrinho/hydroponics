@@ -9,7 +9,6 @@
 
 #include "esp_err.h"
 
-#include "buses.h"
 #include "config.h"
 #include "context.h"
 #include "error.h"
@@ -17,6 +16,8 @@
 #include "tuya.h"
 #include "tuya_io.h"
 #include "utils.h"
+
+#define MAX_RETRIES 3
 
 typedef enum {
     OP_CONFIG = 1,
@@ -117,7 +118,13 @@ static esp_err_t tuya_io_control(int sequence, const Hydroponics__HardwareId *hi
 
     tuya_msg_t rx = {0};
     ESP_LOGI(TAG, "Setting tuya {\"%d\":%s}", hid->dps_id, value ? "true" : "false");
-    esp_err_t ret = tuya_send(&LOCAL, sequence, TUYA_COMMAND_CONTROL, payload, payload_len, &rx);
+    esp_err_t ret = ESP_OK;
+    for (int i = 0; i < MAX_RETRIES; ++i) {
+        ret = tuya_send(&LOCAL, sequence, TUYA_COMMAND_CONTROL, payload, payload_len, &rx);
+        if (ret == ESP_OK) {
+            break;
+        }
+    }
     FAIL_IF(ret != ESP_OK, "tuya_send, error: %d", ret);
     FAIL_IF(sequence != rx.sequence, "tuya_send sequence mismatch, %d != %d", sequence, rx.sequence);
     ESP_ERROR_CHECK(tuya_free(&rx));
@@ -126,23 +133,6 @@ static esp_err_t tuya_io_control(int sequence, const Hydroponics__HardwareId *hi
     fail:
     ESP_ERROR_CHECK(tuya_free(&rx));
     return ESP_FAIL;
-}
-
-static void tuya_io_set_default_state() {
-    if (config == NULL || config->n_startup_state <= 0) {
-        return;
-    }
-    // Remove all upcoming messages to avoid getting stuck if the queue is not big enough.
-    xQueueReset(queue);
-    for (int i = 0; i < config->n_startup_state; ++i) {
-        Hydroponics__StartupState *s = config->startup_state[i];
-        bool state = s->state == HYDROPONICS__OUTPUT_STATE__ON ? true : false;
-        for (int j = 0; j < s->n_output; ++j) {
-            if (IS_EXT_TUYA(s->output[i])) {
-                tuya_io_set(s->output[j], state);
-            }
-        }
-    }
 }
 
 static void tuya_task(void *arg) {
@@ -176,15 +166,14 @@ static void tuya_task(void *arg) {
                         hydroponics__config__free_unpacked((Hydroponics__Config *) config, NULL);
                     }
                     config = op.config.config;
-                    tuya_io_set_default_state();
                     break;
                 }
                 case OP_SET: { // Change the status of a Tuya IO.
                     const Hydroponics__HardwareId *hid = tuya_io_find_hardware_io(op.set.output);
                     FAIL_IF(hid == NULL, "Could not find the HardwareId for output %d", op.set.output);
                     esp_err_t ret = tuya_io_control(sequence++, hid, op.set.value);
-                    FAIL_IF(ret != ESP_OK, "Could not set tuya {\"%d\":%s}, error: %d", hid->dps_id,
-                            op.set.value ? "true" : "false", ret);
+                    FAIL_IF(ret != ESP_OK, "Could not set tuya {\"%d\":%s}, error: %s", hid->dps_id,
+                            op.set.value ? "true" : "false", esp_err_to_name(ret));
                     break;
                     fail:
                     reload_udp = true;
