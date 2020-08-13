@@ -32,5 +32,9 @@
 	update = merge
 [submodule "components/esp32-ads1115"]
 	path = components/esp32-ads1115
-	url = https://github.com/schroedermarius/esp32-ads1115.git
-	branch = master
+	url = https://github.com/schroedermarius/esp32-ads1115
+	update = merge
+[submodule "components/esp-timespec"]
+	path = components/esp-timespec
+	url = https://github.com/csobrinho/esp-timespec
+	update = merge
