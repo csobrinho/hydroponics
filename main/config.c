@@ -204,7 +204,6 @@ esp_err_t config_init(context_t *context) {
     ESP_LOGI(TAG, "Config loaded");
     ESP_LOGI(TAG, "  device_id: %s", device_id);
     ESP_LOGI(TAG, "  ssid:      %s", ssid);
-    ESP_ERROR_CHECK(config_dump(context->config.config));
     return ESP_OK;
 }
 
