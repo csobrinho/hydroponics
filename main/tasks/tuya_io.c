@@ -128,10 +128,12 @@ static esp_err_t tuya_io_control(int sequence, const Hydroponics__HardwareId *hi
     FAIL_IF(ret != ESP_OK, "tuya_send, error: %d", ret);
     FAIL_IF(sequence != rx.sequence, "tuya_send sequence mismatch, %d != %d", sequence, rx.sequence);
     ESP_ERROR_CHECK(tuya_free(&rx));
+    vTaskDelay(pdMS_TO_TICKS(500)); // Wait a little before sending a new command.
     return ESP_OK;
 
     fail:
     ESP_ERROR_CHECK(tuya_free(&rx));
+    vTaskDelay(pdMS_TO_TICKS(500)); // Wait a little before sending a new command.
     return ESP_FAIL;
 }
 
