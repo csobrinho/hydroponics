@@ -1,4 +1,4 @@
-# proto-file: components/protos/config.proto
+# proto-file: config.proto
 # proto-message: hydroponics.Config
 sampling {
   humidity: 1000

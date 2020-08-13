@@ -56,6 +56,7 @@ enum Output {
   EXT_TUYA_OUT_3 = 103; // EXT_TUYA_END
 };
 
+// Defines the state of the output, ON or OFF.
 enum OutputState {
   OFF = 0;
   ON = 1;

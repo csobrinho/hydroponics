@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+import "config.proto";
+
+package hydroponics;
+
+message CommandReboot {}
+
+message CommandSet {
+  repeated Output output = 1;
+  OutputState state = 2;
+}
+
+// Defines an output impulse response.
+// The output will start on the initial `state`, then it will be valid for `delay_ms` and finally it will transition to
+// the final `!state`.
+message CommandImpulse {
+  repeated Output output = 1;
+  OutputState state = 2;
+  uint32 delay_ms = 3;
+}
+
+message Command {
+  oneof command {
+    CommandReboot reboot = 1;
+    CommandSet set = 2;
+    CommandImpulse impulse = 3;
+  }
+}
+
+message Commands {
+  repeated Command command = 1;
+}

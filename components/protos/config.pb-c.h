@@ -76,6 +76,9 @@ typedef enum _Hydroponics__Output {
   HYDROPONICS__OUTPUT__EXT_TUYA_OUT_3 = 103
     PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(HYDROPONICS__OUTPUT)
 } Hydroponics__Output;
+/*
+ * Defines the state of the output, ON or OFF.
+ */
 typedef enum _Hydroponics__OutputState {
   HYDROPONICS__OUTPUT_STATE__OFF = 0,
   HYDROPONICS__OUTPUT_STATE__ON = 1
