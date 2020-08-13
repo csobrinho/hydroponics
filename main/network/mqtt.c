@@ -18,7 +18,8 @@
 #include "utils.h"
 
 #define DEVICE_PATH "projects/%s/locations/%s/registries/%s/devices/%s"
-#define SUBSCRIBE_TOPIC_COMMAND "/devices/%s/commands/#"
+#define SUBSCRIBE_TOPIC_WILDCARD_COMMAND "/devices/%s/commands/#"
+#define SUBSCRIBE_TOPIC_COMMAND "/devices/%s/commands"
 #define SUBSCRIBE_TOPIC_CONFIG "/devices/%s/config"
 #define PUBLISH_TOPIC_EVENT "/devices/%s/events"
 #define PUBLISH_TOPIC_STATE "/devices/%s/state"
@@ -33,6 +34,7 @@ static const mqtt_config_t *mqtt_config;
 static const iotc_mqtt_qos_t mqtt_qos = IOTC_MQTT_QOS_AT_LEAST_ONCE;
 static iotc_timed_task_handle_t delayed_publish_task = IOTC_INVALID_TIMED_TASK_HANDLE;
 static iotc_context_handle_t iotc_context = IOTC_INVALID_CONTEXT_HANDLE;
+static char *subscribe_topic_wildcard_command;
 static char *subscribe_topic_command;
 static char *subscribe_topic_config;
 static char *publish_topic_event;
@@ -150,7 +152,8 @@ static void mqtt_subscribe_callback(iotc_context_handle_t in_context_handle, iot
                 ESP_LOGI(TAG, "Config payload: %d bytes", params->message.temporary_payload_data_length);
                 ESP_ERROR_CHECK(mqtt_config->handle_config(context, payload, payload_size));
             } else if (strcmp(subscribe_topic_command, params->message.topic) == 0) {
-                ESP_LOGI(TAG, "Message payload: %.*s", payload_size, payload);
+                ESP_LOGI(TAG, "Message payload: %d bytes", payload_size);
+                ESP_LOG_BUFFER_HEXDUMP(TAG, payload, payload_size, ESP_LOG_DEBUG);
                 ESP_ERROR_CHECK(mqtt_config->handle_command(context, payload, payload_size));
             } else {
                 ESP_LOGW(TAG, "Unknown topic: %s", params->message.topic);
@@ -174,9 +177,9 @@ static void mqtt_connection_state_changed(iotc_context_handle_t in_context_handl
 
             /* Publish immediately upon connect. 'mqtt_publish_telemetry_event' is defined above and invokes the IoTC
              * API to publish a message. */
-            iotc_state_t err = iotc_subscribe(in_context_handle, subscribe_topic_command, mqtt_qos,
+            iotc_state_t err = iotc_subscribe(in_context_handle, subscribe_topic_wildcard_command, mqtt_qos,
                                               &mqtt_subscribe_callback, /* user_data= */ NULL);
-            ESP_LOGI(TAG, "Subscribed to topic, error: %d: '%s'", err, subscribe_topic_command);
+            ESP_LOGI(TAG, "Subscribed to topic, error: %d: '%s'", err, subscribe_topic_wildcard_command);
 
             err = iotc_subscribe(in_context_handle, subscribe_topic_config, mqtt_qos,
                                  &mqtt_subscribe_callback, /* user_data= */ NULL);
@@ -313,6 +316,7 @@ esp_err_t mqtt_init(context_t *ctx, const mqtt_config_t *config) {
     mqtt_config = config;
     mqtt_dispatch_connected(false);
 
+    asprintf(&subscribe_topic_wildcard_command, SUBSCRIBE_TOPIC_WILDCARD_COMMAND, CONFIG_GIOT_DEVICE_ID);
     asprintf(&subscribe_topic_command, SUBSCRIBE_TOPIC_COMMAND, CONFIG_GIOT_DEVICE_ID);
     asprintf(&subscribe_topic_config, SUBSCRIBE_TOPIC_CONFIG, CONFIG_GIOT_DEVICE_ID);
     asprintf(&publish_topic_event, PUBLISH_TOPIC_EVENT, CONFIG_GIOT_DEVICE_ID);
