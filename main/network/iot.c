@@ -6,19 +6,54 @@
 #include "esp_err.h"
 #include "esp_log.h"
 
+#include "command.pb-c.h"
 #include "config.h"
 #include "context.h"
 #include "error.h"
 #include "iot.h"
 #include "mqtt.h"
+#include "tasks/io.h"
 
 static const char *TAG = "iot";
 
 static esp_err_t iot_handle_command(context_t *context, const uint8_t *command, size_t size) {
     ARG_UNUSED(context);
-    ARG_UNUSED(command);
-    ARG_UNUSED(size);
-    // TODO(sobrinho): Add proper handling of commands.
+    if (command == NULL || size == 0) {
+        ESP_LOGW(TAG, "Empty command payload.");
+        return ESP_OK;
+    }
+    Hydroponics__Commands *cmds = hydroponics__commands__unpack(NULL, size, command);
+    ARG_CHECK(cmds != NULL, "Error unpacking the Commands proto");
+    for (int i = 0; i < cmds->n_command; ++i) {
+        Hydroponics__Command *cmd = cmds->command[i];
+        switch (cmd->command_case) {
+            case HYDROPONICS__COMMAND__COMMAND__NOT_SET:
+                break;
+            case HYDROPONICS__COMMAND__COMMAND_REBOOT: {
+                ESP_LOGW(TAG, "System going to reboot in 4s");
+                vTaskDelay(pdMS_TO_TICKS(4000));
+                esp_restart();
+            }
+            case HYDROPONICS__COMMAND__COMMAND_SET: {
+                for (int idx = 0; idx < cmd->set->n_output; ++idx) {
+                    bool state = cmd->set->state == HYDROPONICS__OUTPUT_STATE__ON;
+                    ESP_ERROR_CHECK(io_set_level(cmd->set->output[idx], state, 0));
+                }
+                break;
+            }
+            case HYDROPONICS__COMMAND__COMMAND_STEP: {
+                for (int idx = 0; idx < cmd->step->n_output; ++idx) {
+                    ESP_ERROR_CHECK(io_set_level(cmd->step->output[idx], cmd->step->step->state,
+                                                 cmd->step->step->delay_ms));
+                }
+                break;
+            }
+            default:
+                ESP_LOGW(TAG, "Unknown command: %d", cmd->command_case);
+                break;
+        }
+    }
+    hydroponics__commands__free_unpacked(cmds, NULL);
     return ESP_OK;
 }
 
