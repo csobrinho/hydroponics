@@ -224,7 +224,8 @@ static void io_task(void *arg) {
                         if (op.set.delay_ms == 0) {
                             break;
                         }
-                        ESP_ERROR_CHECK(io_cron_add("STEP", NULL, 1, &op.set.output, !op.set.value, op.set.delay_ms));
+                        ESP_ERROR_CHECK(io_cron_add("Impulse", NULL, 1, &op.set.output, !op.set.value,
+                                                    op.set.delay_ms));
                     }
                 }
             }

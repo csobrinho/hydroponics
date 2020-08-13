@@ -6,7 +6,7 @@
 #include "esp_err.h"
 #include "esp_log.h"
 
-#include "command.pb-c.h"
+#include "commands.pb-c.h"
 #include "config.h"
 #include "context.h"
 #include "error.h"
@@ -41,10 +41,10 @@ static esp_err_t iot_handle_command(context_t *context, const uint8_t *command, 
                 }
                 break;
             }
-            case HYDROPONICS__COMMAND__COMMAND_STEP: {
-                for (int idx = 0; idx < cmd->step->n_output; ++idx) {
-                    ESP_ERROR_CHECK(io_set_level(cmd->step->output[idx], cmd->step->step->state,
-                                                 cmd->step->step->delay_ms));
+            case HYDROPONICS__COMMAND__COMMAND_IMPULSE: {
+                for (int idx = 0; idx < cmd->impulse->n_output; ++idx) {
+                    ESP_ERROR_CHECK(io_set_level(cmd->impulse->output[idx], cmd->impulse->state,
+                                                 cmd->impulse->delay_ms));
                 }
                 break;
             }
