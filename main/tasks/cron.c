@@ -10,6 +10,7 @@
 #include "esp_err.h"
 
 #include "ccronexpr.h"
+#include "timespec.h"
 
 #include "context.h"
 #include "error.h"
@@ -18,7 +19,6 @@
 
 #define INVALID_INSTANT ((time_t) -1) // Invalid time defined in time.h.
 #define NS_TO_MS 1000000L
-#define S_TO_MS 1000
 
 typedef struct {
     cron_handle_t handle;
@@ -27,7 +27,7 @@ typedef struct {
     cron_callback_t callback;
     void *data;
     cron_expr expr;
-    time_t next_execution;
+    struct timespec next_execution;
 } cron_job_t;
 
 typedef enum {
@@ -74,14 +74,15 @@ static TickType_t cron_next_delay(void) {
         return portMAX_DELAY;
     }
     cron_job_entry_t *first = TAILQ_FIRST(&cron_job_head);
-    if (first == NULL || first->job.next_execution == INVALID_INSTANT) {
+    if (first == NULL || first->job.next_execution.tv_sec == INVALID_INSTANT) {
         return portMAX_DELAY;
     }
     struct timespec now = {0};
     if (clock_gettime(CLOCK_REALTIME, &now) != 0) {
         return portMAX_DELAY;
     }
-    long delay_ms = (first->job.next_execution - now.tv_sec) * S_TO_MS - (now.tv_nsec / NS_TO_MS);
+    struct timespec sub = timespec_sub(first->job.next_execution, now);
+    long delay_ms = timespec_to_ms(sub);
     if (delay_ms <= 0) {
         // We passed the deadline so run as many as possible.
         return 0;
@@ -89,14 +90,22 @@ static TickType_t cron_next_delay(void) {
     // Round up the delay to the nearest 'tick' to avoid undershooting.
     long tick_ms = portTICK_PERIOD_MS;
     long round_up_delay_ms = ((delay_ms + tick_ms - 1) / tick_ms) * tick_ms;
-    ESP_LOGD(TAG, "cron_next_delay will wait %ld ms (next: %ld, tv_sec: %ld, tv_msec: %ld)", round_up_delay_ms,
-             first->job.next_execution, now.tv_sec, now.tv_nsec / NS_TO_MS);
+    ESP_LOGD(TAG, "cron_next_delay will wait %ld ms (next: %lds.%ldms, noew: %lds.%ldms)", round_up_delay_ms,
+             first->job.next_execution.tv_sec, first->job.next_execution.tv_nsec / NS_TO_MS, now.tv_sec,
+             now.tv_nsec / NS_TO_MS);
     return pdMS_TO_TICKS(round_up_delay_ms);
 }
 
-static esp_err_t cron_calculate_next(cron_job_t *job) {
-    job->next_execution = cron_next(&job->expr, cron_now().tv_sec);
-    return job->next_execution != INVALID_INSTANT ? ESP_OK : ESP_FAIL;
+static inline bool cron_is_oneshot(cron_job_t *job) {
+    return job->expression[0] == '\0';
+}
+
+static void cron_calculate_next(cron_job_t *job) {
+    if (cron_is_oneshot(job)) {
+        return;
+    }
+    job->next_execution.tv_sec = cron_next(&job->expr, cron_now().tv_sec);
+    job->next_execution.tv_nsec = 0;
 }
 
 static esp_err_t cron_unschedule_job(cron_handle_t handle) {
@@ -113,10 +122,9 @@ static esp_err_t cron_unschedule_job(cron_handle_t handle) {
 }
 
 static esp_err_t cron_schedule_job(cron_job_entry_t *entry) {
-    ESP_ERROR_CHECK(cron_calculate_next(&entry->job));
     ESP_ERROR_CHECK(cron_unschedule_job(entry->job.handle));
 
-    if (entry->job.next_execution == INVALID_INSTANT) {
+    if (entry->job.next_execution.tv_sec == INVALID_INSTANT) {
         TAILQ_INSERT_TAIL(&cron_job_head, entry, next);
         return ESP_OK;
     }
@@ -126,7 +134,7 @@ static esp_err_t cron_schedule_job(cron_job_entry_t *entry) {
     }
     cron_job_entry_t *e = NULL;
     TAILQ_FOREACH(e, &cron_job_head, next) {
-        if (entry->job.next_execution < e->job.next_execution) {
+        if (timespec_lt(entry->job.next_execution, e->job.next_execution)) {
             TAILQ_INSERT_BEFORE(e, entry, next);
             return ESP_OK;
         }
@@ -142,6 +150,7 @@ static esp_err_t cron_create_job(cron_job_t *job) {
         return ESP_ERR_NO_MEM;
     }
     memcpy(&entry->job, job, sizeof(cron_job_t));
+    cron_calculate_next(&entry->job);
     ESP_ERROR_CHECK(cron_schedule_job(entry));
     return ESP_OK;
 }
@@ -187,15 +196,20 @@ static void cron_task(void *arg) {
         }
         cron_job_entry_t *e = NULL, *tmp = NULL;
         TAILQ_FOREACH_SAFE(e, &cron_job_head, next, tmp) {
-            if (e->job.next_execution == INVALID_INSTANT) {
+            if (e->job.next_execution.tv_sec == INVALID_INSTANT) {
                 break;
             }
             struct timespec now = cron_now();
-            if (e->job.next_execution > now.tv_sec) {
+            if (timespec_gt(e->job.next_execution, now)) {
                 break;
             }
             e->job.callback(e->job.handle, e->job.name, e->job.data);
-            ESP_ERROR_CHECK(cron_schedule_job(e));
+            if (cron_is_oneshot(&e->job)) {
+                ESP_ERROR_CHECK(cron_destroy_job(e->job.handle));
+            } else {
+                cron_calculate_next(&e->job);
+                ESP_ERROR_CHECK(cron_schedule_job(e));
+            }
         }
     }
 }
@@ -208,6 +222,17 @@ esp_err_t cron_init(context_t *context) {
     TAILQ_INIT(&cron_job_head);
 
     xTaskCreatePinnedToCore(cron_task, "cron", 3072, context, configMAX_PRIORITIES - 5, NULL, tskNO_AFFINITY);
+    return ESP_OK;
+}
+
+static esp_err_t cron_add(cron_job_t *job, cron_handle_t *handle) {
+    cron_op_t arg = {.type = CRON_OP_ADD, .add = {.job = *job}};
+    if (xQueueSend(queue, &arg, portMAX_DELAY) != pdPASS) {
+        return ESP_FAIL;
+    }
+    if (handle != NULL) {
+        *handle = arg.add.job.handle;
+    }
     return ESP_OK;
 }
 
@@ -224,7 +249,8 @@ esp_err_t cron_create(const char *name, const char *expression, cron_callback_t 
     strlcpy((char *) job.expression, expression, sizeof(job.expression));
     job.callback = callback;
     job.data = data;
-    job.next_execution = INVALID_INSTANT;
+    job.next_execution.tv_sec = INVALID_INSTANT;
+    job.next_execution.tv_nsec = 0;
 
     const char *error = NULL;
     cron_parse_expr(job.expression, &job.expr, &error);
@@ -232,14 +258,33 @@ esp_err_t cron_create(const char *name, const char *expression, cron_callback_t 
         ESP_LOGE(TAG, "Could not parse %s, error: %s", job.expression, error);
         return ESP_ERR_INVALID_ARG;
     }
-    cron_op_t arg = {.type = CRON_OP_ADD, .add = {.job = job}};
-    if (xQueueSend(queue, &arg, portMAX_DELAY) != pdPASS) {
-        return ESP_FAIL;
-    }
-    if (handle != NULL) {
-        *handle = arg.add.job.handle;
-    }
+    ESP_ERROR_CHECK(cron_add(&job, handle));
     return ESP_OK;
+}
+
+esp_err_t cron_schedule_at(const char *name, struct timespec in, cron_callback_t callback, void *data,
+                           cron_handle_t *handle) {
+    ARG_CHECK(name != NULL, ERR_PARAM_NULL);
+    ARG_CHECK(in.tv_sec != INVALID_INSTANT, "timespec is INVALID");
+    ARG_CHECK(callback != NULL, ERR_PARAM_NULL);
+
+    cron_handle_t new_handle = (cron_handle_t) id++;
+    cron_job_t job = {0};
+    job.handle = new_handle;
+    strlcpy((char *) job.name, name, sizeof(job.name));
+    job.callback = callback;
+    job.data = data;
+    struct timespec normalized = timespec_normalise(in);
+    job.next_execution.tv_sec = normalized.tv_sec;
+    job.next_execution.tv_nsec = normalized.tv_nsec;
+
+    ESP_ERROR_CHECK(cron_add(&job, handle));
+    return ESP_OK;
+}
+
+esp_err_t cron_schedule_in(const char *name, uint32_t delay_ms, cron_callback_t callback, void *data,
+                           cron_handle_t *handle) {
+    return cron_schedule_at(name, timespec_add(cron_now(), timespec_from_ms(delay_ms)), callback, data, handle);
 }
 
 esp_err_t cron_delete(cron_handle_t handle) {

@@ -28,6 +28,12 @@ esp_err_t cron_init(context_t *context);
 esp_err_t cron_create(const char *name, const char *expression, cron_callback_t callback, void *data,
                       cron_handle_t *handle);
 
+esp_err_t cron_schedule_at(const char *name, struct timespec in, cron_callback_t callback, void *data,
+                           cron_handle_t *handle);
+
+esp_err_t cron_schedule_in(const char *name, uint32_t delay_ms, cron_callback_t callback, void *data,
+                           cron_handle_t *handle);
+
 esp_err_t cron_delete(cron_handle_t handle);
 
 #endif //HYDROPONICS_TASKS_CRON_H
