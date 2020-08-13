@@ -104,6 +104,16 @@ menu "Project config"
             help
                 Set the number of tanks.
 
+        config TANK_A
+            int "Tank A index"
+            default 0
+            range 0 1
+
+        config TANK_B
+            int "Tank B index"
+            default 1
+            range 0 1
+
         config ESP_SENSOR_RTD_ADDR
             hex "RTD Probe I2C Address"
             default 0x66

@@ -46,11 +46,11 @@ static esp_err_t display_draw(context_t *context, bool connected, bool time_upda
     float indoor = context->sensors.temp.indoor;
     float probe = context->sensors.temp.probe;
     float humidity = context->sensors.humidity;
-    float eca = context->sensors.ec[0].value;
-    float pha = context->sensors.ph[0].value;
+    float eca = context->sensors.ec[CONFIG_TANK_A].value;
+    float pha = context->sensors.ph[CONFIG_TANK_A].value;
 #if CONFIG_ESP_SENSOR_TANKS == 2
-    float ecb = context->sensors.ec[1].value;
-    float phb = context->sensors.ph[1].value;
+    float ecb = context->sensors.ec[CONFIG_TANK_B].value;
+    float phb = context->sensors.ph[CONFIG_TANK_B].value;
 #endif
     context_unlock(context);
 

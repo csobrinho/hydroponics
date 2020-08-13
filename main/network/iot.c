@@ -32,15 +32,15 @@ static esp_err_t iot_handle_publish_telemetry(context_t *context, uint8_t **data
     cJSON_AddNumberToObject(root, "sensors.temp.probe", context->sensors.temp.probe);
     cJSON_AddNumberToObject(root, "sensors.humidity", context->sensors.humidity);
     cJSON_AddNumberToObject(root, "sensors.pressure", context->sensors.pressure);
-    cJSON_AddNumberToObject(root, "sensors.eca.value", context->sensors.ec[0].value);
-    cJSON_AddNumberToObject(root, "sensors.pha.value", context->sensors.ph[0].value);
-    if (CONTEXT_VALUE_IS_VALID(context->sensors.ec[1].value)) {
-        cJSON_AddNumberToObject(root, "sensors.ecb.value", context->sensors.ec[1].value);
+    cJSON_AddNumberToObject(root, "sensors.eca.value", context->sensors.ec[CONFIG_TANK_A].value);
+    cJSON_AddNumberToObject(root, "sensors.pha.value", context->sensors.ph[CONFIG_TANK_A].value);
+    if (CONTEXT_VALUE_IS_VALID(context->sensors.ec[CONFIG_TANK_B].value)) {
+        cJSON_AddNumberToObject(root, "sensors.ecb.value", context->sensors.ec[CONFIG_TANK_B].value);
     }
-    if (CONTEXT_VALUE_IS_VALID(context->sensors.ph[1].value)) {
-        cJSON_AddNumberToObject(root, "sensors.phb.value", context->sensors.ph[1].value);
+    if (CONTEXT_VALUE_IS_VALID(context->sensors.ph[CONFIG_TANK_B].value)) {
+        cJSON_AddNumberToObject(root, "sensors.phb.value", context->sensors.ph[CONFIG_TANK_B].value);
     }
-    cJSON_AddNumberToObject(root, "sensors.tanka.value", context->sensors.tank[0].value);
+    cJSON_AddNumberToObject(root, "sensors.tanka.value", context->sensors.tank[CONFIG_TANK_A].value);
 
     char *msg = cJSON_Print(root);
     cJSON_Delete(root);
