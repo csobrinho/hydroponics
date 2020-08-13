@@ -23,6 +23,7 @@ idf_component_register(
         "esp-tuya" "button"
         # External components.
         "bme280" "esp32-ads1115" "esp-ccronexpr" "esp-google-iot" "esp32-ds18b20" "esp32-owb" "protos" "u8g2"
+        "esp-timespec"
         # ESP-IDF components.
         "console" "json" "nvs_flash"
 )
