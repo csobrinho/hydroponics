@@ -83,8 +83,12 @@ static esp_err_t io_cron_args_destroy(io_cron_args_t *cron_args) {
 static void io_generic_set(Hydroponics__Output output, Hydroponics__OutputState state) {
     if (IS_EXT_GPIO(output)) {
         uint32_t value = state == HYDROPONICS__OUTPUT_STATE__ON ? true : false;
+        ESP_LOGW(TAG, "EXT_GPIO[%s] = %s", enum_from_value(&hydroponics__output__descriptor, output),
+                 enum_from_value(&hydroponics__output_state__descriptor, state));
         ESP_ERROR_CHECK(ext_gpio_set_level((ext_gpio_num_t) output, value));
     } else if (IS_EXT_TUYA(output)) {
+        ESP_LOGW(TAG, "TUYA_IO[%s] = %s", enum_from_value(&hydroponics__output__descriptor, output),
+                 enum_from_value(&hydroponics__output_state__descriptor, state));
         ESP_ERROR_CHECK(tuya_io_set(output, state));
     } else {
         ESP_LOGE(TAG, "Unknown output: %d", output);
@@ -211,14 +215,14 @@ static void io_task(void *arg) {
                         Hydroponics__OutputState state = op.set.value ? HYDROPONICS__OUTPUT_STATE__ON
                                                                       : HYDROPONICS__OUTPUT_STATE__OFF;
                         ESP_LOGD(TAG, "io_task          name: %s action: %3s output: %s delay: %d ms",
-                                 op.set.delay_ms > 0 ? "IMPULSE" : "SET",
+                                 op.set.delay_ms > 0 ? "Impulse" : "SET",
                                  enum_from_value(&hydroponics__output_state__descriptor, state),
                                  enum_from_value(&hydroponics__output__descriptor, op.set.output), op.set.delay_ms);
                         io_generic_set(op.set.output, state);
                         if (op.set.delay_ms == 0) {
                             break;
                         }
-                        ESP_ERROR_CHECK(io_cron_add("!IMPULSE", NULL, 1, &op.set.output, !op.set.value,
+                        ESP_ERROR_CHECK(io_cron_add("!Impulse", NULL, 1, &op.set.output, !op.set.value,
                                                     op.set.delay_ms));
                     }
                 }
