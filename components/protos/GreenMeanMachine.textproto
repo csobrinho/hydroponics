@@ -83,12 +83,12 @@ task: {
   name: "Heartbeat"
   output: EXT_GPIO_B_0
   cron: {
-    state: OFF,
+    state: ON,
     # On 1s every 10s.
     expression: "0/10 * * * * *"
   }
   cron: {
-    state: ON,
+    state: OFF,
     expression: "1/10 * * * * *"
   }
 }
