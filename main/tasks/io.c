@@ -84,8 +84,11 @@ static esp_err_t io_cron_args_destroy(io_cron_args_t *cron_args) {
 static void io_generic_set(Hydroponics__Output output, Hydroponics__OutputState state) {
     if (IS_EXT_GPIO(output)) {
         uint32_t value = state == HYDROPONICS__OUTPUT_STATE__ON ? true : false;
+        ESP_LOGD(TAG, "ext_gpio_set_level(%s, %d)", enum_from_value(&hydroponics__output__descriptor, output), value);
         ESP_ERROR_CHECK(ext_gpio_set_level((ext_gpio_num_t) output, value));
     } else if (IS_EXT_TUYA(output)) {
+        ESP_LOGD(TAG, "tuya_io_set(%s, %s)", enum_from_value(&hydroponics__output__descriptor, output),
+                 enum_from_value(&hydroponics__output_state__descriptor, state));
         ESP_ERROR_CHECK(tuya_io_set(output, state));
     } else {
         ESP_LOGE(TAG, "Unknown output: %d", output);
