@@ -1,6 +1,7 @@
 # To re-generate the files:
 # $ brew install protobuf-c
-# $ cmake --build build --target protos config_protos command_protos
+# $ ./tools/idf_esp32.sh   protos config_protos command_protos
+# $ ./tools/idf_esp32s2.sh protos config_protos command_protos
 #
 # To upload the GreenMeanMachine.pb:
 # $ gcloud iot devices configs update --config-file=components/protos/GreenMeanMachine.pb --registry=registry --region=us-central1 --device=GreenMeanMachine-test
