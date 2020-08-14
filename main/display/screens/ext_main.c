@@ -235,20 +235,19 @@ static void draw_labels(ucg_t *ucg) {
 }
 
 static void draw_values(context_t *context, ucg_t *ucg) {
+    log_t *entry = calloc(1, sizeof(log_t));
+    ARG_ERROR_CHECK(entry != NULL, "Out of memory");
+
+    entry->timestamp = time(NULL);
+
     context_lock(context);
-    float pha = context->sensors.ph[TANK_A].value;
-    float eca = context->sensors.ec[TANK_A].value;
     float temp = context->sensors.temp.probe;
-    float ecb = context->sensors.ec[TANK_B].value;
-    float phb = context->sensors.ph[TANK_B].value;
+    entry->values[VALUE_PH_A] = context->sensors.ph[TANK_A].value;
+    entry->values[VALUE_EC_A] = context->sensors.ec[TANK_A].value;
+    entry->values[VALUE_PH_B] = context->sensors.ph[TANK_B].value;
+    entry->values[VALUE_EC_B] = context->sensors.ec[TANK_B].value;
     context_unlock(context);
 
-    log_t *entry = calloc(1, sizeof(log_t));
-    entry->timestamp = time(NULL);
-    entry->values[VALUE_PH_A] = pha;
-    entry->values[VALUE_EC_A] = eca;
-    entry->values[VALUE_PH_B] = phb;
-    entry->values[VALUE_EC_B] = ecb;
     TAILQ_INSERT_HEAD(&head, entry, next);
 
     ucg_SetFont(ucg, ucg_font_helvB18_tr);
@@ -256,11 +255,11 @@ static void draw_values(context_t *context, ucg_t *ucg) {
     uint8_t font_height = ucg_GetFontCapitalAHeight(ucg);
     ucg_DrawBox(ucg, 32, 70 - font_height, 3 * COLUMN - 6, font_height);
 
+    int value_idx = current_tank * 2;
     ucg_SetColor(ucg, 0, COLOR_PRIMARY[0].r, COLOR_PRIMARY[0].g, COLOR_PRIMARY[0].b);
-    ucg_DrawString(ucg, 32, 70, 0, render_value("%.2f", pha, "??"));
-
+    ucg_DrawString(ucg, 32, 70, 0, render_value("%.2f", entry->values[value_idx], "??"));
     ucg_SetColor(ucg, 0, COLOR_PRIMARY[1].r, COLOR_PRIMARY[1].g, COLOR_PRIMARY[1].b);
-    ucg_DrawString(ucg, 32 + COLUMN, 70, 0, render_value("%.f", eca, "??"));
+    ucg_DrawString(ucg, 32 + COLUMN, 70, 0, render_value("%.f", entry->values[value_idx + 1], "??"));
 
     ucg_SetColor(ucg, 0, COLOR_PRIMARY[2].r, COLOR_PRIMARY[2].g, COLOR_PRIMARY[2].b);
     ucg_DrawString(ucg, 32 + 2 * COLUMN, 70, 0, render_value("%.1f", temp, "??"));
