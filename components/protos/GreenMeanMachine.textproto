@@ -80,35 +80,20 @@ hardware_id {
   output: EXT_TUYA_OUT_3
 }
 task: {
-  name: "FooBar0"
+  name: "Heartbeat"
   output: EXT_GPIO_B_0
   cron: {
     state: OFF,
-    # Off at xx:00.
-    expression: "0 * * * * *"
+    # On 1s every 10s.
+    expression: "0/10 * * * * *"
   }
   cron: {
     state: ON,
-    # On at xx:58.
-    expression: "55 * * * * *"
-  }
-}
-task: {
-  name: "FooBar1"
-  output: EXT_GPIO_A_0
-  cron: {
-    state: ON,
-    # On every minute at xx:00.
-    expression: "0 * * * * *"
-  }
-  cron: {
-    state: OFF,
-    # Off every minute at xx:05.
-    expression: "5 * * * * *"
+    expression: "1/10 * * * * *"
   }
 }
 startup_state {
-  state: OFF
+  state: ON # Relays are active low so force disable all relays.
   output: EXT_GPIO_A_0
   output: EXT_GPIO_A_1
   output: EXT_GPIO_A_2
@@ -117,6 +102,9 @@ startup_state {
   output: EXT_GPIO_A_5
   output: EXT_GPIO_A_6
   output: EXT_GPIO_A_7
+}
+startup_state {
+  state: OFF
   output: EXT_GPIO_B_0
   output: EXT_GPIO_B_1
   output: EXT_GPIO_B_2
