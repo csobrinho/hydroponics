@@ -2,8 +2,8 @@
 # proto-message: hydroponics.Commands
 command {
   impulse {
-    output: EXT_GPIO_B_0
-    state: ON,
-    delay_ms: 2500,
+    output: EXT_GPIO_A_0
+    state: OFF, # Pumps are active-low!
+    delay_ms: 2000,
   }
 }
