@@ -6,8 +6,34 @@
 #include "error.h"
 #include "ext_gpio.h"
 
-static const char *TAG = "ext_gpio";
+#define EXT_GPIO_INITIAL_PORT_A 0xff  // Set all to ON since the relays are active-low.
+#define EXT_GPIO_INITIAL_PORT_B 0x00  // Set all to OFF.
 
+static const char *TAG = "ext_gpio";
+static const uint8_t EXT_GPIO_REG_POR_VALUES[] = {
+        0x00, // IODIRA:   Set all to Output.
+        0x00, // IODIRB:   Set all to Output.
+        0x00, // IPOLA:    Input polarity = direct. Attached to the relays.
+        0x00, // IPOLB:    Input polarity = direct.
+        0x00, // GPINTENA: Interrupts disabled.
+        0x00, // GPINTENB: Interrupts disabled.
+        0x00, // DEFVALA:  Interrupts disabled, no default value.
+        0x00, // DEFVALB:  Interrupts disabled, no default value.
+        0x00, // INTCONA:  Interrupts disabled, use previous value.
+        0x00, // INTCONB:  Interrupts disabled, use previous value.
+        0x00, // IOCONA:   BANK=0, MIRROR=0, SEQOP=0, SlewRate, NA, INT not open-drain, INT Active-low.
+        0x00, // IOCONB:   BANK=0, MIRROR=0, SEQOP=0, SlewRate, NA, INT not open-drain, INT Active-low.
+        0x00, // GPPUA:    No pull-ups. Only useful for INPUTS.
+        0x00, // GPPUB:    No pull-ups. Only useful for INPUTS.
+        0x00, // INTFA:    INT flags, WR is ignored.
+        0x00, // INTFB:    INT flags, WR is ignored.
+        0x00, // INTCAPA:  INT Captured Value, WR is ignored.
+        0x00, // INTCAPB:  INT Captured Value, WR is ignored.
+        EXT_GPIO_INITIAL_PORT_A, // GPIOA: Port value.
+        EXT_GPIO_INITIAL_PORT_B, // GPIOB: Port value.
+        EXT_GPIO_INITIAL_PORT_A, // OLATA: Output Latch, should match the port value.
+        EXT_GPIO_INITIAL_PORT_B, // OLATB: Output Latch, should match the port value.
+};
 typedef enum {
     EXT_GPIO_REG_BASE = 0x00,
     EXT_GPIO_REG_IODIRA = 0x00,
@@ -37,30 +63,30 @@ typedef enum {
 typedef struct {
     union {
         struct {
-            uint8_t _reserved1:1;
-            uint8_t intpol:1;     /*!< This bit sets the polarity of the INT output pin.
+            uint8_t _reserved1: 1;
+            uint8_t intpol: 1;     /*!< This bit sets the polarity of the INT output pin.
                                    *    1: Active-high.
                                    *    0: Active-low.
                                    */
-            uint8_t odr:1;        /*!< Configures the INT pin as an open-drain output.
+            uint8_t odr: 1;        /*!< Configures the INT pin as an open-drain output.
                                    *    1: Open-drain output (overrides the INTPOL bit.)
                                    *    0: Active driver output (INTPOL bit sets the polarity.)
                                    */
-            uint8_t _reserved2:1;
-            uint8_t disslw:1;     /*!< Slew Rate control bit for SDA output.
+            uint8_t _reserved2: 1;
+            uint8_t disslw: 1;     /*!< Slew Rate control bit for SDA output.
                                    *    1: Slew rate disabled.
                                    *    0: Slew rate enabled.
                                    */
-            uint8_t seqop:1;      /*!< Sequential Operation mode bit.
+            uint8_t seqop: 1;      /*!< Sequential Operation mode bit.
                                    *    1: Sequential operation disabled, address pointer does not increment.
                                    *    0: Sequential operation enabled, address pointer increments.
                                    */
-            uint8_t mirror:1;     /*!< INT Pins Mirror bit.
+            uint8_t mirror: 1;     /*!< INT Pins Mirror bit.
                                    *    1: The INT pins are internally connected.
                                    *    0: The INT pins are not connected. INTA is associated with PORTA and INTB is
                                    *       associated with PORTB.
                                    */
-            uint8_t bank:1;       /*!< Controls how the registers are addressed.
+            uint8_t bank: 1;       /*!< Controls how the registers are addressed.
                                    *    1: The registers associated with each port are separated into different banks.
                                    *    0: The registers are in the same bank (addresses are sequential).
                                    */
@@ -116,13 +142,15 @@ static esp_err_t ext_gpio_read(ext_gpio_reg_t reg_addr, uint8_t *data, size_t da
     i2c_master_read(cmd, data, data_len, I2C_MASTER_LAST_NACK);
     i2c_master_stop(cmd);
 
-    esp_err_t err = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, pdMS_TO_TICKS(I2C_TIMEOUT_MS));
+    ESP_LOGD(TAG, "READ 0x%02x -> 0x%02x", (EXT_GPIO_ADDRESS << 1) | I2C_MASTER_READ, reg_addr);
+    ESP_ERROR_CHECK(i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, pdMS_TO_TICKS(I2C_TIMEOUT_MS)));
+    ESP_LOG_BUFFER_HEX(TAG, data, data_len);
     i2c_cmd_link_delete(cmd);
 
-    return err;
+    return ESP_OK;
 }
 
-static esp_err_t ext_gpio_write(ext_gpio_reg_t reg_addr, uint8_t *data, size_t data_len) {
+static esp_err_t ext_gpio_write(ext_gpio_reg_t reg_addr, const uint8_t *data, size_t data_len) {
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 
     i2c_master_start(cmd);
@@ -130,11 +158,17 @@ static esp_err_t ext_gpio_write(ext_gpio_reg_t reg_addr, uint8_t *data, size_t d
     i2c_master_write_byte(cmd, reg_addr, I2C_WRITE_ACK_CHECK);
     i2c_master_write(cmd, data, data_len, true);
     i2c_master_stop(cmd);
+    ESP_LOGD(TAG, "WRITE 0x%02x -> 0x%02x", (EXT_GPIO_ADDRESS << 1) | I2C_MASTER_WRITE, reg_addr);
+    ESP_LOG_BUFFER_HEX(TAG, data, data_len);
 
-    esp_err_t err = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, pdMS_TO_TICKS(I2C_TIMEOUT_MS));
+    ESP_ERROR_CHECK(i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, pdMS_TO_TICKS(I2C_TIMEOUT_MS)));
     i2c_cmd_link_delete(cmd);
 
-    return err;
+    return ESP_OK;
+}
+
+static esp_err_t ext_gpio_write_reg(ext_gpio_reg_t reg_addr, uint8_t data) {
+    return ext_gpio_write(reg_addr, &data, 1);
 }
 
 static esp_err_t ext_gpio_set_bits(ext_gpio_reg_t reg_addr, uint8_t *data, uint8_t mask) {
@@ -148,9 +182,16 @@ static esp_err_t ext_gpio_clear_bits(ext_gpio_reg_t reg_addr, uint8_t *data, uin
 }
 
 esp_err_t ext_gpio_init(void) {
+    // Reset the bank access to BANK=0.
+    ESP_ERROR_CHECK(ext_gpio_write_reg(EXT_GPIO_REG_IOCONA, 0x00));
+    ESP_ERROR_CHECK(ext_gpio_write_reg(EXT_GPIO_REG_IOCONB, 0x00));
+
+    // Force set the port values first, then all the registers since the IN/OUT register will instantly turn the port!
+    ESP_ERROR_CHECK(ext_gpio_write(EXT_GPIO_REG_BASE, &EXT_GPIO_REG_POR_VALUES[EXT_GPIO_REG_GPIOA], 2));
+
+    // Reset all regs to known values, slightly different from POR values!
+    ESP_ERROR_CHECK(ext_gpio_write(EXT_GPIO_REG_BASE, EXT_GPIO_REG_POR_VALUES, sizeof(EXT_GPIO_REG_POR_VALUES)));
     ESP_ERROR_CHECK(ext_gpio_read(EXT_GPIO_REG_BASE, (uint8_t *) &status.value, sizeof(status)));
-    ESP_ERROR_CHECK(ext_gpio_set_bits(EXT_GPIO_REG_IODIRA, &status.iodir_a, 0xff));
-    ESP_ERROR_CHECK(ext_gpio_set_bits(EXT_GPIO_REG_IODIRB, &status.iodir_a, 0xff));
     return ESP_OK;
 }
 
@@ -215,6 +256,7 @@ esp_err_t ext_gpio_set_level(ext_gpio_num_t gpio_num, uint32_t level) {
     ext_gpio_reg_t reg = A_OR_B(gpio_num, EXT_GPIO_REG_GPIOA, EXT_GPIO_REG_GPIOB);
     uint8_t *r = A_OR_B(gpio_num, &status.gpio_a, &status.gpio_b);
     uint8_t mask = PIN_MASK(gpio_num);
+    ESP_LOGD(TAG, "SET num: %d val: %d  now: 0x%02x | 0x%02x", gpio_num, level, *r, mask);
     return level ? ext_gpio_set_bits(reg, r, mask) : ext_gpio_clear_bits(reg, r, mask);
 }
 
