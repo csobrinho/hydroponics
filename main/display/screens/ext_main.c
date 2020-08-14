@@ -63,9 +63,9 @@ static const uint8_t COLUMN = 72;
 static char buf[128] = {0};
 static log_head_t head;
 
-static tank_t current = TANK_A;
+static tank_t current_tank = TANK_A;
 static bool refresh = true;
-static button_handle_t button;
+static button_handle_t button_handle;
 static lerp_t mxb[VALUE_MAX] = {0};
 
 static const char *TAG = "ext_main";
@@ -108,10 +108,11 @@ static void config_callback(const Hydroponics__Config *config) {
     hydroponics__config__free_unpacked((Hydroponics__Config *) config, NULL);
 }
 
-static void button_callback(void *data) {
+static void IRAM_ATTR button_callback(void *data) {
     ARG_UNUSED(data);
-    current = current == TANK_A ? TANK_B : TANK_A;
-    ESP_LOGI(TAG, "Button pressed. Now showing Tank %c", current == TANK_A ? 'A' : 'B');
+    current_tank = current_tank == TANK_A ? TANK_B : TANK_A;
+    refresh = true;
+    ESP_LOGI(TAG, "Button pressed. Now showing Tank %c", current_tank == TANK_A ? 'A' : 'B');
 }
 
 static const char *render_value(const char *fmt, float value, const char *na) {
@@ -137,14 +138,14 @@ static void draw_graph_frame(ucg_t *ucg) {
     ucg_DrawVLine(ucg, 280, 89, 122);
     ucg_DrawHLine(ucg, 30, 210, 250);
 
-    lerp_t current_mxb = mxb[current * 2];
+    lerp_t current_mxb = mxb[current_tank * 2];
     ucg_SetFont(ucg, ucg_font_helvR08_tr);
     ucg_SetColor(ucg, 0, COLOR_PRIMARY[0].r, COLOR_PRIMARY[0].g, COLOR_PRIMARY[0].b);
     ucg_DrawString(ucg, 9, 100, 0, current_mxb.str.max);
     ucg_DrawString(ucg, 9, 150, 0, current_mxb.str.mid);
     ucg_DrawString(ucg, 9, 200, 0, current_mxb.str.min);
 
-    current_mxb = mxb[current * 2 + 1];
+    current_mxb = mxb[current_tank * 2 + 1];
     ucg_SetColor(ucg, 0, COLOR_PRIMARY[1].r, COLOR_PRIMARY[1].g, COLOR_PRIMARY[1].b);
     ucg_DrawString(ucg, 287, 100, 0, current_mxb.str.max);
     ucg_DrawString(ucg, 287, 150, 0, current_mxb.str.mid);
@@ -157,9 +158,10 @@ static void draw_graph(ucg_t *ucg) {
     ucg_SetColor(ucg, 0, COLOR_INACTIVE.r, COLOR_INACTIVE.g, COLOR_INACTIVE.b);
     ucg_DrawVLine(ucg, 280, 89, 122);
 
-    int start = current * 2;
+    int start = current_tank * 2;
     for (int i = start; i < start + 2; ++i) {
-        ucg_SetColor(ucg, 0, COLOR_PRIMARY[i].r, COLOR_PRIMARY[i].g, COLOR_PRIMARY[i].b);
+        int color = i - start;
+        ucg_SetColor(ucg, 0, COLOR_PRIMARY[color].r, COLOR_PRIMARY[color].g, COLOR_PRIMARY[color].b);
         log_t *e = NULL;
         log_t *tmp = NULL;
         uint16_t x = 280;
@@ -187,12 +189,12 @@ static void draw_graph(ucg_t *ucg) {
 
 static void draw_indicators(ucg_t *ucg) {
     ucg_SetFont(ucg, ucg_font_helvB14_tr);
-    lcd_rgb_t color_a = current == TANK_A ? COLOR_ACTIVE : COLOR_INACTIVE;
+    lcd_rgb_t color_a = current_tank == TANK_A ? COLOR_ACTIVE : COLOR_INACTIVE;
     ucg_SetColor(ucg, 0, color_a.r, color_a.g, color_a.b);
     ucg_DrawFrame(ucg, 247, 50, 24, 24);
     ucg_DrawString(ucg, 252, 69, 0, "A");
 
-    lcd_rgb_t color_b = current == TANK_B ? COLOR_ACTIVE : COLOR_INACTIVE;
+    lcd_rgb_t color_b = current_tank == TANK_B ? COLOR_ACTIVE : COLOR_INACTIVE;
     ucg_SetColor(ucg, 0, color_b.r, color_b.g, color_b.b);
     ucg_DrawFrame(ucg, 280, 50, 24, 24);
     ucg_DrawString(ucg, 285, 69, 0, "B");
@@ -271,9 +273,9 @@ esp_err_t ext_main_init(context_t *context, lcd_dev_t *dev, ucg_t *ucg) {
 
     TAILQ_INIT(&head);
 
-    button = iot_button_create(LCD_BUTTON_GPIO, BUTTON_ACTIVE_LOW);
-    CHECK_NO_MEM(button);
-    ESP_ERROR_CHECK(iot_button_set_evt_cb(button, BUTTON_CB_TAP, button_callback, NULL));
+    button_handle = iot_button_create(LCD_BUTTON_GPIO, BUTTON_ACTIVE_LOW);
+    CHECK_NO_MEM(button_handle);
+    ESP_ERROR_CHECK(iot_button_set_evt_cb(button_handle, BUTTON_CB_TAP, button_callback, NULL));
 
     const Hydroponics__Config *config;
     ESP_ERROR_CHECK(context_get_config(context, &config));

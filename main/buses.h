@@ -9,7 +9,7 @@
 #define I2C_MASTER_NUM I2C_NUM_1             /*!< I2C port number for master dev. */
 #define I2C_MASTER_TX_BUF_DISABLE 0          /*!< I2C master do not need buffer. */
 #define I2C_MASTER_RX_BUF_DISABLE 0          /*!< I2C master do not need buffer. */
-#define I2C_MASTER_FREQ_HZ 200000            /*!< I2C master clock frequency. */
+#define I2C_MASTER_FREQ_HZ 350000            /*!< I2C master clock frequency. */
 #define I2C_TIMEOUT_MS 500                   /*!< I2C max timeout in ms. */
 #define I2C_NO_DEVICE 0xff                   /*!< I2C no device address. */
 #define I2C_MAX_TRIES 3                      /*!< I2C number of max tries in case of an error. */
@@ -31,7 +31,7 @@ typedef enum {
 #define ROTARY_CLK_GPIO GPIO_NUM_36
 #define ROTARY_SW_GPIO  GPIO_NUM_NC
 
-#define LCD_BUTTON_GPIO GPIO_NUM_35
+#define LCD_BUTTON_GPIO GPIO_NUM_36
 
 #ifdef CONFIG_IDF_TARGET_ESP32
 #define LCD_DATA  { GPIO_NUM_23, GPIO_NUM_18, GPIO_NUM_14, GPIO_NUM_27, GPIO_NUM_26, GPIO_NUM_21, GPIO_NUM_22, GPIO_NUM_19 }
