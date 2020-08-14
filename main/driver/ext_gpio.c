@@ -144,7 +144,7 @@ static esp_err_t ext_gpio_read(ext_gpio_reg_t reg_addr, uint8_t *data, size_t da
 
     ESP_LOGD(TAG, "READ 0x%02x -> 0x%02x", (EXT_GPIO_ADDRESS << 1) | I2C_MASTER_READ, reg_addr);
     ESP_ERROR_CHECK(i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, pdMS_TO_TICKS(I2C_TIMEOUT_MS)));
-    ESP_LOG_BUFFER_HEX(TAG, data, data_len);
+    ESP_LOG_BUFFER_HEX_LEVEL(TAG, data, data_len, ESP_LOG_DEBUG);
     i2c_cmd_link_delete(cmd);
 
     return ESP_OK;
@@ -159,7 +159,7 @@ static esp_err_t ext_gpio_write(ext_gpio_reg_t reg_addr, const uint8_t *data, si
     i2c_master_write(cmd, data, data_len, true);
     i2c_master_stop(cmd);
     ESP_LOGD(TAG, "WRITE 0x%02x -> 0x%02x", (EXT_GPIO_ADDRESS << 1) | I2C_MASTER_WRITE, reg_addr);
-    ESP_LOG_BUFFER_HEX(TAG, data, data_len);
+    ESP_LOG_BUFFER_HEX_LEVEL(TAG, data, data_len, ESP_LOG_DEBUG);
 
     ESP_ERROR_CHECK(i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, pdMS_TO_TICKS(I2C_TIMEOUT_MS)));
     i2c_cmd_link_delete(cmd);
