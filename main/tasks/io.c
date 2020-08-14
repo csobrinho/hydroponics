@@ -4,7 +4,6 @@
 #include "freertos/FreeRTOS.h"
 
 #include "esp_err.h"
-#include "driver/gpio.h"
 
 #include "buses.h"
 #include "config.h"
@@ -84,11 +83,8 @@ static esp_err_t io_cron_args_destroy(io_cron_args_t *cron_args) {
 static void io_generic_set(Hydroponics__Output output, Hydroponics__OutputState state) {
     if (IS_EXT_GPIO(output)) {
         uint32_t value = state == HYDROPONICS__OUTPUT_STATE__ON ? true : false;
-        ESP_LOGD(TAG, "ext_gpio_set_level(%s, %d)", enum_from_value(&hydroponics__output__descriptor, output), value);
         ESP_ERROR_CHECK(ext_gpio_set_level((ext_gpio_num_t) output, value));
     } else if (IS_EXT_TUYA(output)) {
-        ESP_LOGD(TAG, "tuya_io_set(%s, %s)", enum_from_value(&hydroponics__output__descriptor, output),
-                 enum_from_value(&hydroponics__output_state__descriptor, state));
         ESP_ERROR_CHECK(tuya_io_set(output, state));
     } else {
         ESP_LOGE(TAG, "Unknown output: %d", output);
@@ -180,15 +176,6 @@ static void io_apply_config(const Hydroponics__Config *config) {
             for (int j = 0; j < task->n_cron; ++j) {
                 const Hydroponics__Task__Cron *cron = task->cron[j];
                 for (int k = 0; k < cron->n_expression; ++k) {
-                    for (int o = 0; o < task->n_output; ++o) {
-                        const Hydroponics__Output output = task->output[o];
-                        gpio_config_t cfg = {
-                                .pin_bit_mask = BIT64(output),
-                                .mode = GPIO_MODE_OUTPUT,
-                                .pull_up_en = GPIO_PULLUP_ENABLE,
-                        };
-                        ESP_ERROR_CHECK(ext_gpio_config(&cfg));
-                    }
                     ESP_ERROR_CHECK(io_cron_add(task->name, cron->expression[k], task->n_output, task->output,
                                                 cron->state, 0));
                 }
@@ -223,11 +210,15 @@ static void io_task(void *arg) {
                     case OP_SET: {
                         Hydroponics__OutputState state = op.set.value ? HYDROPONICS__OUTPUT_STATE__ON
                                                                       : HYDROPONICS__OUTPUT_STATE__OFF;
+                        ESP_LOGD(TAG, "io_task          name: %s action: %3s output: %s delay: %d ms",
+                                 op.set.delay_ms > 0 ? "IMPULSE" : "SET",
+                                 enum_from_value(&hydroponics__output_state__descriptor, state),
+                                 enum_from_value(&hydroponics__output__descriptor, op.set.output), op.set.delay_ms);
                         io_generic_set(op.set.output, state);
                         if (op.set.delay_ms == 0) {
                             break;
                         }
-                        ESP_ERROR_CHECK(io_cron_add("Impulse", NULL, 1, &op.set.output, !op.set.value,
+                        ESP_ERROR_CHECK(io_cron_add("!IMPULSE", NULL, 1, &op.set.output, !op.set.value,
                                                     op.set.delay_ms));
                     }
                 }
