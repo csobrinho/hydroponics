@@ -44,16 +44,28 @@ typedef enum _Hydroponics__Firmware__Arch {
  */
 typedef enum _Hydroponics__Output {
   /*
+   * PH Down.
+   */
+  /*
    * EXT_GPIO_START
    */
   HYDROPONICS__OUTPUT__EXT_GPIO_A_0 = 0,
+  /*
+   * PH Up.
+   */
   HYDROPONICS__OUTPUT__EXT_GPIO_A_1 = 1,
+  /*
+   * Nutrients.
+   */
   HYDROPONICS__OUTPUT__EXT_GPIO_A_2 = 2,
   HYDROPONICS__OUTPUT__EXT_GPIO_A_3 = 3,
   HYDROPONICS__OUTPUT__EXT_GPIO_A_4 = 4,
   HYDROPONICS__OUTPUT__EXT_GPIO_A_5 = 5,
   HYDROPONICS__OUTPUT__EXT_GPIO_A_6 = 6,
   HYDROPONICS__OUTPUT__EXT_GPIO_A_7 = 7,
+  /*
+   * LED.
+   */
   HYDROPONICS__OUTPUT__EXT_GPIO_B_0 = 8,
   HYDROPONICS__OUTPUT__EXT_GPIO_B_1 = 9,
   HYDROPONICS__OUTPUT__EXT_GPIO_B_2 = 10,
