@@ -39,6 +39,8 @@ static ezo_sensor_t ecb = {
 static void ezo_ec_task(void *arg) {
     context_t *context = (context_t *) arg;
     ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
+    // Give it a little time to initialize.
+    vTaskDelay(pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_EC_MS));
     ESP_ERROR_CHECK(ezo_init(&eca));
     ESP_ERROR_CHECK(ezo_init(&ecb));
 
