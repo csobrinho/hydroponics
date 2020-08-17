@@ -91,7 +91,7 @@ static void setup_lerp(value_t type, Hydroponics__Controller__Entry *entry, floa
         min = entry->min_graph;
         max = entry->max_graph;
     }
-    lerp(&mxb[type], min, max, 100.f, 196.f, IS_PH(type) ? "%.2f" : "%.f");
+    lerp(&mxb[type], min, max, 196.f, 100.f, IS_PH(type) ? "%.2f" : "%.f");
 }
 
 static void config_callback(const Hydroponics__Config *config) {
@@ -219,11 +219,11 @@ static void draw_statusbar(ucg_t *ucg) {
     uint8_t font_height = ucg_GetFontCapitalAHeight(ucg);
 
     ucg_SetColor(ucg, 0, COLOR_BACKGROUND.r, COLOR_BACKGROUND.g, COLOR_BACKGROUND.b);
-    ucg_DrawBox(ucg, 250, 18 - font_height, ucg_GetWidth(ucg) - 253, font_height);
+    ucg_DrawBox(ucg, 248, 18 - font_height, ucg_GetWidth(ucg) - 252, font_height);
 
     ucg_SetColor(ucg, 0, COLOR_TEXT.r, COLOR_TEXT.g, COLOR_TEXT.b);
-    ucg_DrawString(ucg, 274, 18, 0, render_time());
-    draw_wifi(ucg, 253, 6);
+    ucg_DrawString(ucg, 272, 18, 0, render_time());
+    draw_wifi(ucg, 251, 6);
 }
 
 static void draw_labels(ucg_t *ucg) {
