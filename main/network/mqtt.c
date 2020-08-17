@@ -23,7 +23,6 @@
 #define SUBSCRIBE_TOPIC_CONFIG "/devices/%s/config"
 #define PUBLISH_TOPIC_EVENT "/devices/%s/events"
 #define PUBLISH_TOPIC_STATE "/devices/%s/state"
-#define TASK_REPEAT_SEC 30
 #define TASK_REPEAT_FOREVER 1
 
 static const char *TAG = "mqtt";
@@ -166,6 +165,19 @@ static void mqtt_subscribe_callback(iotc_context_handle_t in_context_handle, iot
     }
 }
 
+static iotc_time_t mqtt_refresh_time(void) {
+    iotc_time_t refresh = 0;
+    if (context != NULL) {
+        const Hydroponics__Config *config = NULL;
+        ESP_ERROR_CHECK(context_get_config(context, &config));
+        if (config != NULL && config->sampling != NULL) {
+            refresh = config->sampling->mqtt_ms / 1000;
+        }
+        hydroponics__config__free_unpacked((Hydroponics__Config *) config, NULL);
+    }
+    return refresh < 5 ? 30 : refresh;
+}
+
 static void mqtt_connection_state_changed(iotc_context_handle_t in_context_handle, void *data, iotc_state_t state) {
     iotc_connection_data_t *conn_data = (iotc_connection_data_t *) data;
 
@@ -186,8 +198,9 @@ static void mqtt_connection_state_changed(iotc_context_handle_t in_context_handl
             ESP_LOGI(TAG, "Subscribed to topic, error: %d: '%s'", err, subscribe_topic_config);
 
             /* Create a timed task to publish every 'x' seconds. */
+            iotc_time_t refresh_time = mqtt_refresh_time();
             delayed_publish_task = iotc_schedule_timed_task(in_context_handle, mqtt_publish_telemetry_event,
-                                                            TASK_REPEAT_SEC, TASK_REPEAT_FOREVER, NULL);
+                                                            refresh_time, TASK_REPEAT_FOREVER, NULL);
             /* Force publish the first telemetry or else it will only send the telemetry in TASK_REPEAT_SEC. */
             mqtt_publish_telemetry_event(in_context_handle, delayed_publish_task, NULL);
             mqtt_dispatch_connected(true);
@@ -243,8 +256,8 @@ static void mqtt_task(void *args) {
     while (true) {
         /* Wait until network is connected and time is updated from the network. */
         ESP_LOGI(TAG, "Waiting for network and time to be available.");
-        xEventGroupWaitBits(context->event_group, CONTEXT_EVENT_NETWORK | CONTEXT_EVENT_TIME, pdFALSE, pdTRUE,
-                            portMAX_DELAY);
+        xEventGroupWaitBits(context->event_group, CONTEXT_EVENT_CONFIG | CONTEXT_EVENT_NETWORK | CONTEXT_EVENT_TIME,
+                            pdFALSE, pdTRUE, portMAX_DELAY);
 
         /* Let's wait until the network stabilizes a bit. */
         vTaskDelay(pdMS_TO_TICKS(1000));
