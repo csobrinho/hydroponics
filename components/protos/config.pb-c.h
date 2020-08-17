@@ -61,7 +61,13 @@ typedef enum _Hydroponics__Output {
   HYDROPONICS__OUTPUT__EXT_GPIO_A_3 = 3,
   HYDROPONICS__OUTPUT__EXT_GPIO_A_4 = 4,
   HYDROPONICS__OUTPUT__EXT_GPIO_A_5 = 5,
+  /*
+   * Water Intake.
+   */
   HYDROPONICS__OUTPUT__EXT_GPIO_A_6 = 6,
+  /*
+   * Mixer.
+   */
   HYDROPONICS__OUTPUT__EXT_GPIO_A_7 = 7,
   /*
    * LED.
@@ -102,15 +108,16 @@ typedef enum _Hydroponics__OutputState {
 struct  _Hydroponics__Sampling
 {
   ProtobufCMessage base;
-  int32_t humidity;
-  int32_t temperature;
-  int32_t ec_probe;
-  int32_t ec_probe_temp;
-  int32_t ph_probe;
+  int32_t humidity_ms;
+  int32_t temperature_ms;
+  int32_t ec_probe_ms;
+  int32_t ec_probe_temp_ms;
+  int32_t ph_probe_ms;
+  int32_t mqtt_ms;
 };
 #define HYDROPONICS__SAMPLING__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&hydroponics__sampling__descriptor) \
-    , 0, 0, 0, 0, 0 }
+    , 0, 0, 0, 0, 0, 0 }
 
 
 struct  _Hydroponics__Controller__Entry__Pid

@@ -1,11 +1,12 @@
 # proto-file: config.proto
 # proto-message: hydroponics.Config
 sampling {
-  humidity: 1000
-  temperature: 1000
-  ec_probe: 1500
-  ec_probe_temp: 1000
-  ph_probe: 1500
+  humidity_ms: 1000
+  temperature_ms: 1000
+  ec_probe_ms: 1500
+  ec_probe_temp_ms: 1000
+  ph_probe_ms: 1500
+  mqtt_ms: 20000
 }
 controller: {
   eca: {

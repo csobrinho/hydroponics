@@ -340,63 +340,75 @@ void   hydroponics__config__free_unpacked
   assert(message->base.descriptor == &hydroponics__config__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-static const ProtobufCFieldDescriptor hydroponics__sampling__field_descriptors[5] =
+static const ProtobufCFieldDescriptor hydroponics__sampling__field_descriptors[6] =
 {
   {
-    "humidity",
+    "humidity_ms",
     1,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_INT32,
     0,   /* quantifier_offset */
-    offsetof(Hydroponics__Sampling, humidity),
+    offsetof(Hydroponics__Sampling, humidity_ms),
     NULL,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "temperature",
+    "temperature_ms",
     2,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_INT32,
     0,   /* quantifier_offset */
-    offsetof(Hydroponics__Sampling, temperature),
+    offsetof(Hydroponics__Sampling, temperature_ms),
     NULL,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "ec_probe",
+    "ec_probe_ms",
     3,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_INT32,
     0,   /* quantifier_offset */
-    offsetof(Hydroponics__Sampling, ec_probe),
+    offsetof(Hydroponics__Sampling, ec_probe_ms),
     NULL,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "ec_probe_temp",
+    "ec_probe_temp_ms",
     4,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_INT32,
     0,   /* quantifier_offset */
-    offsetof(Hydroponics__Sampling, ec_probe_temp),
+    offsetof(Hydroponics__Sampling, ec_probe_temp_ms),
     NULL,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "ph_probe",
+    "ph_probe_ms",
     5,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_INT32,
     0,   /* quantifier_offset */
-    offsetof(Hydroponics__Sampling, ph_probe),
+    offsetof(Hydroponics__Sampling, ph_probe_ms),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "mqtt_ms",
+    6,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_INT32,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__Sampling, mqtt_ms),
     NULL,
     NULL,
     0,             /* flags */
@@ -404,16 +416,17 @@ static const ProtobufCFieldDescriptor hydroponics__sampling__field_descriptors[5
   },
 };
 static const unsigned hydroponics__sampling__field_indices_by_name[] = {
-  2,   /* field[2] = ec_probe */
-  3,   /* field[3] = ec_probe_temp */
-  0,   /* field[0] = humidity */
-  4,   /* field[4] = ph_probe */
-  1,   /* field[1] = temperature */
+  2,   /* field[2] = ec_probe_ms */
+  3,   /* field[3] = ec_probe_temp_ms */
+  0,   /* field[0] = humidity_ms */
+  5,   /* field[5] = mqtt_ms */
+  4,   /* field[4] = ph_probe_ms */
+  1,   /* field[1] = temperature_ms */
 };
 static const ProtobufCIntRange hydroponics__sampling__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 5 }
+  { 0, 6 }
 };
 const ProtobufCMessageDescriptor hydroponics__sampling__descriptor =
 {
@@ -423,7 +436,7 @@ const ProtobufCMessageDescriptor hydroponics__sampling__descriptor =
   "Hydroponics__Sampling",
   "hydroponics",
   sizeof(Hydroponics__Sampling),
-  5,
+  6,
   hydroponics__sampling__field_descriptors,
   hydroponics__sampling__field_indices_by_name,
   1,  hydroponics__sampling__number_ranges,
