@@ -8,11 +8,13 @@
 
 #define EXT_GPIO_INITIAL_PORT_A 0xff  // Set all to ON since the relays are active-low.
 #define EXT_GPIO_INITIAL_PORT_B 0x00  // Set all to OFF.
+#define EXT_GPIO_INITIAL_IODIRA 0x00  // Set all as OUTPUTS.
+#define EXT_GPIO_INITIAL_IODIRB 0x00  // Set all as OUTPUTS.
 
 static const char *TAG = "ext_gpio";
 static const uint8_t EXT_GPIO_REG_POR_VALUES[] = {
-        0x00, // IODIRA:   Set all to Output.
-        0x00, // IODIRB:   Set all to Output.
+        EXT_GPIO_INITIAL_IODIRA, // IODIRA:   Set all to Output.
+        EXT_GPIO_INITIAL_IODIRB, // IODIRB:   Set all to Output.
         0x00, // IPOLA:    Input polarity = direct. Attached to the relays.
         0x00, // IPOLB:    Input polarity = direct.
         0x00, // GPINTENA: Interrupts disabled.
@@ -181,6 +183,21 @@ static esp_err_t ext_gpio_clear_bits(ext_gpio_reg_t reg_addr, uint8_t *data, uin
     return ext_gpio_write(reg_addr, data, 1);
 }
 
+// It seems the device sometimes resets itself. Try to detect that and re-init it.
+static esp_err_t ext_gpio_check_reset(void) {
+    uint8_t iodirs[2] = {0};
+    ESP_ERROR_CHECK(ext_gpio_read(EXT_GPIO_REG_IODIRA, iodirs, sizeof(iodirs)));
+    if (iodirs[0] == EXT_GPIO_INITIAL_IODIRA && iodirs[1] == EXT_GPIO_INITIAL_IODIRB) {
+        return ESP_OK;
+    }
+    ESP_LOGW(TAG, "Reset was detected!!");
+    // Preserve the same outputs.
+    status.olat_a = status.gpio_a;
+    status.olat_b = status.gpio_b;
+    ESP_ERROR_CHECK(ext_gpio_write(EXT_GPIO_REG_BASE, status.value, sizeof(status.value)));
+    return ESP_OK;
+}
+
 esp_err_t ext_gpio_init(void) {
     // Reset the bank access to BANK=0.
     ESP_ERROR_CHECK(ext_gpio_write_reg(EXT_GPIO_REG_IOCONA, 0x00));
@@ -257,7 +274,8 @@ esp_err_t ext_gpio_set_level(ext_gpio_num_t gpio_num, uint32_t level) {
     uint8_t *r = A_OR_B(gpio_num, &status.gpio_a, &status.gpio_b);
     uint8_t mask = PIN_MASK(gpio_num);
     ESP_LOGD(TAG, "SET num: %d val: %d  now: 0x%02x | 0x%02x", gpio_num, level, *r, mask);
-    return level ? ext_gpio_set_bits(reg, r, mask) : ext_gpio_clear_bits(reg, r, mask);
+    ESP_ERROR_CHECK(level ? ext_gpio_set_bits(reg, r, mask) : ext_gpio_clear_bits(reg, r, mask));
+    return ext_gpio_check_reset();
 }
 
 esp_err_t ext_gpio_set(uint16_t value) {
