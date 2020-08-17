@@ -242,7 +242,7 @@ esp_err_t io_init(context_t *context) {
     return ESP_OK;
 }
 
-esp_err_t io_set_level(const Hydroponics__Output output, bool value, uint16_t delay_ms) {
+esp_err_t io_set_level(Hydroponics__Output output, bool value, uint16_t delay_ms) {
     const op_t cmd = {.type = OP_SET, .set = {.output = output, .value = value, .delay_ms = delay_ms}};
     xQueueSend(queue, &cmd, portMAX_DELAY);
     return ESP_OK;
