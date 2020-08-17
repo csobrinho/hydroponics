@@ -120,11 +120,11 @@ esp_err_t config_dump(const Hydroponics__Config *config) {
     fprintf(stream, "\n");
     fprintf(stream, "Sampling:\n");
     if (config->sampling != NULL) {
-        fprintf(stream, "  humidity:      %d ms\n", config->sampling->humidity);
-        fprintf(stream, "  temperature:   %d ms\n", config->sampling->temperature);
-        fprintf(stream, "  ec_probe:      %d ms\n", config->sampling->ec_probe);
-        fprintf(stream, "  ec_probe_temp: %d ms\n", config->sampling->ec_probe_temp);
-        fprintf(stream, "  ph_probe:      %d ms\n", config->sampling->ph_probe);
+        fprintf(stream, "  humidity:      %d ms\n", config->sampling->humidity_ms);
+        fprintf(stream, "  temperature:   %d ms\n", config->sampling->temperature_ms);
+        fprintf(stream, "  ec_probe:      %d ms\n", config->sampling->ec_probe_ms);
+        fprintf(stream, "  ec_probe_temp: %d ms\n", config->sampling->ec_probe_temp_ms);
+        fprintf(stream, "  ph_probe:      %d ms\n", config->sampling->ph_probe_ms);
     } else {
         fprintf(stream, "  none\n");
     }
