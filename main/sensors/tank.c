@@ -13,7 +13,7 @@
 #include "tank.h"
 #include "utils.h"
 
-#define NO_OF_SAMPLES 32
+#define NO_OF_SAMPLES 16
 #define COEFFICIENTS_MAX 4
 
 static const char *TAG = "tank";
@@ -44,7 +44,7 @@ static struct {
                         .device_mux = ADS1115_MUX_0_1,
                         // From https://docs.google.com/spreadsheets/d/1LZo2zjm7wT2C7UeA40zMUXK-daBry_TDRjhAEd-a5a8/view
                         //                      x^3                  x^2               x               b
-                        .regression = {0.0000000006782326059, -0.000002020506081, 0.002691129616, -0.4459319977},
+                        .regression = {0.000000000654032205, -0.000005018729145, 0.02677225375, 44.07862253},
                 },
                 {0},
         },
@@ -68,8 +68,8 @@ static void tank_task(void *arg) {
             // Average the value and run linear regression.
             int32_t raw = scratch / NO_OF_SAMPLES;
             double average = lin_regression(config.tanks[idx].regression, COEFFICIENTS_MAX, raw);
-            ESP_ERROR_CHECK(context_set_tank(context, idx, (float) average));
-            ESP_LOGI(TAG, "%s: %d / %.1f %%", config.tanks[idx].name, raw, average * 100);
+            ESP_ERROR_CHECK(context_set_tank(context, idx, (float) average / 100.f));
+            ESP_LOGI(TAG, "%s: %d / %.1f %%", config.tanks[idx].name, raw, average);
         }
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_TANK_MS));
     }
