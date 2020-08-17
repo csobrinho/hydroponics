@@ -9,7 +9,7 @@
 #define I2C_MASTER_NUM I2C_NUM_1             /*!< I2C port number for master dev. */
 #define I2C_MASTER_TX_BUF_DISABLE 0          /*!< I2C master do not need buffer. */
 #define I2C_MASTER_RX_BUF_DISABLE 0          /*!< I2C master do not need buffer. */
-#define I2C_MASTER_FREQ_HZ 350000            /*!< I2C master clock frequency. */
+#define I2C_MASTER_FREQ_HZ 100000            /*!< I2C master clock frequency. */
 #define I2C_TIMEOUT_MS 500                   /*!< I2C max timeout in ms. */
 #define I2C_NO_DEVICE 0xff                   /*!< I2C no device address. */
 #define I2C_MAX_TRIES 3                      /*!< I2C number of max tries in case of an error. */
