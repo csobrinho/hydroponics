@@ -3,10 +3,46 @@
 #include "driver/i2c.h"
 
 #include "buses.h"
+#include "utils.h"
 
 static const char *TAG = "buses";
 
+static void buses_i2c_unstuck(void) {
+    gpio_config_t config = {
+            .pin_bit_mask = BIT64(I2C_MASTER_SDA) | BIT64(I2C_MASTER_SCL),
+            .mode = GPIO_MODE_OUTPUT_OD,
+            .pull_up_en = GPIO_PULLUP_DISABLE,
+            .pull_down_en = GPIO_PULLDOWN_DISABLE,
+            .intr_type = GPIO_INTR_DISABLE,
+    };
+    ESP_ERROR_CHECK(gpio_config(&config));
+    ESP_ERROR_CHECK(gpio_set_level(I2C_MASTER_SDA, true));
+    ESP_ERROR_CHECK(gpio_set_level(I2C_MASTER_SCL, true));
+    for (int i = 0; i < 10; i++) { // 9nth cycle acts as NACK
+        ESP_ERROR_CHECK(gpio_set_level(I2C_MASTER_SCL, true));
+        safe_delay_us(5);
+        ESP_ERROR_CHECK(gpio_set_level(I2C_MASTER_SCL, false));
+        safe_delay_us(5);
+    }
+
+    // A STOP signal (SDA from low to high while CLK is high)
+    ESP_ERROR_CHECK(gpio_set_level(I2C_MASTER_SDA, false));
+    safe_delay_us(5);
+    ESP_ERROR_CHECK(gpio_set_level(I2C_MASTER_SCL, true));
+    safe_delay_us(2);
+    ESP_ERROR_CHECK(gpio_set_level(I2C_MASTER_SDA, true));
+    safe_delay_us(2);
+
+    // Bus status is now FREE. Return to power up mode.
+    config.mode = GPIO_MODE_INPUT;
+    config.pull_up_en = GPIO_PULLUP_ENABLE;
+    ESP_ERROR_CHECK(gpio_config(&config));
+    safe_delay_ms(250);
+}
+
 void buses_init(void) {
+    buses_i2c_unstuck();
+
     i2c_config_t conf;
     conf.mode = I2C_MODE_MASTER;
     conf.sda_io_num = I2C_MASTER_SDA;
