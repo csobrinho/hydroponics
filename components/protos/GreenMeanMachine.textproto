@@ -6,7 +6,7 @@ sampling {
   ec_probe_ms: 1500
   ec_probe_temp_ms: 1000
   ph_probe_ms: 1500
-  mqtt_ms: 20000
+  mqtt_ms: 15000
 }
 controller: {
   eca: {
@@ -91,6 +91,29 @@ task: {
   cron: {
     state: OFF,
     expression: "1/10 * * * * *"
+  }
+}
+task: {
+  name: "Pump Timers"
+  output: EXT_TUYA_OUT_2
+  output: EXT_TUYA_OUT_3
+  cron: {
+    state: ON,
+    expression: "0 0 * * * *"  # On for 5m at 00:00.
+    expression: "5 0 * * * *"  # On for 5m at 00:00.
+    expression: "10 0 * * * *"  # On for 5m at 00:00.
+    expression: "0 30 * * * *" # On for 5m at 00:30.
+    expression: "5 30 * * * *" # On for 5m at 00:30.
+    expression: "10 30 * * * *" # On for 5m at 00:30.
+  }
+  cron: {
+    state: OFF,
+    expression: "0 5 * * * *"  # Off at 00:05.
+    expression: "5 5 * * * *"  # Off at 00:05.
+    expression: "10 5 * * * *"  # Off at 00:05.
+    expression: "0 35 * * * *" # Off at 00:35.
+    expression: "5 35 * * * *" # Off at 00:35.
+    expression: "10 35 * * * *" # Off at 00:35.
   }
 }
 startup_state {
