@@ -1,6 +1,8 @@
 syntax = "proto3";
 
 package hydroponics;
+option java_package = "pt.sobrinho.hydroponics.proto";
+option java_multiple_files = true;
 
 message Sampling {
   int32 humidity_ms = 1;
@@ -58,8 +60,11 @@ enum Output {
   EXT_GPIO_B_6 = 14;
   EXT_GPIO_B_7 = 15; // EXT_GPIO_END
 
+  // NA.
   EXT_TUYA_OUT_1 = 101; // EXT_TUYA_START
+  // Strawberries.
   EXT_TUYA_OUT_2 = 102;
+  // Lettuce.
   EXT_TUYA_OUT_3 = 103; // EXT_TUYA_END
 };
 

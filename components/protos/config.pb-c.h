@@ -84,10 +84,19 @@ typedef enum _Hydroponics__Output {
    */
   HYDROPONICS__OUTPUT__EXT_GPIO_B_7 = 15,
   /*
+   * NA.
+   */
+  /*
    * EXT_TUYA_START
    */
   HYDROPONICS__OUTPUT__EXT_TUYA_OUT_1 = 101,
+  /*
+   * Strawberries.
+   */
   HYDROPONICS__OUTPUT__EXT_TUYA_OUT_2 = 102,
+  /*
+   * Lettuce.
+   */
   /*
    * EXT_TUYA_END
    */
