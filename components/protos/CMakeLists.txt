@@ -22,9 +22,9 @@ set(PROTO_C_OUTS
         "config.pb-c.c" "config.pb-c.h"
         "state.pb-c.c" "state.pb-c.h")
 set(PROTO_GO_OUTS
-        "commands.pb.go"
-        "config.pb.go"
-        "state.pb.go")
+        "go/commands.pb.go"
+        "go/config.pb.go"
+        "go/state.pb.go")
 
 set(CONFIG_TEXTPROTO_SRC "GreenMeanMachine.textproto")
 set(CONFIG_TEXTPROTO_OUT "GreenMeanMachine.pb")
@@ -43,7 +43,7 @@ add_custom_target(protos DEPENDS ${PROTO_C_OUTS})
 
 # Generate the GoLang protobuf sources from the protos.
 add_custom_command(
-        COMMAND ${PROTO_COMPILER} --go_out=${COMPONENT_DIR} -I . --go_opt=paths=source_relative ${PROTO_SRCS}
+        COMMAND ${PROTO_COMPILER} --go_out=${COMPONENT_DIR}/go -I . --go_opt=paths=source_relative ${PROTO_SRCS}
         WORKING_DIRECTORY ${COMPONENT_DIR}
         DEPENDS ${PROTO_SRCS}
         OUTPUT ${PROTO_GO_OUTS}
