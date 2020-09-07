@@ -37,6 +37,8 @@ esp_err_t sha256(const uint8_t *buf, size_t len, unsigned char output[32]);
 
 const char *enum_from_value(const ProtobufCEnumDescriptor *descriptor, int value);
 
+uint32_t enum_max(const ProtobufCEnumDescriptor *descriptor);
+
 void safe_delay_us(uint32_t delay_us);
 
 void safe_delay_ms(uint32_t delay_ms);

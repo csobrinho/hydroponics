@@ -169,6 +169,11 @@ const char *enum_from_value(const ProtobufCEnumDescriptor *descriptor, int value
     return "???";
 }
 
+uint32_t enum_max(const ProtobufCEnumDescriptor *descriptor) {
+    ARG_ERROR_CHECK(descriptor != NULL, ERR_PARAM_NULL);
+    return descriptor->n_values;
+}
+
 void safe_delay_us(uint32_t delay_us) {
     if (delay_us * 1000 < portTICK_PERIOD_MS) {
         ets_delay_us(delay_us);
