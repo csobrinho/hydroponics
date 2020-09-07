@@ -1,7 +1,7 @@
 # To re-generate the files:
 # $ brew install protobuf-c
-# $ ./tools/idf_esp32.sh   protos config_protos command_protos
-# $ ./tools/idf_esp32s2.sh protos config_protos command_protos
+# $ ./tools/idf_esp32.sh   protos protos_go config_protos commands_protos
+# $ ./tools/idf_esp32s2.sh protos protos_go config_protos commands_protos
 #
 # To upload the GreenMeanMachine.pb:
 # $ gcloud iot devices configs update --config-file=components/protos/GreenMeanMachine.pb --registry=registry --region=us-central1 --device=GreenMeanMachine-test
@@ -14,23 +14,42 @@
 idf_component_register(SRC_DIRS "." INCLUDE_DIRS "." REQUIRES "protobuf-c")
 
 set(PROTO_C_COMPILER "protoc-c")
+set(PROTO_COMPILER "protoc")
 
-set(PROTO_SRCS "commands.proto" "config.proto")
-set(PROTO_OUTS "commands.pb-c.c" "commands.pb-c.h" "config.pb-c.c" "config.pb-c.h")
+set(PROTO_SRCS "commands.proto" "config.proto" "state.proto")
+set(PROTO_C_OUTS
+        "commands.pb-c.c" "commands.pb-c.h"
+        "config.pb-c.c" "config.pb-c.h"
+        "state.pb-c.c" "state.pb-c.h")
+set(PROTO_GO_OUTS
+        "commands.pb.go"
+        "config.pb.go"
+        "state.pb.go")
+
 set(CONFIG_TEXTPROTO_SRC "GreenMeanMachine.textproto")
 set(CONFIG_TEXTPROTO_OUT "GreenMeanMachine.pb")
 set(COMMANDS_TEXTPROTO_SRC "Commands.textproto")
 set(COMMANDS_TEXTPROTO_OUT "Commands.pb")
 
-# Generate the protobuf-c sources for "config.proto".
+# Generate the protobuf-c sources from the protos.
 add_custom_command(
         COMMAND ${PROTO_C_COMPILER} --c_out=${COMPONENT_DIR} -I . ${PROTO_SRCS}
         WORKING_DIRECTORY ${COMPONENT_DIR}
         DEPENDS ${PROTO_SRCS}
-        OUTPUT ${PROTO_OUTS}
+        OUTPUT ${PROTO_C_OUTS}
         COMMENT "Generating protobuf-c for ${PROTO_SRCS}."
         VERBATIM)
-add_custom_target(protos DEPENDS ${PROTO_OUTS})
+add_custom_target(protos DEPENDS ${PROTO_C_OUTS})
+
+# Generate the GoLang protobuf sources from the protos.
+add_custom_command(
+        COMMAND ${PROTO_COMPILER} --go_out=${COMPONENT_DIR} -I . --go_opt=paths=source_relative ${PROTO_SRCS}
+        WORKING_DIRECTORY ${COMPONENT_DIR}
+        DEPENDS ${PROTO_SRCS}
+        OUTPUT ${PROTO_GO_OUTS}
+        COMMENT "Generating protobuf-go for ${PROTO_SRCS}."
+        VERBATIM)
+add_custom_target(protos_go DEPENDS ${PROTO_GO_OUTS})
 
 # Generate the hydroponics.Config binary proto.
 add_custom_command(

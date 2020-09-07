@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+import "config.proto";
+
+package hydroponics;
+option go_package = "github.com/csobrinho/hydroponics";
+option java_package = "pt.sobrinho.hydroponics.proto";
+option java_multiple_files = true;
+
+message StateTask {
+  // Task state that directly matches task.h eTaskState enumeration.
+  enum State {
+    // A task is querying the state of itself, so must be running.
+    RUNNING = 0;
+    // The task being queried is in a read or pending ready list.
+    READY = 1;
+    // The task being queried is in the Blocked state.
+    BLOCKED = 2;
+    // The task being queried is in the Suspended state, or is in the Blocked state with an infinite time out.
+    SUSPENDED = 3;
+    // The task being queried has been deleted, but its TCB has not yet been freed.
+    DELETED = 4;
+  }
+
+  string name = 1;
+  State state = 2;
+  uint32 priority = 3;
+  uint64 runtime = 4;
+  uint32 stats = 5;
+  uint32 highwater = 6;
+}
+
+message StateMemory {
+  uint32 min_free = 1;
+  uint32 free = 2;
+}
+
+message StateTelemetry {
+  enum Type {
+    UNKNOWN = 0;
+    TEMP_INDOOR = 1;
+    TEMP_PROBE = 2;
+    HUMIDITY = 3;
+    PRESSURE = 4;
+    EC_A = 5;
+    EC_B = 6;
+    PH_A = 7;
+    PH_B = 8;
+    TANK_A = 9;
+    TANK_B = 10;
+  }
+  message Value {
+    Type type = 1;
+    float value = 2;
+  }
+  repeated Value value = 1;
+}
+
+message StateOutput {
+  repeated Output output = 1;
+  OutputState state = 2;
+}
+
+message State {
+  uint64 timestamp = 1;
+  oneof state {
+    StateTask task = 2;
+    StateMemory memory = 3;
+    StateTelemetry telemetry = 4;
+    StateOutput output = 5;
+  }
+}
+
+message States {
+  repeated State state = 1;
+}

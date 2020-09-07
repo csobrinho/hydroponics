@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 package hydroponics;
+option go_package = "github.com/csobrinho/hydroponics";
 option java_package = "pt.sobrinho.hydroponics.proto";
 option java_multiple_files = true;
 
