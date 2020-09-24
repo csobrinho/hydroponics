@@ -53,11 +53,17 @@ message StateTelemetry {
     TANK_A = 9;
     TANK_B = 10;
   }
-  message Value {
-    Type type = 1;
-    float value = 2;
-  }
-  repeated Value value = 1;
+
+  float temp_indoor = 1;
+  float temp_probe = 2;
+  float humidity = 3;
+  float pressure = 4;
+  float ec_a = 5;
+  float ec_b = 6;
+  float ph_a = 7;
+  float ph_b = 8;
+  float tank_a = 9;
+  float tank_b = 10;
 }
 
 message StateOutput {

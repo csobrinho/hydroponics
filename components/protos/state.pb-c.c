@@ -142,12 +142,6 @@ void   hydroponics__state_memory__free_unpacked
   assert(message->base.descriptor == &hydroponics__state_memory__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-void   hydroponics__state_telemetry__value__init
-                     (Hydroponics__StateTelemetry__Value         *message)
-{
-  static const Hydroponics__StateTelemetry__Value init_value = HYDROPONICS__STATE_TELEMETRY__VALUE__INIT;
-  *message = init_value;
-}
 void   hydroponics__state_telemetry__init
                      (Hydroponics__StateTelemetry         *message)
 {
@@ -644,57 +638,6 @@ const ProtobufCMessageDescriptor hydroponics__state_memory__descriptor =
   (ProtobufCMessageInit) hydroponics__state_memory__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor hydroponics__state_telemetry__value__field_descriptors[2] =
-{
-  {
-    "type",
-    1,
-    PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_ENUM,
-    0,   /* quantifier_offset */
-    offsetof(Hydroponics__StateTelemetry__Value, type),
-    &hydroponics__state_telemetry__type__descriptor,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "value",
-    2,
-    PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_FLOAT,
-    0,   /* quantifier_offset */
-    offsetof(Hydroponics__StateTelemetry__Value, value),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-};
-static const unsigned hydroponics__state_telemetry__value__field_indices_by_name[] = {
-  0,   /* field[0] = type */
-  1,   /* field[1] = value */
-};
-static const ProtobufCIntRange hydroponics__state_telemetry__value__number_ranges[1 + 1] =
-{
-  { 1, 0 },
-  { 0, 2 }
-};
-const ProtobufCMessageDescriptor hydroponics__state_telemetry__value__descriptor =
-{
-  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "hydroponics.StateTelemetry.Value",
-  "Value",
-  "Hydroponics__StateTelemetry__Value",
-  "hydroponics",
-  sizeof(Hydroponics__StateTelemetry__Value),
-  2,
-  hydroponics__state_telemetry__value__field_descriptors,
-  hydroponics__state_telemetry__value__field_indices_by_name,
-  1,  hydroponics__state_telemetry__value__number_ranges,
-  (ProtobufCMessageInit) hydroponics__state_telemetry__value__init,
-  NULL,NULL,NULL    /* reserved[123] */
-};
 static const ProtobufCEnumValue hydroponics__state_telemetry__type__enum_values_by_number[11] =
 {
   { "UNKNOWN", "HYDROPONICS__STATE_TELEMETRY__TYPE__UNKNOWN", 0 },
@@ -741,28 +684,145 @@ const ProtobufCEnumDescriptor hydroponics__state_telemetry__type__descriptor =
   hydroponics__state_telemetry__type__value_ranges,
   NULL,NULL,NULL,NULL   /* reserved[1234] */
 };
-static const ProtobufCFieldDescriptor hydroponics__state_telemetry__field_descriptors[1] =
+static const ProtobufCFieldDescriptor hydroponics__state_telemetry__field_descriptors[10] =
 {
   {
-    "value",
+    "temp_indoor",
     1,
-    PROTOBUF_C_LABEL_REPEATED,
-    PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(Hydroponics__StateTelemetry, n_value),
-    offsetof(Hydroponics__StateTelemetry, value),
-    &hydroponics__state_telemetry__value__descriptor,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_FLOAT,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__StateTelemetry, temp_indoor),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "temp_probe",
+    2,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_FLOAT,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__StateTelemetry, temp_probe),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "humidity",
+    3,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_FLOAT,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__StateTelemetry, humidity),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "pressure",
+    4,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_FLOAT,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__StateTelemetry, pressure),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "ec_a",
+    5,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_FLOAT,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__StateTelemetry, ec_a),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "ec_b",
+    6,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_FLOAT,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__StateTelemetry, ec_b),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "ph_a",
+    7,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_FLOAT,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__StateTelemetry, ph_a),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "ph_b",
+    8,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_FLOAT,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__StateTelemetry, ph_b),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "tank_a",
+    9,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_FLOAT,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__StateTelemetry, tank_a),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "tank_b",
+    10,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_FLOAT,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__StateTelemetry, tank_b),
+    NULL,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
 };
 static const unsigned hydroponics__state_telemetry__field_indices_by_name[] = {
-  0,   /* field[0] = value */
+  4,   /* field[4] = ec_a */
+  5,   /* field[5] = ec_b */
+  2,   /* field[2] = humidity */
+  6,   /* field[6] = ph_a */
+  7,   /* field[7] = ph_b */
+  3,   /* field[3] = pressure */
+  8,   /* field[8] = tank_a */
+  9,   /* field[9] = tank_b */
+  0,   /* field[0] = temp_indoor */
+  1,   /* field[1] = temp_probe */
 };
 static const ProtobufCIntRange hydroponics__state_telemetry__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 1 }
+  { 0, 10 }
 };
 const ProtobufCMessageDescriptor hydroponics__state_telemetry__descriptor =
 {
@@ -772,7 +832,7 @@ const ProtobufCMessageDescriptor hydroponics__state_telemetry__descriptor =
   "Hydroponics__StateTelemetry",
   "hydroponics",
   sizeof(Hydroponics__StateTelemetry),
-  1,
+  10,
   hydroponics__state_telemetry__field_descriptors,
   hydroponics__state_telemetry__field_indices_by_name,
   1,  hydroponics__state_telemetry__number_ranges,

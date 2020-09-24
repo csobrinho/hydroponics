@@ -20,7 +20,6 @@ typedef struct _Hydroponics__StateTask Hydroponics__StateTask;
 typedef struct _Hydroponics__StateTasks Hydroponics__StateTasks;
 typedef struct _Hydroponics__StateMemory Hydroponics__StateMemory;
 typedef struct _Hydroponics__StateTelemetry Hydroponics__StateTelemetry;
-typedef struct _Hydroponics__StateTelemetry__Value Hydroponics__StateTelemetry__Value;
 typedef struct _Hydroponics__StateOutput Hydroponics__StateOutput;
 typedef struct _Hydroponics__StateOutputs Hydroponics__StateOutputs;
 typedef struct _Hydroponics__StateReboot Hydroponics__StateReboot;
@@ -110,26 +109,23 @@ struct  _Hydroponics__StateMemory
     , 0, 0 }
 
 
-struct  _Hydroponics__StateTelemetry__Value
-{
-  ProtobufCMessage base;
-  Hydroponics__StateTelemetry__Type type;
-  float value;
-};
-#define HYDROPONICS__STATE_TELEMETRY__VALUE__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&hydroponics__state_telemetry__value__descriptor) \
-    , HYDROPONICS__STATE_TELEMETRY__TYPE__UNKNOWN, 0 }
-
-
 struct  _Hydroponics__StateTelemetry
 {
   ProtobufCMessage base;
-  size_t n_value;
-  Hydroponics__StateTelemetry__Value **value;
+  float temp_indoor;
+  float temp_probe;
+  float humidity;
+  float pressure;
+  float ec_a;
+  float ec_b;
+  float ph_a;
+  float ph_b;
+  float tank_a;
+  float tank_b;
 };
 #define HYDROPONICS__STATE_TELEMETRY__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&hydroponics__state_telemetry__descriptor) \
-    , 0,NULL }
+    , 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 
 
 struct  _Hydroponics__StateOutput
@@ -260,9 +256,6 @@ Hydroponics__StateMemory *
 void   hydroponics__state_memory__free_unpacked
                      (Hydroponics__StateMemory *message,
                       ProtobufCAllocator *allocator);
-/* Hydroponics__StateTelemetry__Value methods */
-void   hydroponics__state_telemetry__value__init
-                     (Hydroponics__StateTelemetry__Value         *message);
 /* Hydroponics__StateTelemetry methods */
 void   hydroponics__state_telemetry__init
                      (Hydroponics__StateTelemetry         *message);
@@ -388,9 +381,6 @@ typedef void (*Hydroponics__StateTasks_Closure)
 typedef void (*Hydroponics__StateMemory_Closure)
                  (const Hydroponics__StateMemory *message,
                   void *closure_data);
-typedef void (*Hydroponics__StateTelemetry__Value_Closure)
-                 (const Hydroponics__StateTelemetry__Value *message,
-                  void *closure_data);
 typedef void (*Hydroponics__StateTelemetry_Closure)
                  (const Hydroponics__StateTelemetry *message,
                   void *closure_data);
@@ -420,7 +410,6 @@ extern const ProtobufCEnumDescriptor    hydroponics__state_task__state__descript
 extern const ProtobufCMessageDescriptor hydroponics__state_tasks__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__state_memory__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__state_telemetry__descriptor;
-extern const ProtobufCMessageDescriptor hydroponics__state_telemetry__value__descriptor;
 extern const ProtobufCEnumDescriptor    hydroponics__state_telemetry__type__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__state_output__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__state_outputs__descriptor;
