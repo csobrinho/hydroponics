@@ -63,7 +63,7 @@ controller: {
   }
 }
 hardware_id {
-  name: "NA"
+  name: "Relays"
   dev_id: "37517103d8f15be34e2c"
   dps_id: 1,
   output: EXT_TUYA_OUT_1
@@ -99,21 +99,11 @@ task: {
   output: EXT_TUYA_OUT_3
   cron: {
     state: ON,
-    expression: "0 0 * * * *"  # On for 5m at 00:00.
-    expression: "5 0 * * * *"  # On for 5m at 00:00.
-    expression: "10 0 * * * *"  # On for 5m at 00:00.
-    expression: "0 30 * * * *" # On for 5m at 00:30.
-    expression: "5 30 * * * *" # On for 5m at 00:30.
-    expression: "10 30 * * * *" # On for 5m at 00:30.
+    expression: "0,3,6 0,30 * * * *"  # On for 5m at 00:00.
   }
   cron: {
     state: OFF,
-    expression: "0 5 * * * *"  # Off at 00:05.
-    expression: "5 5 * * * *"  # Off at 00:05.
-    expression: "10 5 * * * *"  # Off at 00:05.
-    expression: "0 35 * * * *" # Off at 00:35.
-    expression: "5 35 * * * *" # Off at 00:35.
-    expression: "10 35 * * * *" # Off at 00:35.
+    expression: "0,3,6 10,40 * * * *"  # Off after 10m.
   }
 }
 startup_state {
@@ -137,12 +127,6 @@ startup_state {
   output: EXT_GPIO_B_5
   output: EXT_GPIO_B_6
   output: EXT_GPIO_B_7
-}
-startup_state {
-  state: ON
-  output: EXT_TUYA_OUT_1
-  output: EXT_TUYA_OUT_2
-  output: EXT_TUYA_OUT_3
 }
 firmware {
   type: RELEASE
