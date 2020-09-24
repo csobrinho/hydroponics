@@ -52,6 +52,51 @@ void   hydroponics__state_task__free_unpacked
   assert(message->base.descriptor == &hydroponics__state_task__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+void   hydroponics__state_tasks__init
+                     (Hydroponics__StateTasks         *message)
+{
+  static const Hydroponics__StateTasks init_value = HYDROPONICS__STATE_TASKS__INIT;
+  *message = init_value;
+}
+size_t hydroponics__state_tasks__get_packed_size
+                     (const Hydroponics__StateTasks *message)
+{
+  assert(message->base.descriptor == &hydroponics__state_tasks__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t hydroponics__state_tasks__pack
+                     (const Hydroponics__StateTasks *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &hydroponics__state_tasks__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t hydroponics__state_tasks__pack_to_buffer
+                     (const Hydroponics__StateTasks *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &hydroponics__state_tasks__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+Hydroponics__StateTasks *
+       hydroponics__state_tasks__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (Hydroponics__StateTasks *)
+     protobuf_c_message_unpack (&hydroponics__state_tasks__descriptor,
+                                allocator, len, data);
+}
+void   hydroponics__state_tasks__free_unpacked
+                     (Hydroponics__StateTasks *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &hydroponics__state_tasks__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 void   hydroponics__state_memory__init
                      (Hydroponics__StateMemory         *message)
 {
@@ -191,6 +236,96 @@ void   hydroponics__state_output__free_unpacked
   if(!message)
     return;
   assert(message->base.descriptor == &hydroponics__state_output__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   hydroponics__state_outputs__init
+                     (Hydroponics__StateOutputs         *message)
+{
+  static const Hydroponics__StateOutputs init_value = HYDROPONICS__STATE_OUTPUTS__INIT;
+  *message = init_value;
+}
+size_t hydroponics__state_outputs__get_packed_size
+                     (const Hydroponics__StateOutputs *message)
+{
+  assert(message->base.descriptor == &hydroponics__state_outputs__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t hydroponics__state_outputs__pack
+                     (const Hydroponics__StateOutputs *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &hydroponics__state_outputs__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t hydroponics__state_outputs__pack_to_buffer
+                     (const Hydroponics__StateOutputs *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &hydroponics__state_outputs__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+Hydroponics__StateOutputs *
+       hydroponics__state_outputs__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (Hydroponics__StateOutputs *)
+     protobuf_c_message_unpack (&hydroponics__state_outputs__descriptor,
+                                allocator, len, data);
+}
+void   hydroponics__state_outputs__free_unpacked
+                     (Hydroponics__StateOutputs *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &hydroponics__state_outputs__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   hydroponics__state_reboot__init
+                     (Hydroponics__StateReboot         *message)
+{
+  static const Hydroponics__StateReboot init_value = HYDROPONICS__STATE_REBOOT__INIT;
+  *message = init_value;
+}
+size_t hydroponics__state_reboot__get_packed_size
+                     (const Hydroponics__StateReboot *message)
+{
+  assert(message->base.descriptor == &hydroponics__state_reboot__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t hydroponics__state_reboot__pack
+                     (const Hydroponics__StateReboot *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &hydroponics__state_reboot__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t hydroponics__state_reboot__pack_to_buffer
+                     (const Hydroponics__StateReboot *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &hydroponics__state_reboot__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+Hydroponics__StateReboot *
+       hydroponics__state_reboot__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (Hydroponics__StateReboot *)
+     protobuf_c_message_unpack (&hydroponics__state_reboot__descriptor,
+                                allocator, len, data);
+}
+void   hydroponics__state_reboot__free_unpacked
+                     (Hydroponics__StateReboot *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &hydroponics__state_reboot__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
 void   hydroponics__state__init
@@ -418,6 +553,44 @@ const ProtobufCMessageDescriptor hydroponics__state_task__descriptor =
   hydroponics__state_task__field_indices_by_name,
   1,  hydroponics__state_task__number_ranges,
   (ProtobufCMessageInit) hydroponics__state_task__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor hydroponics__state_tasks__field_descriptors[1] =
+{
+  {
+    "task",
+    1,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(Hydroponics__StateTasks, n_task),
+    offsetof(Hydroponics__StateTasks, task),
+    &hydroponics__state_task__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned hydroponics__state_tasks__field_indices_by_name[] = {
+  0,   /* field[0] = task */
+};
+static const ProtobufCIntRange hydroponics__state_tasks__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 1 }
+};
+const ProtobufCMessageDescriptor hydroponics__state_tasks__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "hydroponics.StateTasks",
+  "StateTasks",
+  "Hydroponics__StateTasks",
+  "hydroponics",
+  sizeof(Hydroponics__StateTasks),
+  1,
+  hydroponics__state_tasks__field_descriptors,
+  hydroponics__state_tasks__field_indices_by_name,
+  1,  hydroponics__state_tasks__number_ranges,
+  (ProtobufCMessageInit) hydroponics__state_tasks__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
 static const ProtobufCFieldDescriptor hydroponics__state_memory__field_descriptors[2] =
@@ -657,7 +830,63 @@ const ProtobufCMessageDescriptor hydroponics__state_output__descriptor =
   (ProtobufCMessageInit) hydroponics__state_output__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor hydroponics__state__field_descriptors[5] =
+static const ProtobufCFieldDescriptor hydroponics__state_outputs__field_descriptors[1] =
+{
+  {
+    "output",
+    1,
+    PROTOBUF_C_LABEL_REPEATED,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(Hydroponics__StateOutputs, n_output),
+    offsetof(Hydroponics__StateOutputs, output),
+    &hydroponics__state_output__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned hydroponics__state_outputs__field_indices_by_name[] = {
+  0,   /* field[0] = output */
+};
+static const ProtobufCIntRange hydroponics__state_outputs__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 1 }
+};
+const ProtobufCMessageDescriptor hydroponics__state_outputs__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "hydroponics.StateOutputs",
+  "StateOutputs",
+  "Hydroponics__StateOutputs",
+  "hydroponics",
+  sizeof(Hydroponics__StateOutputs),
+  1,
+  hydroponics__state_outputs__field_descriptors,
+  hydroponics__state_outputs__field_indices_by_name,
+  1,  hydroponics__state_outputs__number_ranges,
+  (ProtobufCMessageInit) hydroponics__state_outputs__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+#define hydroponics__state_reboot__field_descriptors NULL
+#define hydroponics__state_reboot__field_indices_by_name NULL
+#define hydroponics__state_reboot__number_ranges NULL
+const ProtobufCMessageDescriptor hydroponics__state_reboot__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "hydroponics.StateReboot",
+  "StateReboot",
+  "Hydroponics__StateReboot",
+  "hydroponics",
+  sizeof(Hydroponics__StateReboot),
+  0,
+  hydroponics__state_reboot__field_descriptors,
+  hydroponics__state_reboot__field_indices_by_name,
+  0,  hydroponics__state_reboot__number_ranges,
+  (ProtobufCMessageInit) hydroponics__state_reboot__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor hydroponics__state__field_descriptors[6] =
 {
   {
     "timestamp",
@@ -672,32 +901,8 @@ static const ProtobufCFieldDescriptor hydroponics__state__field_descriptors[5] =
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "task",
-    2,
-    PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(Hydroponics__State, state_case),
-    offsetof(Hydroponics__State, task),
-    &hydroponics__state_task__descriptor,
-    NULL,
-    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "memory",
-    3,
-    PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(Hydroponics__State, state_case),
-    offsetof(Hydroponics__State, memory),
-    &hydroponics__state_memory__descriptor,
-    NULL,
-    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
     "telemetry",
-    4,
+    2,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(Hydroponics__State, state_case),
@@ -708,29 +913,66 @@ static const ProtobufCFieldDescriptor hydroponics__state__field_descriptors[5] =
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "output",
+    "tasks",
+    3,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(Hydroponics__State, state_case),
+    offsetof(Hydroponics__State, tasks),
+    &hydroponics__state_tasks__descriptor,
+    NULL,
+    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "memory",
+    4,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(Hydroponics__State, state_case),
+    offsetof(Hydroponics__State, memory),
+    &hydroponics__state_memory__descriptor,
+    NULL,
+    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "outputs",
     5,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(Hydroponics__State, state_case),
-    offsetof(Hydroponics__State, output),
-    &hydroponics__state_output__descriptor,
+    offsetof(Hydroponics__State, outputs),
+    &hydroponics__state_outputs__descriptor,
+    NULL,
+    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "reboot",
+    6,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(Hydroponics__State, state_case),
+    offsetof(Hydroponics__State, reboot),
+    &hydroponics__state_reboot__descriptor,
     NULL,
     0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
 };
 static const unsigned hydroponics__state__field_indices_by_name[] = {
-  2,   /* field[2] = memory */
-  4,   /* field[4] = output */
-  1,   /* field[1] = task */
-  3,   /* field[3] = telemetry */
+  3,   /* field[3] = memory */
+  4,   /* field[4] = outputs */
+  5,   /* field[5] = reboot */
+  2,   /* field[2] = tasks */
+  1,   /* field[1] = telemetry */
   0,   /* field[0] = timestamp */
 };
 static const ProtobufCIntRange hydroponics__state__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 5 }
+  { 0, 6 }
 };
 const ProtobufCMessageDescriptor hydroponics__state__descriptor =
 {
@@ -740,7 +982,7 @@ const ProtobufCMessageDescriptor hydroponics__state__descriptor =
   "Hydroponics__State",
   "hydroponics",
   sizeof(Hydroponics__State),
-  5,
+  6,
   hydroponics__state__field_descriptors,
   hydroponics__state__field_indices_by_name,
   1,  hydroponics__state__number_ranges,

@@ -17,10 +17,13 @@ PROTOBUF_C__BEGIN_DECLS
 #include "config.pb-c.h"
 
 typedef struct _Hydroponics__StateTask Hydroponics__StateTask;
+typedef struct _Hydroponics__StateTasks Hydroponics__StateTasks;
 typedef struct _Hydroponics__StateMemory Hydroponics__StateMemory;
 typedef struct _Hydroponics__StateTelemetry Hydroponics__StateTelemetry;
 typedef struct _Hydroponics__StateTelemetry__Value Hydroponics__StateTelemetry__Value;
 typedef struct _Hydroponics__StateOutput Hydroponics__StateOutput;
+typedef struct _Hydroponics__StateOutputs Hydroponics__StateOutputs;
+typedef struct _Hydroponics__StateReboot Hydroponics__StateReboot;
 typedef struct _Hydroponics__State Hydroponics__State;
 typedef struct _Hydroponics__States Hydroponics__States;
 
@@ -85,6 +88,17 @@ struct  _Hydroponics__StateTask
     , (char *)protobuf_c_empty_string, HYDROPONICS__STATE_TASK__STATE__RUNNING, 0, 0, 0, 0 }
 
 
+struct  _Hydroponics__StateTasks
+{
+  ProtobufCMessage base;
+  size_t n_task;
+  Hydroponics__StateTask **task;
+};
+#define HYDROPONICS__STATE_TASKS__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&hydroponics__state_tasks__descriptor) \
+    , 0,NULL }
+
+
 struct  _Hydroponics__StateMemory
 {
   ProtobufCMessage base;
@@ -130,12 +144,33 @@ struct  _Hydroponics__StateOutput
     , 0,NULL, HYDROPONICS__OUTPUT_STATE__OFF }
 
 
+struct  _Hydroponics__StateOutputs
+{
+  ProtobufCMessage base;
+  size_t n_output;
+  Hydroponics__StateOutput **output;
+};
+#define HYDROPONICS__STATE_OUTPUTS__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&hydroponics__state_outputs__descriptor) \
+    , 0,NULL }
+
+
+struct  _Hydroponics__StateReboot
+{
+  ProtobufCMessage base;
+};
+#define HYDROPONICS__STATE_REBOOT__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&hydroponics__state_reboot__descriptor) \
+     }
+
+
 typedef enum {
   HYDROPONICS__STATE__STATE__NOT_SET = 0,
-  HYDROPONICS__STATE__STATE_TASK = 2,
-  HYDROPONICS__STATE__STATE_MEMORY = 3,
-  HYDROPONICS__STATE__STATE_TELEMETRY = 4,
-  HYDROPONICS__STATE__STATE_OUTPUT = 5
+  HYDROPONICS__STATE__STATE_TELEMETRY = 2,
+  HYDROPONICS__STATE__STATE_TASKS = 3,
+  HYDROPONICS__STATE__STATE_MEMORY = 4,
+  HYDROPONICS__STATE__STATE_OUTPUTS = 5,
+  HYDROPONICS__STATE__STATE_REBOOT = 6
     PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(HYDROPONICS__STATE__STATE)
 } Hydroponics__State__StateCase;
 
@@ -145,10 +180,11 @@ struct  _Hydroponics__State
   uint64_t timestamp;
   Hydroponics__State__StateCase state_case;
   union {
-    Hydroponics__StateTask *task;
-    Hydroponics__StateMemory *memory;
     Hydroponics__StateTelemetry *telemetry;
-    Hydroponics__StateOutput *output;
+    Hydroponics__StateTasks *tasks;
+    Hydroponics__StateMemory *memory;
+    Hydroponics__StateOutputs *outputs;
+    Hydroponics__StateReboot *reboot;
   };
 };
 #define HYDROPONICS__STATE__INIT \
@@ -185,6 +221,25 @@ Hydroponics__StateTask *
                       const uint8_t       *data);
 void   hydroponics__state_task__free_unpacked
                      (Hydroponics__StateTask *message,
+                      ProtobufCAllocator *allocator);
+/* Hydroponics__StateTasks methods */
+void   hydroponics__state_tasks__init
+                     (Hydroponics__StateTasks         *message);
+size_t hydroponics__state_tasks__get_packed_size
+                     (const Hydroponics__StateTasks   *message);
+size_t hydroponics__state_tasks__pack
+                     (const Hydroponics__StateTasks   *message,
+                      uint8_t             *out);
+size_t hydroponics__state_tasks__pack_to_buffer
+                     (const Hydroponics__StateTasks   *message,
+                      ProtobufCBuffer     *buffer);
+Hydroponics__StateTasks *
+       hydroponics__state_tasks__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   hydroponics__state_tasks__free_unpacked
+                     (Hydroponics__StateTasks *message,
                       ProtobufCAllocator *allocator);
 /* Hydroponics__StateMemory methods */
 void   hydroponics__state_memory__init
@@ -246,6 +301,44 @@ Hydroponics__StateOutput *
 void   hydroponics__state_output__free_unpacked
                      (Hydroponics__StateOutput *message,
                       ProtobufCAllocator *allocator);
+/* Hydroponics__StateOutputs methods */
+void   hydroponics__state_outputs__init
+                     (Hydroponics__StateOutputs         *message);
+size_t hydroponics__state_outputs__get_packed_size
+                     (const Hydroponics__StateOutputs   *message);
+size_t hydroponics__state_outputs__pack
+                     (const Hydroponics__StateOutputs   *message,
+                      uint8_t             *out);
+size_t hydroponics__state_outputs__pack_to_buffer
+                     (const Hydroponics__StateOutputs   *message,
+                      ProtobufCBuffer     *buffer);
+Hydroponics__StateOutputs *
+       hydroponics__state_outputs__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   hydroponics__state_outputs__free_unpacked
+                     (Hydroponics__StateOutputs *message,
+                      ProtobufCAllocator *allocator);
+/* Hydroponics__StateReboot methods */
+void   hydroponics__state_reboot__init
+                     (Hydroponics__StateReboot         *message);
+size_t hydroponics__state_reboot__get_packed_size
+                     (const Hydroponics__StateReboot   *message);
+size_t hydroponics__state_reboot__pack
+                     (const Hydroponics__StateReboot   *message,
+                      uint8_t             *out);
+size_t hydroponics__state_reboot__pack_to_buffer
+                     (const Hydroponics__StateReboot   *message,
+                      ProtobufCBuffer     *buffer);
+Hydroponics__StateReboot *
+       hydroponics__state_reboot__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   hydroponics__state_reboot__free_unpacked
+                     (Hydroponics__StateReboot *message,
+                      ProtobufCAllocator *allocator);
 /* Hydroponics__State methods */
 void   hydroponics__state__init
                      (Hydroponics__State         *message);
@@ -289,6 +382,9 @@ void   hydroponics__states__free_unpacked
 typedef void (*Hydroponics__StateTask_Closure)
                  (const Hydroponics__StateTask *message,
                   void *closure_data);
+typedef void (*Hydroponics__StateTasks_Closure)
+                 (const Hydroponics__StateTasks *message,
+                  void *closure_data);
 typedef void (*Hydroponics__StateMemory_Closure)
                  (const Hydroponics__StateMemory *message,
                   void *closure_data);
@@ -300,6 +396,12 @@ typedef void (*Hydroponics__StateTelemetry_Closure)
                   void *closure_data);
 typedef void (*Hydroponics__StateOutput_Closure)
                  (const Hydroponics__StateOutput *message,
+                  void *closure_data);
+typedef void (*Hydroponics__StateOutputs_Closure)
+                 (const Hydroponics__StateOutputs *message,
+                  void *closure_data);
+typedef void (*Hydroponics__StateReboot_Closure)
+                 (const Hydroponics__StateReboot *message,
                   void *closure_data);
 typedef void (*Hydroponics__State_Closure)
                  (const Hydroponics__State *message,
@@ -315,11 +417,14 @@ typedef void (*Hydroponics__States_Closure)
 
 extern const ProtobufCMessageDescriptor hydroponics__state_task__descriptor;
 extern const ProtobufCEnumDescriptor    hydroponics__state_task__state__descriptor;
+extern const ProtobufCMessageDescriptor hydroponics__state_tasks__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__state_memory__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__state_telemetry__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__state_telemetry__value__descriptor;
 extern const ProtobufCEnumDescriptor    hydroponics__state_telemetry__type__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__state_output__descriptor;
+extern const ProtobufCMessageDescriptor hydroponics__state_outputs__descriptor;
+extern const ProtobufCMessageDescriptor hydroponics__state_reboot__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__state__descriptor;
 extern const ProtobufCMessageDescriptor hydroponics__states__descriptor;
 

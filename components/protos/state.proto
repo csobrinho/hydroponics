@@ -30,6 +30,10 @@ message StateTask {
   uint32 highwater = 6;
 }
 
+message StateTasks {
+  repeated StateTask task = 1;
+}
+
 message StateMemory {
   uint32 min_free = 1;
   uint32 free = 2;
@@ -61,13 +65,21 @@ message StateOutput {
   OutputState state = 2;
 }
 
+message StateOutputs {
+  repeated StateOutput output = 1;
+}
+
+message StateReboot {
+}
+
 message State {
   uint64 timestamp = 1;
   oneof state {
-    StateTask task = 2;
-    StateMemory memory = 3;
-    StateTelemetry telemetry = 4;
-    StateOutput output = 5;
+    StateTelemetry telemetry = 2;
+    StateTasks tasks = 3;
+    StateMemory memory = 4;
+    StateOutputs outputs = 5;
+    StateReboot reboot = 6;
   }
 }
 
