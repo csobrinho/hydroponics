@@ -12,6 +12,8 @@
 #include "driver/ext_gpio.h"
 #include "error.h"
 #include "io.h"
+#include "network/iot.h"
+#include "network/state.h"
 #include "tasks/tuya_io.h"
 #include "utils.h"
 
@@ -93,6 +95,9 @@ static void io_generic_set(Hydroponics__Output output, Hydroponics__OutputState 
     } else {
         ESP_LOGE(TAG, "Unknown output: %d", output);
     }
+
+    size_t buckets = 1;
+    ESP_ERROR_CHECK(state_push_output(1, &buckets, &output, &state));
 }
 
 static void io_cron_callback(cron_handle_t handle, const char *name, void *data) {
@@ -131,12 +136,28 @@ static void io_set_default_state(const Hydroponics__Config *config) {
     }
     // Remove all upcoming messages to avoid getting stuck if the queue is not big enough.
     xQueueReset(queue);
+    Hydroponics__OutputState output_states[config->n_startup_state];
+    size_t buckets[config->n_startup_state];
+    size_t max_outputs = 0;
     for (int i = 0; i < config->n_startup_state; ++i) {
         Hydroponics__StartupState *s = config->startup_state[i];
+        buckets[i] = s->n_output;
+        output_states[i] = s->state;
+        max_outputs += s->n_output;
         for (int j = 0; j < s->n_output; ++j) {
             io_generic_set(s->output[j], s->state);
         }
     }
+    Hydroponics__Output outputs[max_outputs];
+    max_outputs = 0;
+    for (int i = 0; i < config->n_startup_state; ++i) {
+        Hydroponics__StartupState *s = config->startup_state[i];
+        for (int j = 0; j < s->n_output; ++j) {
+            outputs[max_outputs++] = s->output[j];
+        }
+    }
+
+    ESP_ERROR_CHECK(state_push_output(config->n_startup_state, buckets, outputs, output_states));
 }
 
 static esp_err_t io_cron_add(const char *name, const char *expression, const size_t n_output,

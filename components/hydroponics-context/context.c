@@ -1,6 +1,5 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
-#include "freertos/portmacro.h"
 
 #include "context.h"
 #include "error.h"
@@ -252,32 +251,4 @@ esp_err_t context_get_config(context_t *context, const Hydroponics__Config **con
     SAFE_FREE(data);
     context_unlock(context);
     return ret;
-}
-
-esp_err_t context_set_state_message(context_t *context, char *message) {
-    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
-
-    EventBits_t bitsToSet = 0U;
-    context_lock(context);
-    if (context->status.state_message != NULL) {
-        SAFE_FREE(context->status.state_message);
-    }
-    context_set(context->status.state_message, message, CONTEXT_EVENT_STATE);
-    context_unlock(context);
-
-    if (bitsToSet) xEventGroupSetBits(context->event_group, bitsToSet);
-    return ESP_OK;
-}
-
-esp_err_t context_get_state_message(context_t *context, char **message) {
-    ARG_CHECK(context != NULL, ERR_PARAM_NULL);
-    ARG_CHECK(message != NULL, ERR_PARAM_NULL);
-
-    context_lock(context);
-    *message = context->status.state_message;
-    context->status.state_message = NULL;
-    xEventGroupClearBits(context->event_group, CONTEXT_EVENT_STATE);
-    context_unlock(context);
-
-    return ESP_OK;
 }

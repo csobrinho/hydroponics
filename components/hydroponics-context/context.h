@@ -100,7 +100,6 @@ typedef struct {
     } network;
 
     struct {
-        char *state_message;
     } status;
 } context_t;
 
@@ -143,9 +142,5 @@ esp_err_t context_set_base_config(context_t *context, const char *device_id, con
 esp_err_t context_set_config(context_t *context, const Hydroponics__Config *config);
 
 esp_err_t context_get_config(context_t *context, const Hydroponics__Config **config);
-
-esp_err_t context_set_state_message(context_t *context, char *message);
-
-esp_err_t context_get_state_message(context_t *context, char **message);
 
 #endif //HYDROPONICS_CONTEXT_H

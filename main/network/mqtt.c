@@ -25,7 +25,7 @@
 #define PUBLISH_TOPIC_STATE "/devices/%s/state"
 #define TASK_REPEAT_FOREVER 1
 
-static const char *TAG = "mqtt";
+static const char *const TAG = "mqtt";
 
 static context_t *context;
 static const mqtt_config_t *mqtt_config;
@@ -58,6 +58,7 @@ static void mqtt_dispatch_connected(bool connected) {
 esp_err_t mqtt_publish_event(uint8_t *data, size_t size) {
     /* Wait until IoT is connected. */
     xEventGroupWaitBits(context->event_group, CONTEXT_EVENT_IOT, pdFALSE, pdTRUE, portMAX_DELAY);
+    ESP_LOGI(TAG, "Publishing topic: '%s' with %d bytes payload", publish_topic_event, size);
     iotc_state_t err = iotc_publish_data(iotc_context, publish_topic_event, data, size, mqtt_qos,
             /* callback= */ NULL, /* user_data= */ NULL);
     if (err == IOTC_STATE_OK) {
@@ -70,6 +71,7 @@ esp_err_t mqtt_publish_event(uint8_t *data, size_t size) {
 esp_err_t mqtt_publish_state(uint8_t *data, size_t size) {
     /* Wait until IoT is connected. */
     xEventGroupWaitBits(context->event_group, CONTEXT_EVENT_IOT, pdFALSE, pdTRUE, portMAX_DELAY);
+    ESP_LOGI(TAG, "Publishing topic: '%s' with %d bytes payload", publish_topic_state, size);
     iotc_state_t err = iotc_publish_data(iotc_context, publish_topic_state, data, size, mqtt_qos,
             /* callback= */ NULL, /* user_data= */ NULL);
     if (err == IOTC_STATE_OK) {
@@ -81,28 +83,11 @@ esp_err_t mqtt_publish_state(uint8_t *data, size_t size) {
 
 static void mqtt_publish_telemetry_event(iotc_context_handle_t context_handle, iotc_timed_task_handle_t timed_task,
                                          void *user_data) {
+    ARG_UNUSED(context_handle);
     ARG_UNUSED(timed_task);
     ARG_UNUSED(user_data);
 
-    /* Publish the telemetry. */
-    uint8_t *msg = NULL;
-    size_t size = 0;
-    ESP_ERROR_CHECK(mqtt_config->handle_publish_telemetry(context, &msg, &size));
-    if (msg != NULL) {
-        ESP_LOGI(TAG, "Publishing topic: '%s' with message:\n%.*s", publish_topic_event, size, msg);
-        iotc_publish_data(context_handle, publish_topic_event, msg, size, mqtt_qos, /* callback= */ NULL,
-                /* user_data= */ NULL);
-        SAFE_FREE(msg);
-    }
-
-    /* Now try to publish the state if available. */
-    ESP_ERROR_CHECK(mqtt_config->handle_publish_state(context, &msg, &size));
-    if (msg != NULL) {
-        ESP_LOGI(TAG, "Publishing topic: '%s' with message:\n%.*s", publish_topic_state, size, msg);
-        iotc_publish_data(context_handle, publish_topic_state, msg, size, mqtt_qos, /* callback= */ NULL,
-                /* user_data= */ NULL);
-        SAFE_FREE(msg);
-    }
+    ESP_ERROR_CHECK(mqtt_config->handle_publish_telemetry(context));
 }
 
 /* Generate the client authentication JWT, which will serve as the MQTT password. */
