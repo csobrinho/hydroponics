@@ -59,14 +59,20 @@ typedef enum _Hydroponics__Output {
    */
   HYDROPONICS__OUTPUT__EXT_GPIO_A_2 = 2,
   HYDROPONICS__OUTPUT__EXT_GPIO_A_3 = 3,
+  /*
+   * Tank B Mixer.
+   */
   HYDROPONICS__OUTPUT__EXT_GPIO_A_4 = 4,
+  /*
+   * Tank B Water Intake.
+   */
   HYDROPONICS__OUTPUT__EXT_GPIO_A_5 = 5,
   /*
-   * Water Intake.
+   * Tank A Water Intake.
    */
   HYDROPONICS__OUTPUT__EXT_GPIO_A_6 = 6,
   /*
-   * Mixer.
+   * Tank A Mixer.
    */
   HYDROPONICS__OUTPUT__EXT_GPIO_A_7 = 7,
   /*
