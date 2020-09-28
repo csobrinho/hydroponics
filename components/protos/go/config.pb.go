@@ -36,11 +36,13 @@ const (
 	// Nutrients.
 	Output_EXT_GPIO_A_2 Output = 2
 	Output_EXT_GPIO_A_3 Output = 3
+	// Tank B Mixer.
 	Output_EXT_GPIO_A_4 Output = 4
+	// Tank B Water Intake.
 	Output_EXT_GPIO_A_5 Output = 5
-	// Water Intake.
+	// Tank A Water Intake.
 	Output_EXT_GPIO_A_6 Output = 6
-	// Mixer.
+	// Tank A Mixer.
 	Output_EXT_GPIO_A_7 Output = 7
 	// LED.
 	Output_EXT_GPIO_B_0 Output = 8
