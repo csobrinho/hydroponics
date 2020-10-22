@@ -10,11 +10,11 @@ sampling {
 }
 controller: {
   eca: {
-    target: 1500
-    min: 1400
-    max: 1600
-    min_graph: 1250
-    max_graph: 1750
+    target: 1300
+    min: 1100
+    max: 1400
+    min_graph: 1150
+    max_graph: 1550
     pid: {
       sampling: 20
       p: 1.0
@@ -26,8 +26,8 @@ controller: {
     target: 6.3
     min: 6.15
     max: 6.45
-    min_graph: 5.8
-    max_graph: 6.8
+    min_graph: 5.6
+    max_graph: 7.0
     pid: {
       sampling: 20
       p: 1.0
@@ -36,11 +36,11 @@ controller: {
     }
   }
   ecb: {
-    target: 1600
-    min: 1500
-    max: 1700
-    min_graph: 1450
-    max_graph: 1950
+    target: 1200
+    min: 1000
+    max: 1300
+    min_graph: 1050
+    max_graph: 1450
     pid: {
       sampling: 20
       p: 1.0
@@ -49,11 +49,11 @@ controller: {
     }
   }
   phb: {
-    target: 6.0
-    min: 5.85
-    max: 6.15
-    min_graph: 5.8
-    max_graph: 6.8
+    target: 5.9
+    min: 5.75
+    max: 6.05
+    min_graph: 5.2
+    max_graph: 6.6
     pid: {
       sampling: 20
       p: 1.0
