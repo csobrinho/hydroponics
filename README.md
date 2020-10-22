@@ -52,34 +52,13 @@ gcloud iot devices create GreenMeanMachine \
  --log-level=debug
 
 # Cloud functions.
-gcloud beta functions deploy bigquery \
+gcloud beta functions deploy pubsub \
  --region ${REGION} \
- --source cloud/functions/bigquery \
- --entry-point BigqueryPubSub \
- --set-env-vars=DATASET=${DATASET},TABLE=${TABLE_TELEMETRY} \
+ --source cloud/functions/pubsub \
+ --entry-point HandlePubSub \
+ --set-env-vars=DATASET=${DATASET},TABLE=${TABLE_TELEMETRY},IGNORE_SUFFIX="-test" \
  --trigger-topic ${EVENT_TOPIC} \
  --ingress-settings internal-only \
  --max-instances 1 \
  --runtime go113 \
  --memory 128mb
-
-gcloud beta functions deploy firestore \
- --region ${REGION} \
- --source cloud/functions/firestore \
- --entry-point FirestorePubSub \
- --trigger-topic ${EVENT_TOPIC} \
- --ingress-settings internal-only \
- --max-instances 1 \
- --runtime go113 \
- --memory 128mb
-
-gcloud beta functions deploy firestore_state \
- --region ${REGION} \
- --source cloud/functions/firestore \
- --entry-point FirestorePubSub \
- --trigger-topic ${EVENT_STATE} \
- --ingress-settings internal-only \
- --max-instances 1 \
- --runtime go113 \
- --memory 128mb
-```
