@@ -1,7 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Flash and Run" type="elmot.embedded.openocd.conf.type" factoryName="elmot.embedded.openocd.conf.factory" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="hydroponics" TARGET_NAME="app" CONFIG_NAME="Default (ESP32-S2)" RUN_TARGET_PROJECT_NAME="hydroponics" RUN_TARGET_NAME="hydroponics.elf" gdb_port="3333" telnet_port="4444" board_config="$PROJECT_DIR$/openocd/board.cfg" interface_config="$PROJECT_DIR$/openocd/interface.cfg" download_type="ALWAYS" halt_on_reset="false" flush_regs="true" break="true" break_function="app_main">
-    <method v="2">
-      <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-    </method>
-  </configuration>
-</component>
