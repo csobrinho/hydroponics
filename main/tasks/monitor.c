@@ -13,8 +13,8 @@
 #include "network/state.h"
 #include "utils.h"
 
-#define MONITOR_CRON_MEMORY "*/20 * * * * *"  // Once every 20s.
-#define MONITOR_CRON_TASKS  "0 * * * * *"     // Once every minutes.
+#define MONITOR_CRON_MEMORY "0 * * * * * *" // Once every minute.
+#define MONITOR_CRON_TASKS  "0 */2 * * * *" // Once every 2 minutes.
 
 static const char *const TAG = "monitor";
 static const uint8_t STATES[] = {'R', '*', 'B', 'S', 'D', '?'};
