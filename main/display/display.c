@@ -99,7 +99,7 @@ static void display_task(void *arg) {
     u8g2_esp32_hal_t u8g2_esp32_hal = U8G2_ESP32_HAL_DEFAULT;
     u8g2_esp32_hal.sda = I2C_MASTER_SDA;
     u8g2_esp32_hal.scl = I2C_MASTER_SCL;
-    u8g2_esp32_hal.reset = LCD_RST;     // The reset is done by the lcd module.
+    u8g2_esp32_hal.reset = U8G2_ESP32_HAL_UNDEFINED; // The reset is done by the buses module.
     u8g2_esp32_hal_init(u8g2_esp32_hal);
 
     u8g2_Setup_ssd1306_i2c_128x32_univision_f(

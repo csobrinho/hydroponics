@@ -7,6 +7,23 @@
 
 static const char *TAG = "buses";
 
+static void buses_reset(void) {
+    gpio_config_t config = {
+            .pin_bit_mask = BIT64(LCD_RST),
+            .mode = GPIO_MODE_OUTPUT,
+            .pull_up_en = GPIO_PULLUP_DISABLE,
+            .pull_down_en = GPIO_PULLDOWN_DISABLE,
+            .intr_type = GPIO_INTR_DISABLE,
+    };
+    ESP_ERROR_CHECK(gpio_config(&config));
+    ESP_ERROR_CHECK(gpio_set_level(LCD_RST, true));
+    safe_delay_ms(100);
+    ESP_ERROR_CHECK(gpio_set_level(LCD_RST, false));
+    safe_delay_ms(100);
+    ESP_ERROR_CHECK(gpio_set_level(LCD_RST, true));
+    safe_delay_ms(100);
+}
+
 static void buses_i2c_unstuck(void) {
     gpio_config_t config = {
             .pin_bit_mask = BIT64(I2C_MASTER_SDA) | BIT64(I2C_MASTER_SCL),
@@ -41,6 +58,7 @@ static void buses_i2c_unstuck(void) {
 }
 
 void buses_init(void) {
+    buses_reset();
     buses_i2c_unstuck();
 
     i2c_config_t conf;
