@@ -158,6 +158,8 @@ esp_err_t state_push_output(size_t size, const size_t *buckets, const Hydroponic
         state_output[i].output = (Hydroponics__Output *) outputs;
         state_output[i].state = output_states[i];
         outputs += buckets[i];
+
+        pstate_output[i] = &state_output[i];
     }
 
     Hydroponics__StateOutputs state_outputs = HYDROPONICS__STATE_OUTPUTS__INIT;
