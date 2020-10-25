@@ -10,7 +10,7 @@ REGION=us-central1
 DATASET=dataset
 TABLE_TELEMETRY=telemetry
 EVENT_TOPIC=telemetry
-EVENT_STATE=state
+STATE_TOPIC=state
 
 gcloud config set project ${PROJECT}
 
@@ -22,8 +22,8 @@ gcloud services enable dataflow.googleapis.com
 # Create the PubSub topic and subscription:
 gcloud pubsub topics create ${EVENT_TOPIC}
 gcloud pubsub subscriptions create ${EVENT_TOPIC}-sub --topic=${EVENT_TOPIC} --expiration-period=never --message-retention-duration=10m
-gcloud pubsub topics create ${EVENT_STATE}
-gcloud pubsub subscriptions create ${EVENT_STATE}-sub --topic=${EVENT_STATE} --expiration-period=never --message-retention-duration=10m
+gcloud pubsub topics create ${STATE_TOPIC}
+gcloud pubsub subscriptions create ${STATE_TOPIC}-sub --topic=${STATE_TOPIC} --expiration-period=never --message-retention-duration=10m
 
 # IAM
 gcloud projects add-iam-policy-binding ${PROJECT} --member=serviceAccount:cloud-iot@system.gserviceaccount.com --role=roles/pubsub.publisher
@@ -56,8 +56,19 @@ gcloud beta functions deploy pubsub \
  --region ${REGION} \
  --source cloud/functions/pubsub \
  --entry-point HandlePubSub \
- --set-env-vars=DATASET=${DATASET},TABLE=${TABLE_TELEMETRY},IGNORE_SUFFIX="-test" \
  --trigger-topic ${EVENT_TOPIC} \
+ --set-env-vars=DATASET=${DATASET},TABLE=${TABLE_TELEMETRY},IGNORE_SUFFIX="-test" \
+ --ingress-settings internal-only \
+ --max-instances 1 \
+ --runtime go113 \
+ --memory 128mb
+
+gcloud beta functions deploy pubsub-state \
+ --region ${REGION} \
+ --source cloud/functions/pubsub \
+ --entry-point HandlePubSub \
+ --trigger-topic ${STATE_TOPIC} \
+ --set-env-vars=DATASET=${DATASET},TABLE=${TABLE_TELEMETRY},IGNORE_SUFFIX="-test" \
  --ingress-settings internal-only \
  --max-instances 1 \
  --runtime go113 \

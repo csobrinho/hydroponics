@@ -64,19 +64,19 @@ var tableName = os.Getenv("TABLE")
 var ignoreSuffix = os.Getenv("IGNORE_SUFFIX")
 
 func getSuffix(s *pb.State) (string, error) {
-	t := reflect.TypeOf(s).Elem()
-	if !strings.HasPrefix(t.Elem().Name(), "State_") {
+	t := reflect.TypeOf(s.State).Elem()
+	if !strings.HasPrefix(t.Name(), "State_") {
 		return "", fmt.Errorf("state has unexpected type %T", s)
 	}
-	return strings.SplitN(t.Elem().Name(), "_", 2)[1], nil
+	return strings.SplitN(t.Name(), "_", 2)[1], nil
 }
 
 func handleState(ctx context.Context, s *pb.State, m pubSubMessage, meta *metadata.Metadata, client *firestore.Client) error {
 	suffix, err := getSuffix(s)
+	log.Printf("state %s: %+v", suffix, s)
 	if err != nil {
 		return err
 	}
-	log.Printf("state %s: %+v\n", suffix, s)
 	doc := client.Doc(fmt.Sprintf("devices/%s/state/%s", m.Attributes.DeviceId, strings.ToLower(suffix)))
 	data := map[string]interface{}{
 		"timestamp": meta.Timestamp,
@@ -87,7 +87,7 @@ func handleState(ctx context.Context, s *pb.State, m pubSubMessage, meta *metada
 }
 
 func handleStateTelemetry(ctx context.Context, tpb *pb.StateTelemetry, m pubSubMessage, meta *metadata.Metadata, client *firestore.Client) error {
-	log.Printf("State_Telemetry: %+v\n", tpb)
+	log.Printf("State_Telemetry: %+v", tpb)
 	e := &event{
 		DeviceId:   m.Attributes.DeviceId,
 		Timestamp:  meta.Timestamp,
@@ -102,28 +102,38 @@ func handleStateTelemetry(ctx context.Context, tpb *pb.StateTelemetry, m pubSubM
 		TankaValue: float64(tpb.TankA),
 		TankbValue: float64(tpb.TankB),
 	}
-	log.Printf("telemetry: %+v\n", e)
-
-	status := make(chan error, 2)
-	defer close(status)
 
 	var wg sync.WaitGroup
-	wg.Add(2)
+	status := make(chan error, 2)
+	finished := make(chan bool, 1)
+	defer close(status)
 
-	go func(c chan<- error) {
+	wg.Add(1)
+	go func() {
 		defer wg.Done()
-		c <- handleStateTelemetryFirestore(ctx, e, client)
-	}(status)
-	go func(c chan<- error) {
-		defer wg.Done()
-		c <- handleStateTelemetryBigQuery(ctx, e, m.Attributes.ProjectId)
-	}(status)
-
-	wg.Wait()
-	for err := range status {
-		if err != nil {
-			return err
+		if err := handleStateTelemetryFirestore(ctx, e, client); err != nil {
+			status <- err
 		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := handleStateTelemetryBigQuery(ctx, e, m.Attributes.ProjectId); err != nil {
+			status <- err
+		}
+	}()
+
+	// Wait for all to complete in a go routine to avoid a deadlock.
+	go func() {
+		wg.Wait()
+		close(finished)
+	}()
+
+	select {
+	case <-finished:
+	case err := <-status:
+		return err
 	}
 	return nil
 }
@@ -131,6 +141,7 @@ func handleStateTelemetry(ctx context.Context, tpb *pb.StateTelemetry, m pubSubM
 func handleStateTelemetryFirestore(ctx context.Context, e *event, client *firestore.Client) error {
 	doc := client.Doc(fmt.Sprintf("devices/%s/telemetry/%d", e.DeviceId, e.Timestamp.Unix()))
 	_, err := doc.Create(ctx, e)
+	log.Printf("handleStateTelemetryFirestore err: %v", err)
 	return err
 }
 
@@ -146,7 +157,9 @@ func handleStateTelemetryBigQuery(ctx context.Context, e *event, projectId strin
 	}()
 
 	ins := client.Dataset(datasetName).Table(tableName).Inserter()
-	if err := ins.Put(ctx, e); err != nil {
+	err = ins.Put(ctx, e)
+	log.Printf("handleStateTelemetryBigQuery err: %v", err)
+	if err != nil {
 		if pmErr, ok := err.(bigquery.PutMultiError); ok {
 			for _, rowInsertionError := range pmErr {
 				log.Println(rowInsertionError.Errors)
