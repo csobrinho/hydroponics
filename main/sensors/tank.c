@@ -46,7 +46,13 @@ static struct {
                         //                      x^3                  x^2               x               b
                         .regression = {0.000000000654032205, -0.000005018729145, 0.02677225375, 44.07862253},
                 },
-                {0},
+                {
+                        .name = "Tank B",
+                        .device_mux = ADS1115_MUX_2_3,
+                        // From https://docs.google.com/spreadsheets/d/1LZo2zjm7wT2C7UeA40zMUXK-daBry_TDRjhAEd-a5a8/view
+                        //                      x^3                  x^2               x               b
+                        .regression = {0.000000000654032205, -0.000005018729145, 0.02677225375, 44.07862253},
+                },
         },
 };
 
