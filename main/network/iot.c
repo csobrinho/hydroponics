@@ -38,7 +38,7 @@ typedef struct {
 } while(0)
 
 static const char *const TAG = "iot";
-static RingbufHandle_t ring;
+static RingbufHandle_t ring = NULL;
 
 static esp_err_t iot_handle_command(context_t *context, const uint8_t *command, size_t size) {
     ARG_UNUSED(context);
