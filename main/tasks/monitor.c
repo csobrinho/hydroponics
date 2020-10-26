@@ -13,7 +13,7 @@
 #include "network/state.h"
 #include "utils.h"
 
-#define MONITOR_CRON_MEMORY "0 * * * * * *" // Once every minute.
+#define MONITOR_CRON_MEMORY "0 * * * * *"   // Once every minute.
 #define MONITOR_CRON_TASKS  "0 */2 * * * *" // Once every 2 minutes.
 
 static const char *const TAG = "monitor";
