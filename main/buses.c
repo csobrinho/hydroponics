@@ -9,18 +9,18 @@ static const char *TAG = "buses";
 
 static void buses_reset(void) {
     gpio_config_t config = {
-            .pin_bit_mask = BIT64(LCD_RST),
+            .pin_bit_mask = BIT64(N_RESET_GPIO),
             .mode = GPIO_MODE_OUTPUT,
             .pull_up_en = GPIO_PULLUP_DISABLE,
             .pull_down_en = GPIO_PULLDOWN_DISABLE,
             .intr_type = GPIO_INTR_DISABLE,
     };
     ESP_ERROR_CHECK(gpio_config(&config));
-    ESP_ERROR_CHECK(gpio_set_level(LCD_RST, true));
+    ESP_ERROR_CHECK(gpio_set_level(N_RESET_GPIO, true));
     safe_delay_ms(100);
-    ESP_ERROR_CHECK(gpio_set_level(LCD_RST, false));
+    ESP_ERROR_CHECK(gpio_set_level(N_RESET_GPIO, false));
     safe_delay_ms(100);
-    ESP_ERROR_CHECK(gpio_set_level(LCD_RST, true));
+    ESP_ERROR_CHECK(gpio_set_level(N_RESET_GPIO, true));
     safe_delay_ms(100);
 }
 

@@ -25,7 +25,7 @@ typedef enum {
 #else
 #define I2C_MASTER_SDA  GPIO_NUM_14
 #endif
-#define OLED_RESET      GPIO_NUM_16
+#define N_RESET_GPIO    GPIO_NUM_16
 #define ONE_WRITE_GPIO  CONFIG_ESP_ONE_WIRE_GPIO
 #define ROTARY_DT_GPIO  GPIO_NUM_37
 #define ROTARY_CLK_GPIO GPIO_NUM_36
@@ -39,7 +39,7 @@ typedef enum {
 #define LCD_WS    GPIO_NUM_17
 #define LCD_RS    GPIO_NUM_12
 #define LCD_RD    GPIO_NUM_NC
-#define LCD_RST   OLED_RESET
+#define LCD_RST   N_RESET_GPIO
 #else
 #define LCD_DATA  { GPIO_NUM_2, GPIO_NUM_1, GPIO_NUM_8, GPIO_NUM_7, GPIO_NUM_6, GPIO_NUM_5, GPIO_NUM_4, GPIO_NUM_3 }
 #define LCD_CONTROL_HIGH
