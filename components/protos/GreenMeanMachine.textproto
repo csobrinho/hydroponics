@@ -85,12 +85,12 @@ task: {
   output: EXT_GPIO_B_0
   cron: {
     state: ON,
-    # On 1s every 10s.
-    expression: "0/10 * * * * *"
+    # On 1s every 20s.
+    expression: "0/20 * * * * *"
   }
   cron: {
     state: OFF,
-    expression: "1/10 * * * * *"
+    expression: "1/20 * * * * *"
   }
 }
 task: {
