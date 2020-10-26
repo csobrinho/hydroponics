@@ -38,6 +38,7 @@ void app_main() {
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     ESP_ERROR_CHECK(config_init(context));
     ESP_ERROR_CHECK(cron_init(context));
+    ESP_ERROR_CHECK(iot_init(context));
     ESP_ERROR_CHECK(ext_gpio_init());
     ESP_ERROR_CHECK(tuya_io_init(context));
     ESP_ERROR_CHECK(io_init(context));
@@ -53,7 +54,6 @@ void app_main() {
     ESP_ERROR_CHECK(tank_init(context));
     ESP_ERROR_CHECK(wifi_init(context, context->config.ssid, context->config.password));
     ESP_ERROR_CHECK(ntp_init(context));
-    ESP_ERROR_CHECK(iot_init(context));
     ESP_ERROR_CHECK(monitor_init(context));
     ESP_ERROR_CHECK(console_init());
 }
