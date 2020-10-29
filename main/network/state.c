@@ -177,7 +177,7 @@ esp_err_t state_push_output(size_t size, const size_t *buckets, const Hydroponic
     msg.state = &pstate;
 
     ESP_LOGW(TAG, "Created output state: 0x%p", &msg);
-    ESP_ERROR_CHECK(iot_publish_state(&msg));
+    // FIXME: ESP_ERROR_CHECK(iot_publish_state(&msg));
 
     return ESP_OK;
 }
