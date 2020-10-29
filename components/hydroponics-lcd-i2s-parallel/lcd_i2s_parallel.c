@@ -12,9 +12,9 @@ static const char *TAG = "lcd_i2s_p";
 
 esp_err_t lcd_driver_init(lcd_dev_t *dev) {
     ARG_CHECK(dev != NULL, ERR_PARAM_NULL);
-    ARG_CHECK(dev->config.data_width == 8, "data_width must be 8");
-    ARG_CHECK(dev->config.ws_io_num != GPIO_NUM_NC, "ws_io_num is GPIO_NUM_NC");
-    ARG_CHECK(dev->config.rs_io_num != GPIO_NUM_NC, "rs_io_num is GPIO_NUM_NC");
+    ARG_CHECK(dev->config.parallel.data_width == 8, "data_width must be 8");
+    ARG_CHECK(dev->config.parallel.ws_io_num != GPIO_NUM_NC, "ws_io_num is GPIO_NUM_NC");
+    ARG_CHECK(dev->config.parallel.rs_io_num != GPIO_NUM_NC, "rs_io_num is GPIO_NUM_NC");
 
     // No need for any buffer.
     dev->buffer_len = 0;
@@ -28,12 +28,12 @@ esp_err_t lcd_driver_init(lcd_dev_t *dev) {
         gpio_pad_select_gpio(dev->config.rst_io_num);
         mask |= BIT64(dev->config.rst_io_num);
     }
-    if (dev->config.rd_io_num != GPIO_NUM_NC) {
-        gpio_pad_select_gpio(dev->config.rd_io_num);
-        mask |= BIT64(dev->config.rd_io_num);
+    if (dev->config.parallel.rd_io_num != GPIO_NUM_NC) {
+        gpio_pad_select_gpio(dev->config.parallel.rd_io_num);
+        mask |= BIT64(dev->config.parallel.rd_io_num);
     }
-    gpio_pad_select_gpio(dev->config.rs_io_num);
-    mask |= BIT64(dev->config.rs_io_num);
+    gpio_pad_select_gpio(dev->config.parallel.rs_io_num);
+    mask |= BIT64(dev->config.parallel.rs_io_num);
     const gpio_config_t conf = {
             .pin_bit_mask = mask,
             .mode = GPIO_MODE_OUTPUT,
@@ -44,12 +44,13 @@ esp_err_t lcd_driver_init(lcd_dev_t *dev) {
     ESP_ERROR_CHECK(gpio_config(&conf));
 
     i2s_parallel_pin_config_t *lcd_conf = calloc(1, sizeof(i2s_parallel_pin_config_t));
-    lcd_conf->bit_width = dev->config.data_width;
+    lcd_conf->bit_width = dev->config.parallel.data_width;
     for (int i = 0; i < lcd_conf->bit_width; ++i) {
-        ARG_CHECK(dev->config.data_io_num[i] != GPIO_NUM_NC, "dev->config.data_io_num is GPIO_NUM_NC");
-        lcd_conf->data[i] = dev->config.data_io_num[i];
+        ARG_CHECK(dev->config.parallel.data_io_num[i] != GPIO_NUM_NC,
+                  "dev->config.parallel.data_io_num is GPIO_NUM_NC");
+        lcd_conf->data[i] = dev->config.parallel.data_io_num[i];
     }
-    lcd_conf->pin_clk = dev->config.ws_io_num;
+    lcd_conf->pin_clk = dev->config.parallel.ws_io_num;
     i2s_parallel_init(lcd_conf, 2);
     return ESP_OK;
 }

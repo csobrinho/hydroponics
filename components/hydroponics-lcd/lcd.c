@@ -24,17 +24,19 @@ esp_err_t lcd_init(lcd_dev_t *dev) {
 
 esp_err_t lcd_reset(const lcd_dev_t *dev) {
     ARG_CHECK(dev != NULL, ERR_PARAM_NULL);
-    if (dev->config.rd_io_num != GPIO_NUM_NC) {
-        RD_IDLE(dev);
-    }
-    WR_IDLE(dev);
-    if (dev->config.rst_io_num != GPIO_NUM_NC) {
-        RESET_IDLE(dev);
-        safe_delay_ms(50);
-        RESET_ACTIVE(dev);
-        safe_delay_ms(100);
-        RESET_IDLE(dev);
-        safe_delay_ms(100);
+    if (dev->config.type == LCD_TYPE_PARALLEL) {
+        if (dev->config.parallel.rd_io_num != GPIO_NUM_NC) {
+            RD_IDLE(dev);
+        }
+        WR_IDLE(dev);
+        if (dev->config.rst_io_num != GPIO_NUM_NC) {
+            RESET_IDLE(dev);
+            safe_delay_ms(50);
+            RESET_ACTIVE(dev);
+            safe_delay_ms(100);
+            RESET_IDLE(dev);
+            safe_delay_ms(100);
+        }
     }
     return ESP_OK;
 }

@@ -2,6 +2,7 @@
 #define HYDROPONICS_DRIVER_LCD_LCD_H
 
 #include "driver/gpio.h"
+#include "driver/spi_master.h"
 
 #include "esp_log.h"
 
@@ -9,15 +10,15 @@
 #define WR_IDLE(d)      GPIO.out_w1ts = (1 << d->config.ws_io_num)
 #define WR_ACTIVE(d)    GPIO.out_w1tc = (1 << d->config.ws_io_num)
 #else
-#define WR_IDLE(d)      GPIO.out1_w1ts.data = (1 << (d->config.ws_io_num - 32))
-#define WR_ACTIVE(d)    GPIO.out1_w1tc.data = (1 << (d->config.ws_io_num - 32))
+#define WR_IDLE(d)      GPIO.out1_w1ts.data = (1 << (d->config.parallel.ws_io_num - 32))
+#define WR_ACTIVE(d)    GPIO.out1_w1tc.data = (1 << (d->config.parallel.ws_io_num - 32))
 #endif
 #define WR_STROBE(d)    WR_ACTIVE(d); WR_IDLE(d)
-#define RD_IDLE(d)      gpio_set_level(d->config.rd_io_num, 1)
-#define RD_ACTIVE(d)    gpio_set_level(d->config.rd_io_num, 0)
+#define RD_IDLE(d)      gpio_set_level(d->config.parallel.rd_io_num, 1)
+#define RD_ACTIVE(d)    gpio_set_level(d->config.parallel.rd_io_num, 0)
 #define RD_STROBE(d)    RD_IDLE(d); RD_ACTIVE(d); RD_ACTIVE(d); RD_ACTIVE(d)
-#define CD_DATA(d)      gpio_set_level(d->config.rs_io_num, 1)
-#define CD_COMMAND(d)   gpio_set_level(d->config.rs_io_num, 0)
+#define CD_DATA(d)      gpio_set_level(d->config.parallel.rs_io_num, 1)
+#define CD_COMMAND(d)   gpio_set_level(d->config.parallel.rs_io_num, 0)
 #define RESET_IDLE(d)   gpio_set_level(d->config.rst_io_num, 1)
 #define RESET_ACTIVE(d) gpio_set_level(d->config.rst_io_num, 0)
 
@@ -35,13 +36,26 @@ typedef enum {
     ROTATION_LANDSCAPE_MAX,
 } rotation_t;
 
-typedef const struct {
-    size_t screen;              /*!< Screen size in bytes necessary to refresh a full frame */
+typedef enum {
+    LCD_TYPE_PARALLEL = 0,
+    LCD_TYPE_SPI = 1,
+} lcd_type_t;
+
+typedef struct {
     gpio_num_t data_width;      /*!< Parallel data width, 16bit or 8bit available */
     gpio_num_t data_io_num[16]; /*!< Parallel data output IO*/
     gpio_num_t ws_io_num;       /*!< write clk io */
     gpio_num_t rs_io_num;       /*!< rs io num */
     gpio_num_t rd_io_num;       /*!< (optional) rd io num */
+} lcd_parallel_config_t;
+
+typedef const struct {
+    lcd_type_t type;            /*!< Screen type: parallel or spi. */
+    size_t screen;              /*!< Screen size in bytes necessary to refresh a full frame */
+    union {
+        lcd_parallel_config_t parallel;
+        spi_device_interface_config_t spi;
+    };
     gpio_num_t rst_io_num;      /*!< (optional) reset io num */
     rotation_t rotation;        /*!< Initial rotation */
 } lcd_config_t;

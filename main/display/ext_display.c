@@ -18,13 +18,16 @@ static ucg_t ucg = {0};
 static lcd_dev_t dev = {
         .id = RM68090_ID,
         .config = {
+                .type = LCD_TYPE_PARALLEL,
                 .screen = RM68090_MAX_WIDTH * RM68090_MAX_HEIGHT * 2,
                 .rotation = ROTATION_PORTRAIT,
-                .data_width = 8,
-                .data_io_num = LCD_DATA,
-                .ws_io_num = LCD_WS,
-                .rs_io_num = LCD_RS,
-                .rd_io_num = LCD_RD,
+                .parallel = {
+                        .data_width = 8,
+                        .data_io_num = LCD_DATA,
+                        .ws_io_num = LCD_WS,
+                        .rs_io_num = LCD_RS,
+                        .rd_io_num = LCD_RD,
+                },
                 .rst_io_num = LCD_RST,
         },
         .device = {
