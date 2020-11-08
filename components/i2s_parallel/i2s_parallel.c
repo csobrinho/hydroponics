@@ -186,6 +186,6 @@ void i2s_parallel_write_data16n(uint16_t data, size_t len) {
 
     // Flip the high/low bytes.
     data = (data >> 8) | ((data & 0xFF) << 8);
-    lcd_buf_fill(i2s_parallel_buffer, data, to_fill);
+    lcd_buf_fill((uint16_t *) i2s_parallel_buffer, data, to_fill);
     i2s_parallel_dma_write(i2s_parallel_buffer, len, BUFFER_POLICY_REUSE);
 }

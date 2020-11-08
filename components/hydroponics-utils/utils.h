@@ -21,6 +21,8 @@ uint16_t clamp(uint16_t value, uint16_t min, uint16_t max);
 
 size_t round_up(size_t len, uint16_t block_size);
 
+size_t round_divide(size_t len, size_t block_size);
+
 esp_err_t aes128_decrypt(const uint8_t *src, size_t src_len, uint8_t *dst, size_t dst_len,
                          const uint8_t key[AES128_BLOCK_SIZE]);
 

@@ -14,7 +14,7 @@
 #define DEFAULT_I2S_NUM I2S_NUM_1
 #define HANDLE(d) ((i2s_lcd_handle_t)(d->handle))
 
-static const char *TAG = "lcd_i2s";
+static const char *const TAG = "lcd_i2s";
 
 esp_err_t lcd_driver_init(lcd_dev_t *dev) {
     ARG_CHECK(dev != NULL, ERR_PARAM_NULL);
@@ -85,10 +85,10 @@ void lcd_driver_write_data16n(const lcd_dev_t *dev, uint16_t data, size_t len) {
     while (len > 0) {
         size_t to_write = len >= dev->buffer_len ? dev->buffer_len : len;
         if (!filled) {
-            lcd_buf_fill((uint8_t *) dev->buffer, data, to_write);
+            lcd_buf_fill(dev->buffer, data, to_write);
             filled = true;
         }
-        LLOG(TAG, "  remaining %d bytes", size_remain);
+        LLOG(TAG, "  remaining %d bytes", len);
         lcd_write_datan(dev, dev->buffer, to_write);
         len -= to_write;
     }

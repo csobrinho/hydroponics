@@ -32,6 +32,10 @@ size_t round_up(size_t len, uint16_t block_size) {
     return ((len + block_size - 1) & (-block_size));
 }
 
+size_t round_divide(size_t len, size_t block_size) {
+    return len / block_size + (len % block_size ? 1 : 0);
+}
+
 static esp_err_t aes128(int mode, const uint8_t *src, size_t src_len, uint8_t *dst, size_t dst_len,
                         const uint8_t key[AES128_BLOCK_SIZE]) {
     ARG_CHECK(src != NULL, ERR_PARAM_NULL);

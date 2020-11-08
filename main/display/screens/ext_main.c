@@ -68,7 +68,7 @@ static bool refresh = true;
 static button_handle_t button_handle;
 static lerp_t mxb[VALUE_MAX] = {0};
 
-static const char *TAG = "ext_main";
+static const char *const TAG = "ext_main";
 
 static void lerp(lerp_t *s, float x1, float x2, float y1, float y2, const char *fmt) {
     s->min = x1;
@@ -272,9 +272,11 @@ esp_err_t ext_main_init(context_t *context, lcd_dev_t *dev, ucg_t *ucg) {
 
     TAILQ_INIT(&head);
 
+#ifdef CONFIG_IDF_TARGET_ESP32
     button_handle = iot_button_create(LCD_BUTTON_GPIO, BUTTON_ACTIVE_LOW);
     CHECK_NO_MEM(button_handle);
     ESP_ERROR_CHECK(iot_button_set_evt_cb(button_handle, BUTTON_CB_TAP, button_callback, NULL));
+#endif
 
     const Hydroponics__Config *config;
     ESP_ERROR_CHECK(context_get_config(context, &config));

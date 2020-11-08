@@ -8,107 +8,69 @@
 #include "lcd_driver.h"
 #include "utils.h"
 
-static const char *TAG = "lcd";
+static const char *const TAG = "lcd";
+
+static esp_err_t lcd_init_gpio(lcd_dev_t *dev) {
+    if (dev->config.led_io_num != GPIO_NUM_NC) {
+        gpio_config_t conf = {
+                .pin_bit_mask = BIT64(dev->config.led_io_num),
+                .mode = GPIO_MODE_OUTPUT,
+                .pull_up_en = GPIO_PULLUP_DISABLE,
+                .pull_down_en = GPIO_PULLDOWN_DISABLE,
+                .intr_type = GPIO_INTR_DISABLE,
+        };
+        ESP_ERROR_CHECK(gpio_config(&conf));
+    }
+    return ESP_OK;
+}
 
 esp_err_t lcd_init(lcd_dev_t *dev) {
     ARG_CHECK(dev != NULL, ERR_PARAM_NULL);
     dev->rotation = ROTATION_UNKNOWN;
 
-    ESP_ERROR_CHECK(lcd_driver_init(dev));
-    ESP_ERROR_CHECK(lcd_reset(dev));
-    ESP_ERROR_CHECK(dev->device.init(dev));
+    ESP_ERROR_CHECK(dev->device->comm->init(dev));
+    ESP_ERROR_CHECK(dev->device->init(dev));
+    lcd_set_rotation(dev, dev->config.rotation);
     lcd_clear(dev, LCD_COLOR_BLACK);
 
+    ESP_ERROR_CHECK(lcd_init_gpio(dev));
+    ESP_ERROR_CHECK(lcd_set_backlight(dev, true));
+
     return ESP_OK;
-}
-
-esp_err_t lcd_reset(const lcd_dev_t *dev) {
-    ARG_CHECK(dev != NULL, ERR_PARAM_NULL);
-    if (dev->config.type == LCD_TYPE_PARALLEL) {
-        if (dev->config.parallel.rd_io_num != GPIO_NUM_NC) {
-            RD_IDLE(dev);
-        }
-        WR_IDLE(dev);
-        if (dev->config.rst_io_num != GPIO_NUM_NC) {
-            RESET_IDLE(dev);
-            safe_delay_ms(50);
-            RESET_ACTIVE(dev);
-            safe_delay_ms(100);
-            RESET_IDLE(dev);
-            safe_delay_ms(100);
-        }
-    }
-    return ESP_OK;
-}
-
-esp_err_t lcd_init_registers(const lcd_dev_t *dev, const uint16_t *table, size_t size) {
-    ARG_CHECK(dev != NULL, ERR_PARAM_NULL);
-    ARG_CHECK(table != NULL, ERR_PARAM_NULL);
-    ARG_CHECK(size > 0, ERR_PARAM_LE_ZERO);
-    LLOG(TAG, "[%s] count: %d", __FUNCTION__, (int) (size / sizeof(uint16_t)));
-
-    while (size > 0) {
-        uint16_t cmd = *table++;
-        uint16_t d = *table++;
-        if (cmd == LCD_CMD_DELAY)
-            safe_delay_ms(d);
-        else {
-            lcd_write_reg(dev, cmd, d);
-        }
-        size -= 2 * sizeof(int16_t);
-    }
-    return ESP_OK;
-}
-
-inline void lcd_write_data16(const lcd_dev_t *dev, uint16_t data) {
-    lcd_driver_write_data16(dev, data);
-}
-
-inline void lcd_write_data16n(const lcd_dev_t *dev, uint16_t data, size_t len) {
-    lcd_driver_write_data16n(dev, data, len);
-}
-
-inline void lcd_write_datan(const lcd_dev_t *dev, const uint16_t *buf, size_t len) {
-    lcd_driver_write_datan(dev, buf, len);
-}
-
-inline void lcd_write_cmd(const lcd_dev_t *dev, uint16_t cmd) {
-    CD_COMMAND(dev);
-    lcd_write_data16(dev, cmd);
-    CD_DATA(dev);
-}
-
-inline void lcd_write_reg(const lcd_dev_t *dev, uint16_t cmd, uint16_t data) {
-    LLOG(TAG, "[%s] cmd: 0x%04x data: 0x%04x", __FUNCTION__, cmd, data);
-    lcd_write_cmd(dev, cmd);
-    lcd_write_data16(dev, data);
-}
-
-inline void lcd_clear(lcd_dev_t *dev, uint16_t color) {
-    dev->device.clear(dev, color);
 }
 
 inline void lcd_draw_pixel(lcd_dev_t *dev, uint16_t color, uint16_t x, uint16_t y) {
-    dev->device.draw_pixel(dev, color, x, y);
+    dev->device->draw_pixel(dev, color, x, y);
+}
+
+void lcd_clear(lcd_dev_t *dev, uint16_t color) {
+    LLOG(TAG, "[%s] clear color: 0x%04x", __FUNCTION__, color);
+    dev->device->clear(dev, color);
 }
 
 inline void lcd_fill(lcd_dev_t *dev, uint16_t color, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) {
     LLOG(TAG, "[%s] color: 0x%04x (%d, %d) -> (%d, %d)", __FUNCTION__, color, x1, y1, x2, y2);
-    dev->device.fill(dev, color, x1, y1, x2, y2);
+    dev->device->fill(dev, color, x1, y1, x2, y2);
 }
 
 inline void lcd_fill_wh(lcd_dev_t *dev, uint16_t color, uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
-    if (width <= 0 || height <= 0) return;
+    if (width <= 0 || height <= 0) {
+        return;
+    }
     lcd_fill(dev, color, x, y, x + width - 1, y + height - 1);
 }
 
 inline void lcd_hline(lcd_dev_t *dev, uint16_t color, uint16_t x, uint16_t y, uint16_t width) {
-    if (width <= 0) return;
+    if (width <= 0) {
+        return;
+    }
     lcd_fill(dev, color, x, y, x + width - 1, y);
 }
 
 inline void lcd_vline(lcd_dev_t *dev, uint16_t color, uint16_t x, uint16_t y, uint16_t height) {
-    if (height <= 0) return;
+    if (height <= 0) {
+        return;
+    }
     lcd_fill(dev, color, x, y, x, y + height - 1);
 }
 
@@ -178,19 +140,27 @@ void lcd_rect(lcd_dev_t *dev, uint16_t color, uint16_t x, uint16_t y, uint16_t w
 }
 
 void lcd_draw(lcd_dev_t *dev, const uint16_t *img, uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
-    dev->device.draw(dev, img, x, y, width, height);
+    dev->device->draw(dev, img, x, y, width, height);
 }
 
 esp_err_t lcd_set_rotation(lcd_dev_t *dev, rotation_t rotation) {
-    return dev->device.set_rotation(dev, rotation);
+    return dev->device->set_rotation(dev, rotation);
 }
 
 esp_err_t lcd_vertical_scroll(lcd_dev_t *dev, int16_t top, int16_t scroll_lines, int16_t offset) {
-    return dev->device.vertical_scroll(dev, top, scroll_lines, offset);
+    return dev->device->vertical_scroll(dev, top, scroll_lines, offset);
 }
 
 esp_err_t lcd_invert_display(lcd_dev_t *dev, bool reverse) {
-    return dev->device.invert_display(dev, reverse);
+    return dev->device->invert_display(dev, reverse);
+}
+
+esp_err_t lcd_set_backlight(lcd_dev_t *dev, bool on) {
+    if (dev->config.led_io_num == GPIO_NUM_NC) {
+        return ESP_OK;
+    }
+    ESP_ERROR_CHECK(gpio_set_level(dev->config.led_io_num, on));
+    return ESP_OK;
 }
 
 inline uint16_t lcd_width(const lcd_dev_t *dev) {
@@ -211,14 +181,54 @@ inline uint16_t lcd_rgb565s(const lcd_rgb_t color) {
     return lcd_rgb565(color.r, color.g, color.b);
 }
 
-void lcd_buf_fill(uint8_t *buf, uint16_t data, size_t len) {
+inline lcd_rgb_t lcd_rgb888(uint16_t color) {
+    return (lcd_rgb_t) {
+            .r = ((((color >> 11) & 0b00011111) * 527) + 23) >> 6,
+            .g = ((((color >> 5) & 0b00111111) * 259) + 33) >> 6,
+            .b = (((color & 0b00011111) * 527) + 23) >> 6,
+    };
+}
+
+#define LCD_FILL_BLOCK 16 // Should be 8 or 16.
+
+void lcd_buf_fill(uint16_t *buf, uint16_t data, size_t len) {
+    LLOG(TAG, "[%s] len: %d data: 0x%02x 0x%02x", __FUNCTION__, len, data & 0xff, data >> 8);
     // Fill the buffer with the data.
-    if ((data & 0xff) == (data >> 8)) {
+    uint16_t swapped = __bswap16(data);
+    if (data == swapped) {
         memset(buf, data, len);
-    } else {
-        uint16_t *tmp = (uint16_t *) buf;
-        for (int i = 0; i < len; i += sizeof(uint16_t)) {
-            *tmp++ = data;
-        }
+        return;
     }
+    ARG_ERROR_CHECK(len % 2 == 0, "len %d must be an even number", len);
+    uint32_t swapped32 = swapped << 16 | swapped;
+    void *end = buf + len / 2;
+    uint32_t *buf32 = (uint32_t *) buf;
+    while (len >= LCD_FILL_BLOCK * sizeof(uint32_t)) {
+        buf32[0] = swapped32;
+        buf32[1] = swapped32;
+        buf32[2] = swapped32;
+        buf32[3] = swapped32;
+        buf32[4] = swapped32;
+        buf32[5] = swapped32;
+        buf32[6] = swapped32;
+        buf32[7] = swapped32;
+#if LCD_FILL_BLOCK == 16
+        buf32[8] = swapped32;
+        buf32[9] = swapped32;
+        buf32[10] = swapped32;
+        buf32[11] = swapped32;
+        buf32[12] = swapped32;
+        buf32[13] = swapped32;
+        buf32[14] = swapped32;
+        buf32[15] = swapped32;
+#endif
+        buf32 += LCD_FILL_BLOCK;
+        len -= LCD_FILL_BLOCK * sizeof(uint32_t);
+    }
+    buf = (uint16_t *) buf32;
+    while (len > 0) {
+        *buf++ = swapped;
+        len -= sizeof(uint16_t);
+    }
+    ARG_ERROR_CHECK(buf == end, "buf %p != predicted end %p", buf, end);
 }

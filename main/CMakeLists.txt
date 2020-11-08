@@ -19,8 +19,12 @@ idf_component_register(
         EMBED_FILES "../firmware/private/ec_private.pem" "embed/hydroponics_logo.bin"
         REQUIRES
         # Own components.
-        "hydroponics-context" "hydroponics-error" "hydroponics-lcd" "hydroponics-lcd-dev-rm68090" "hydroponics-utils"
-        "esp-tuya" "button"
+        "hydroponics-context" "hydroponics-error" "hydroponics-lcd"
+        "hydroponics-lcd-ucglib"
+        "hydroponics-lcd-dev-st7796s"
+        "hydroponics-utils"
+        "esp-tuya"
+        "button"
         # External components.
         "bme280" "esp32-ads1115" "esp-ccronexpr" "esp-google-iot" "esp32-ds18b20" "esp32-owb" "protos" "u8g2"
         "esp-timespec"

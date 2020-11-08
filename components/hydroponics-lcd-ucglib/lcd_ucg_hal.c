@@ -4,15 +4,14 @@
 
 #include "error.h"
 #include "lcd.h"
-#include "rm68090.h"
-#include "ucg_rm68090_hal.h"
+#include "lcd_ucg_hal.h"
 #include "utils.h"
 
 #define HANDLE(d) ((lcd_dev_t*)(d->user_ptr))
 
-static const char *TAG = "ucg_rm68090_hal";
+static const char *const TAG = "lcd_ucg_hal";
 
-static ucg_int_t ucg_rm68090_handle_l90fx(ucg_t *ucg) {
+static ucg_int_t lcd_ucg_handle_l90fx(ucg_t *ucg) {
     lcd_dev_t *dev = HANDLE(ucg);
     uint16_t color = lcd_rgb565(ucg->arg.pixel.rgb.color[0], ucg->arg.pixel.rgb.color[1], ucg->arg.pixel.rgb.color[2]);
     if (ucg_clip_l90fx(ucg) != 0) {
@@ -39,20 +38,23 @@ static ucg_int_t ucg_rm68090_handle_l90fx(ucg_t *ucg) {
     return 0;
 }
 
-static ucg_int_t ucg_rm68090_device(ucg_t *ucg, ucg_int_t msg, void *data) {
+static ucg_int_t lcd_ucg_device(ucg_t *ucg, ucg_int_t msg, void *data) {
     switch (msg) {
-        case UCG_MSG_DEV_POWER_UP:
+        case UCG_MSG_DEV_POWER_UP: {
             // "data" is a pointer to ucg_com_info_t structure but we don't use it.
             // "arg" is not used
             // This message is sent once at the uC startup and for power up.
             LLOG(TAG, "DEV: UCG_MSG_DEV_POWER_UP");
             return ucg_com_PowerUp(ucg, -1, -1);
-        case UCG_MSG_GET_DIMENSION:
+        }
+        case UCG_MSG_GET_DIMENSION: {
             LLOG(TAG, "DEV: UCG_MSG_GET_DIMENSION");
-            ((ucg_wh_t *) data)->w = RM68090_MAX_WIDTH;
-            ((ucg_wh_t *) data)->h = RM68090_MAX_HEIGHT;
+            lcd_dev_t *dev = HANDLE(ucg);
+            ((ucg_wh_t *) data)->w = dev->config.screen.width;
+            ((ucg_wh_t *) data)->h = dev->config.screen.height;
             return 1;
-        case UCG_MSG_DRAW_PIXEL:
+        }
+        case UCG_MSG_DRAW_PIXEL: {
             if (ucg_clip_is_pixel_visible(ucg)) {
                 lcd_dev_t *dev = HANDLE(ucg);
                 uint16_t color = lcd_rgb565(ucg->arg.pixel.rgb.color[0], ucg->arg.pixel.rgb.color[1],
@@ -60,18 +62,33 @@ static ucg_int_t ucg_rm68090_device(ucg_t *ucg, ucg_int_t msg, void *data) {
                 lcd_draw_pixel(dev, color, ucg->arg.pixel.pos.x, ucg->arg.pixel.pos.y);
             }
             return 1;
-        case UCG_MSG_DRAW_L90FX: // Lines.
-            return ucg_rm68090_handle_l90fx(ucg);
-        case UCG_MSG_DRAW_L90SE: // Gradient.
+        }
+        case UCG_MSG_DRAW_L90FX: {
+            // Lines.
+            return lcd_ucg_handle_l90fx(ucg);
+        }
+        case UCG_MSG_DRAW_L90SE: {
+            // Gradient.
             LLOG(TAG, "DEV: UCG_MSG_DRAW_L90SE");
-            return ucg_handle_l90se(ucg, ucg_rm68090_device);
-        default:
+            return ucg_handle_l90se(ucg, lcd_ucg_device);
+        }
+        case UCG_MSG_SET_CLIP_BOX: {
+            // Clip Box.
+            // "data" is a pointer to ucg_box_t structure.
+            ucg_box_t *clip = (ucg_box_t *) data;
+            LLOG(TAG, "DEV: UCG_MSG_SET_CLIP_BOX (%d, %d) -> (%d, %d)",
+                 clip->ul.x, clip->ul.y,
+                 clip->ul.x + clip->size.w, clip->ul.y + clip->size.h);
+            return ucg_dev_default_cb(ucg, msg, data);
+        }
+        default: {
             LLOG(TAG, "DEV: default msg: %d", msg);
             return ucg_dev_default_cb(ucg, msg, data);
+        }
     }
 }
 
-static ucg_int_t ucg_rm68090_extensions(ucg_t *ucg, ucg_int_t msg, void *data) {
+static ucg_int_t lcd_ucg_extensions(ucg_t *ucg, ucg_int_t msg, void *data) {
     ARG_UNUSED(ucg);
     ARG_UNUSED(msg);
     ARG_UNUSED(data);
@@ -80,7 +97,7 @@ static ucg_int_t ucg_rm68090_extensions(ucg_t *ucg, ucg_int_t msg, void *data) {
     return 1;
 }
 
-static int16_t ucg_rm68090_com(ucg_t *ucg, int16_t msg, uint16_t arg, uint8_t *data) {
+static int16_t lcd_ucg_com(ucg_t *ucg, int16_t msg, uint16_t arg, uint8_t *data) {
     ARG_UNUSED(ucg);
     ARG_UNUSED(arg);
     ARG_UNUSED(data);
@@ -106,11 +123,10 @@ static int16_t ucg_rm68090_com(ucg_t *ucg, int16_t msg, uint16_t arg, uint8_t *d
     return 1;
 }
 
-esp_err_t ucg_rm68090_init(lcd_dev_t *dev, ucg_t *ucg) {
+esp_err_t lcd_ucg_hal_init(lcd_dev_t *dev, ucg_t *ucg) {
     ucg->user_ptr = dev;
-    ucg_Init(ucg, ucg_rm68090_device, ucg_rm68090_extensions, ucg_rm68090_com);
+    ucg_Init(ucg, lcd_ucg_device, lcd_ucg_extensions, lcd_ucg_com);
     ucg_SetFontMode(ucg, UCG_FONT_MODE_TRANSPARENT);
     ucg_SetRotate90(ucg);
-    ucg_ClearScreen(ucg);
     return ESP_OK;
 }

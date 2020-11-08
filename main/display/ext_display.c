@@ -1,45 +1,44 @@
 #include "esp_err.h"
-#include "driver/gpio.h"
 
 #include "ucg.h"
 
-#include "buses.h"
 #include "error.h"
 #include "ext_display.h"
 #include "lcd.h"
-#include "rm68090.h"
 #include "screens/ext_main.h"
-#include "ucg_rm68090_hal.h"
-#include "utils.h"
+#include "lcd_ucg_hal.h"
+#include "st7796s.h"
 
-static const char *TAG = "ext_display";
+static const char *const TAG = "ext_display";
 static ucg_t ucg = {0};
 
-static lcd_dev_t dev = {
-        .id = RM68090_ID,
+lcd_dev_t dev = {
+        .id = ST7796S_ID,
         .config = {
-                .type = LCD_TYPE_PARALLEL,
-                .screen = RM68090_MAX_WIDTH * RM68090_MAX_HEIGHT * 2,
-                .rotation = ROTATION_PORTRAIT,
-                .parallel = {
-                        .data_width = 8,
-                        .data_io_num = LCD_DATA,
-                        .ws_io_num = LCD_WS,
-                        .rs_io_num = LCD_RS,
-                        .rd_io_num = LCD_RD,
+                .type = LCD_TYPE_SPI,
+                .screen = {
+                        .width = ST7796S_MAX_WIDTH,
+                        .height = ST7796S_MAX_HEIGHT,
+                        .bytes = sizeof(uint16_t),
+                        .divisor = 32,
+                        .caps = MALLOC_CAP_DMA
                 },
-                .rst_io_num = LCD_RST,
+                .rst_io_num = ST7796S_RST,
+                .led_io_num = ST7796S_LED,
+                .rotation = ROTATION_PORTRAIT,
+                .spi = {
+                        .mosi_io_num = ST7796S_MOSI,
+                        .miso_io_num = ST7796S_MISO,
+                        .sclk_io_num = ST7796S_SCK,
+                        .cs_io_num = ST7796S_CS,
+                        .dc_io_num = ST7796S_DC,
+                        .mode = 0,                          // SPI mode 0.
+                        .clock_speed_hz = 80 * 1000 * 1000, // Clock out at 80 MHz
+                        .host = SPI2_HOST,
+                        .dma_chan = SPI2_HOST,
+                },
         },
-        .device = {
-                .init = rm68090_init,
-                .draw_pixel = rm68090_draw_pixel,
-                .fill = rm68090_fill,
-                .draw = rm68090_draw,
-                .clear = rm68090_clear,
-                .set_rotation = rm68090_set_rotation,
-                .vertical_scroll = rm68090_vertical_scroll,
-                .invert_display = rm68090_invert_display,
-        }
+        .device = &st7796s,
 };
 
 static void ext_display_task(void *arg) {
@@ -47,7 +46,7 @@ static void ext_display_task(void *arg) {
     ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
 
     ESP_ERROR_CHECK(lcd_init(&dev));
-    ESP_ERROR_CHECK(ucg_rm68090_init(&dev, &ucg));
+    ESP_ERROR_CHECK(lcd_ucg_hal_init(&dev, &ucg));
     ESP_ERROR_CHECK(ext_main_init(context, &dev, &ucg));
 
     while (true) {
@@ -57,6 +56,6 @@ static void ext_display_task(void *arg) {
 }
 
 esp_err_t ext_display_init(context_t *context) {
-    xTaskCreatePinnedToCore(ext_display_task, "ext_display", 3072, context, 15, NULL, tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(ext_display_task, "ext_display", 4096, context, 15, NULL, tskNO_AFFINITY);
     return ESP_OK;
 }
