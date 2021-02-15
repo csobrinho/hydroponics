@@ -15,59 +15,58 @@
 #include "st7796s.h"
 #include "utils.h"
 
-#define _D0                                 0
-#define _D1(d1)                             1, d1
-#define _D2(d1, d2)                         2, d1, d2
-#define _D3(d1, d2, d3)                     3, d1, d2, d3
-#define _D4(d1, d2, d3, d4)                 4, d1, d2, d3, d4
-#define _D8(d1, d2, d3, d4, d5, d6, d7, d8) 8, d1, d2, d3, d4, d5, d6, d7, d8
-#define _D14(d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14) \
+#define D0                                 0
+#define D1(d1)                             1, d1
+#define D2(d1, d2)                         2, d1, d2
+#define D3(d1, d2, d3)                     3, d1, d2, d3
+#define D4(d1, d2, d3, d4)                 4, d1, d2, d3, d4
+#define D8(d1, d2, d3, d4, d5, d6, d7, d8) 8, d1, d2, d3, d4, d5, d6, d7, d8
+#define D14(d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14) \
          14, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14
 
 static const char *const TAG = "st7796s";
 
-// Init registers adapted from https://github.com/Bodmer/TFT_eSPI/blob/master/TFT_Drivers/ST7796_Init.h
 DMA_ATTR const uint8_t ST7796S_REG_VALUES[] = {
         LCD_CMD8_DELAY, 120,                            // Wait 120 ms.
-        ST7796S_REG_SWRESET, _D0,                       // Software reset.
+        ST7796S_REG_SWRESET, D0,                       // Software reset.
         LCD_CMD8_DELAY, 120,                            // Wait 120 ms.
-        ST7796S_REG_SLPOUT, _D0,                        // Sleep exit.
+        ST7796S_REG_SLPOUT, D0,                        // Sleep exit.
         LCD_CMD8_DELAY, 120,                            // Wait 120 ms.
-        ST7796S_REG_CSCON, _D1(0xC3),                   // Enable extension command 2 part I.
-        ST7796S_REG_CSCON, _D1(0x96),                   // Enable extension command 2 part II.
-        ST7796S_REG_COLMOD, _D1(0x55),                  // Control interface color format set to 16.
-        ST7796S_REG_IFMODE, _D1(0x80),                  // SPI_EN.
-        ST7796S_REG_DFC, _D3(0x00,                      // Bypass.
-                             0x02,                      // Source Output Scan [S1,S960], Gate Output Scan [G1,G480], scan cycle=2.
-                             0x3b),                     // LCD Drive Line=8*(59+1).
-        ST7796S_REG_BPC, _D4(0x02,                      // Blanking Porch Control. Front porch of 2 lines.
-                             0x03,                      // Front porch of 3 lines.
-                             0x00,
-                             0x04),                     // Back porch of 4 lines.
-        ST7796S_REG_FRMCTR1, _D2(0x80, 0x10),           // Frame Rate Control.
-        ST7796S_REG_DIC, _D1(0x00),                     // Display Inversion Control.
-        ST7796S_REG_EM, _D1(0xC6),                      // Entry Mode Set
-        ST7796S_REG_VCMPCTL, _D1(0x24),                 // VCOM = 1.200.
-        ST7796S_REG_DOCA, _D8(0x40, 0x8A, 0x00, 0x00,
-                              0x29,                     // Source timing Control = 21us.
-                              0x19,                     // Gate start: 26 Tclk
-                              0xA5,                     // Gate end: 38 Tclk. Gate driver EQ function ON.
-                              0x33),
-        ST7796S_REG_PWR3, _D0,                          // Power Control 3.
-        ST7796S_REG_PGC, _D14(0xF0, 0x09, 0x13, 0x12,   // Positive Gamma Control
-                              0x12, 0x2B, 0x3C, 0x44,
-                              0x4B, 0x1B, 0x18, 0x17,
-                              0x1D, 0x21),
-        ST7796S_REG_NGC, _D14(0xF0, 0x09, 0x13, 0x0C,   // Negative Gamma Control.
-                              0x0D, 0x27, 0x3B, 0x44,
-                              0x4D, 0x0B, 0x17, 0x17,
-                              0x1D, 0x21),
-        ST7796S_REG_MADCTL, _D1(ST7796S_MADCTL_MX | ST7796S_MADCTL_BGR),
-        ST7796S_REG_CSCON, _D1(0x3c),                   // Disable extension command 2 part I.
-        ST7796S_REG_CSCON, _D1(0x69),                   // Disable extension command 2 part II.
-        ST7796S_REG_NORON, _D0,                         // Normal Display Mode On.
-        ST7796S_REG_SLPOUT, _D0,                        // Sleep Out.
-        ST7796S_REG_DISPON, _D0,                        // Display On.
+        ST7796S_REG_CSCON, D1(0xC3),                   // Enable extension command 2 part I.
+        ST7796S_REG_CSCON, D1(0x96),                   // Enable extension command 2 part II.
+        ST7796S_REG_COLMOD, D1(0x55),                  // Control interface color format set to 16.
+        ST7796S_REG_IFMODE, D1(0x80),                  // SPI_EN.
+        ST7796S_REG_DFC, D3(0x00,                      // Bypass.
+                            0x02,                      // Source Output Scan [S1,S960], Gate Output Scan [G1,G480], scan cycle=2.
+                            0x3b),                     // LCD Drive Line=8*(59+1).
+        ST7796S_REG_BPC, D4(0x02,                      // Blanking Porch Control. Front porch of 2 lines.
+                            0x03,                      // Front porch of 3 lines.
+                            0x00,
+                            0x04),                     // Back porch of 4 lines.
+        ST7796S_REG_FRMCTR1, D2(0x80, 0x10),           // Frame Rate Control.
+        ST7796S_REG_DIC, D1(0x00),                     // Display Inversion Control.
+        ST7796S_REG_EM, D1(0xC6),                      // Entry Mode Set
+        ST7796S_REG_VCMPCTL, D1(0x24),                 // VCOM = 1.200.
+        ST7796S_REG_DOCA, D8(0x40, 0x8A, 0x00, 0x00,
+                             0x29,                     // Source timing Control = 21us.
+                             0x19,                     // Gate start: 26 Tclk
+                             0xA5,                     // Gate end: 38 Tclk. Gate driver EQ function ON.
+                             0x33),
+        ST7796S_REG_PWR3, D0,                          // Power Control 3.
+        ST7796S_REG_PGC, D14(0xF0, 0x09, 0x13, 0x12,   // Positive Gamma Control
+                             0x12, 0x2B, 0x3C, 0x44,
+                             0x4B, 0x1B, 0x18, 0x17,
+                             0x1D, 0x21),
+        ST7796S_REG_NGC, D14(0xF0, 0x09, 0x13, 0x0C,   // Negative Gamma Control.
+                             0x0D, 0x27, 0x3B, 0x44,
+                             0x4D, 0x0B, 0x17, 0x17,
+                             0x1D, 0x21),
+        ST7796S_REG_MADCTL, D1(ST7796S_MADCTL_MX | ST7796S_MADCTL_BGR),
+        ST7796S_REG_CSCON, D1(0x3c),                   // Disable extension command 2 part I.
+        ST7796S_REG_CSCON, D1(0x69),                   // Disable extension command 2 part II.
+        ST7796S_REG_NORON, D0,                         // Normal Display Mode On.
+        ST7796S_REG_SLPOUT, D0,                        // Sleep Out.
+        ST7796S_REG_DISPON, D0,                        // Display On.
 };
 
 static esp_err_t st7796s_vertical_scroll(lcd_dev_t *dev, int16_t top, int16_t scroll_lines, int16_t offset) {
