@@ -75,7 +75,7 @@ static ucg_int_t lcd_ucg_device(ucg_t *ucg, ucg_int_t msg, void *data) {
         case UCG_MSG_SET_CLIP_BOX: {
             // Clip Box.
             // "data" is a pointer to ucg_box_t structure.
-            ucg_box_t *clip = (ucg_box_t *) data;
+            __attribute__((unused)) ucg_box_t *clip = (ucg_box_t *) data;
             LLOG(TAG, "DEV: UCG_MSG_SET_CLIP_BOX (%d, %d) -> (%d, %d)",
                  clip->ul.x, clip->ul.y,
                  clip->ul.x + clip->size.w, clip->ul.y + clip->size.h);
