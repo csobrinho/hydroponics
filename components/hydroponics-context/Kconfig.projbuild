@@ -1,0 +1,32 @@
+menu "Project config"
+    menu "Syslog"
+        config ESP_SYSLOG_ENABLE
+            bool "Enable"
+
+        config ESP_SYSLOG_IPV4_ADDR
+            string "IPV4 Address"
+            default "255.255.255.255"
+            depends on ESP_SYSLOG_ENABLE
+            help
+                IPV4 address to which the syslog client will send data.
+
+        config ESP_SYSLOG_PORT
+            int "Port"
+            range 0 65535
+            default 514
+            depends on ESP_SYSLOG_ENABLE
+            help
+                The remote port to which the syslog client will send data.
+
+    endmenu
+
+    menu "Sensors"
+        config ESP_SENSOR_TANKS
+            int "Number of tanks"
+            default 2
+            range 1 2
+            help
+                Set the number of tanks.
+    endmenu
+
+endmenu
