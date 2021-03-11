@@ -107,7 +107,7 @@ static void monitor_memory_callback(cron_handle_t handle, const char *name, void
 
 esp_err_t monitor_init(context_t *context) {
     ARG_UNUSED(context);
-    ESP_ERROR_CHECK(cron_create("monitor_memory", MONITOR_CRON_MEMORY, monitor_memory_callback, NULL, NULL));
-    ESP_ERROR_CHECK(cron_create("monitor_tasks", MONITOR_CRON_TASKS, monitor_tasks_callback, NULL, NULL));
+    // ESP_ERROR_CHECK(cron_create("monitor_memory", MONITOR_CRON_MEMORY, monitor_memory_callback, NULL, NULL));
+    // ESP_ERROR_CHECK(cron_create("monitor_tasks", MONITOR_CRON_TASKS, monitor_tasks_callback, NULL, NULL));
     return ESP_OK;
 }
