@@ -46,7 +46,7 @@ typedef struct {
         struct {
             const Hydroponics__Output output;
             bool value;
-            uint16_t delay_ms;
+            uint32_t delay_ms;
         } set;
     };
 } op_t;
@@ -162,7 +162,7 @@ static void io_set_default_state(const Hydroponics__Config *config) {
 
 static esp_err_t io_cron_add(const char *name, const char *expression, const size_t n_output,
                              const Hydroponics__Output *output, const Hydroponics__OutputState state,
-                             uint16_t delay_ms) {
+                             uint32_t delay_ms) {
     io_cron_args_t *cron_args = NULL;
     cron_handle_t handle = INVALID_CRON_HANDLE;
     ESP_ERROR_CHECK(io_cron_args_create(&cron_args, n_output, output, state));
@@ -263,7 +263,7 @@ esp_err_t io_init(context_t *context) {
     return ESP_OK;
 }
 
-esp_err_t io_set_level(Hydroponics__Output output, bool value, uint16_t delay_ms) {
+esp_err_t io_set_level(Hydroponics__Output output, bool value, uint32_t delay_ms) {
     const op_t cmd = {.type = OP_SET, .set = {.output = output, .value = value, .delay_ms = delay_ms}};
     xQueueSend(queue, &cmd, portMAX_DELAY);
     return ESP_OK;
