@@ -36,6 +36,17 @@ menu "Project config"
             Some GPIOs are used for other purposes (flash connections, etc.) and cannot be used.
             GPIOs 35-39 are input-only so cannot be used to drive the One Wire Bus.
 
+    menu "Hardware"
+        choice ESP_HARDWARE_LCD
+            bool "LCD Type"
+                default ESP_HARDWARE_LCD_RM68090
+            config ESP_LCD_RM68090
+                bool "RM68090"
+            config ESP_LCD_ST7796S
+                bool "ST7796S"
+        endchoice
+    endmenu
+
     menu "Syslog"
         config ESP_SYSLOG_ENABLE
             bool "Enable"

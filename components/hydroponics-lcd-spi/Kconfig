@@ -1,0 +1,38 @@
+config ESP_LCD_SPI
+    bool
+
+menu "LCD SPI"
+    depends on ESP_LCD_SPI
+    config ESP_LCD_SPI_MISO
+        int "MISO"
+        range 0 39
+        default 37 if IDF_TARGET_ESP32
+        default 13 if IDF_TARGET_ESP32S2
+    config ESP_LCD_SPI_MOSI
+        int "MOSI"
+        range 0 39
+        default 35 if IDF_TARGET_ESP32
+        default 11 if IDF_TARGET_ESP32S2
+    config ESP_LCD_SPI_SCK
+        int "SCK"
+        range 0 39
+        default 36 if IDF_TARGET_ESP32
+        default 12 if IDF_TARGET_ESP32S2
+    config ESP_LCD_SPI_CS
+        int "CS"
+        range 0 39
+        default 34 if IDF_TARGET_ESP32
+        default 10 if IDF_TARGET_ESP32S2
+    config ESP_LCD_SPI_DC
+        int "DC"
+        range 0 39
+        default 4
+    config ESP_LCD_SPI_RST
+        int "RST"
+        range 0 39
+        default 5
+    config ESP_LCD_SPI_LED
+        int "LED"
+        range 0 39
+        default 6
+endmenu

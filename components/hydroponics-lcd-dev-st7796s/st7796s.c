@@ -284,3 +284,32 @@ const lcd_device_t st7796s = {
         .vertical_scroll = st7796s_vertical_scroll,
         .invert_display = st7796s_invert_display,
 };
+
+const lcd_dev_t lcd_dev = {
+        .id = ST7796S_ID,
+        .config = {
+                .type = LCD_TYPE_SPI,
+                .screen = {
+                        .width = ST7796S_MAX_WIDTH,
+                        .height = ST7796S_MAX_HEIGHT,
+                        .bytes = sizeof(uint16_t),
+                        .divisor = 32,
+                        .caps = MALLOC_CAP_DMA
+                },
+                .rst_io_num = CONFIG_ESP_LCD_SPI_RST,
+                .led_io_num = CONFIG_ESP_LCD_SPI_LED,
+                .rotation = ROTATION_PORTRAIT,
+                .spi = {
+                        .mosi_io_num = CONFIG_ESP_LCD_SPI_MOSI,
+                        .miso_io_num = CONFIG_ESP_LCD_SPI_MISO,
+                        .sclk_io_num = CONFIG_ESP_LCD_SPI_SCK,
+                        .cs_io_num = CONFIG_ESP_LCD_SPI_CS,
+                        .dc_io_num = CONFIG_ESP_LCD_SPI_DC,
+                        .mode = 0, // SPI mode 0.
+                        .clock_speed_hz = CONFIG_ESP_LCD_ST7796S * 1000 * 1000,
+                        .host = SPI2_HOST,
+                        .dma_chan = SPI2_HOST,
+                },
+        },
+        .device = &st7796s,
+};

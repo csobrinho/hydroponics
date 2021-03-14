@@ -1,0 +1,6 @@
+menu "LCD ST7796S"
+    depends on ESP_LCD_ST7796S
+    config ESP_LCD_ST7796S_CLOCK
+        int "LCD SPI Clock (MHz)"
+        default 80
+endmenu
