@@ -13,10 +13,10 @@
 #include "tank.h"
 #include "utils.h"
 
-#define NO_OF_SAMPLES 16
+#define NO_OF_SAMPLES 16UL
 #define COEFFICIENTS_MAX 4
 
-static const char *TAG = "tank";
+static const char *const TAG = "tank";
 
 typedef enum {
     TANK_I2C_ADDRESS_GND = UINT8_C(0x48),
@@ -27,7 +27,7 @@ typedef enum {
 } tank_i2c_address_t;
 
 typedef const struct {
-    char *name;                          /*!< Tank description, used for logging. */
+    const char *name;                    /*!< Tank description, used for logging. */
     ads1115_mux_t device_mux;            /*!< ADC channel mux. Should be a differential channel. */
     double regression[COEFFICIENTS_MAX]; /*!< Linear regression coefficients. */
 } tank_t;
@@ -72,7 +72,7 @@ static void tank_task(void *arg) {
                 scratch += ads1115_get_raw(&config.handle);
             }
             // Average the value and run linear regression.
-            int32_t raw = scratch / NO_OF_SAMPLES;
+            int32_t raw = (int32_t) (scratch / NO_OF_SAMPLES);
             double average = lin_regression(config.tanks[idx].regression, COEFFICIENTS_MAX, raw);
             ESP_ERROR_CHECK(context_set_tank(context, idx, (float) average / 100.f));
             ESP_LOGI(TAG, "%s: %d / %.1f %%", config.tanks[idx].name, raw, average);

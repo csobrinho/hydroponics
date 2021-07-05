@@ -193,9 +193,9 @@ esp_err_t config_dump(const Hydroponics__Config *config) {
 
 esp_err_t config_init(context_t *context) {
     TAILQ_INIT(&head);
-    char *device_id = CONFIG_GIOT_DEVICE_ID;
-    char *ssid = CONFIG_ESP_WIFI_SSID;
-    char *password = CONFIG_ESP_WIFI_PASSWORD;
+    char *device_id = (char *) CONFIG_GIOT_DEVICE_ID;
+    char *ssid = (char *) CONFIG_ESP_WIFI_SSID;
+    char *password = (char *) CONFIG_ESP_WIFI_PASSWORD;
     ESP_ERROR_CHECK(storage_get_string(CONFIG_KEY_DEVICE_ID, &device_id, NULL));
     ESP_ERROR_CHECK(storage_get_string(CONFIG_KEY_SSID, &ssid, NULL));
     ESP_ERROR_CHECK(storage_get_string(CONFIG_KEY_PASSWORD, &password, NULL));
