@@ -81,7 +81,7 @@ esp_err_t ezo_read(ezo_sensor_t *sensor, float *value);
 
 esp_err_t ezo_read_temperature(ezo_sensor_t *sensor, float *value, float temp);
 
-float ezo_read_and_print(ezo_sensor_t *sensor, float temp, char id, int precision, const char *unit);
+float ezo_read_and_print(ezo_sensor_t *sensor, float temp, int precision, const char *unit);
 
 esp_err_t ezo_device_info(ezo_sensor_t *sensor);
 

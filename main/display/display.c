@@ -8,6 +8,7 @@
 #include "u8g2.h"
 
 #include "buses.h"
+#include "sdkconfig.h"
 #include "context.h"
 #include "driver/lcd/u8g2_esp32_hal.h"
 #include "error.h"
@@ -48,10 +49,6 @@ static esp_err_t display_draw(context_t *context, bool connected, bool time_upda
     float humidity = context->sensors.humidity;
     float eca = context->sensors.ec[CONFIG_TANK_A].value;
     float pha = context->sensors.ph[CONFIG_TANK_A].value;
-#if CONFIG_ESP_SENSOR_TANKS == 2
-    float ecb = context->sensors.ec[CONFIG_TANK_B].value;
-    float phb = context->sensors.ph[CONFIG_TANK_B].value;
-#endif
     context_unlock(context);
 
     size_t len = strlcpy(buf, "Tmp:", sizeof(buf));
@@ -66,19 +63,11 @@ static esp_err_t display_draw(context_t *context, bool connected, bool time_upda
 
     len = strlcpy(buf, "EC:", sizeof(buf));
     len += snprintf_append(buf, len, sizeof(buf), " %.f", eca);
-#if CONFIG_ESP_SENSOR_TANKS == 2
-    len += snprintf(buf + len, sizeof(buf) - len, " |");
-    len += snprintf_append(buf, len, sizeof(buf), " %.f", ecb);
-#endif
     snprintf(buf + len, sizeof(buf) - len, " uS/cm");
     u8g2_DrawStr(&u8g2, 0, 23, buf);
 
     len = strlcpy(buf, "PH:", sizeof(buf));
     len += snprintf_append(buf, len, sizeof(buf), " %.2f", pha);
-#if CONFIG_ESP_SENSOR_TANKS == 2
-    len += snprintf(buf + len, sizeof(buf) - len, " |");
-    snprintf_append(buf, len, sizeof(buf), " %.2f", phb);
-#endif
     u8g2_DrawStr(&u8g2, 0, 31, buf);
 
     snprintf(buf, sizeof(buf), "%c%c%c", connected ? 'W' : '*', time_updated ? 'T' : '*', iot_connected ? 'G' : '*');

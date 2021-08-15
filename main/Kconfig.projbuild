@@ -93,33 +93,19 @@ menu "Project config"
             help
                 Set the RTD probe I2C address.
 
-        config ESP_SENSOR_EC_TANK_A_ADDR
-            hex "Tank A EC Probe I2C Address"
+        config ESP_SENSOR_EC_ADDR
+            hex "EC Probe I2C Address"
             default 0x64
             range 0x00 0xff
             help
-                Set the tank A EC probe I2C address.
+                Set the EC probe I2C address.
 
-        config ESP_SENSOR_EC_TANK_B_ADDR
-            hex "Tank B EC Probe I2C Address"
-            default 0x74
-            range 0x00 0xff
-            help
-                Set the tank B EC probe I2C address.
-
-        config ESP_SENSOR_PH_TANK_A_ADDR
-            hex "Tank A PH Probe I2C Address"
+        config ESP_SENSOR_PH_ADDR
+            hex "PH Probe I2C Address"
             default 0x63
             range 0x00 0xff
             help
-                Set the tank A PH probe I2C address.
-
-        config ESP_SENSOR_PH_TANK_B_ADDR
-            hex "Tank B PH Probe I2C Address"
-            default 0x73
-            range 0x00 0xff
-            help
-                Set the tank B PH probe I2C address.
+                Set the PH probe I2C address.
 
         config ESP_SENSOR_SIMULATE
             bool "Simulate the sensors"

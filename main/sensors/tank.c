@@ -40,18 +40,11 @@ static struct {
         .address = TANK_I2C_ADDRESS_GND,
         .tanks = {
                 {
-                        .name = "Tank A",
+                        .name = "Tank",
                         .device_mux = ADS1115_MUX_0_1,
                         // From https://docs.google.com/spreadsheets/d/1LZo2zjm7wT2C7UeA40zMUXK-daBry_TDRjhAEd-a5a8/view
                         //                      x^3                  x^2               x               b
                         .regression = {0.000000000654032205, -0.000005018729145, 0.0267722537539866, 44.0786225250312},
-                },
-                {
-                        .name = "Tank B",
-                        .device_mux = ADS1115_MUX_2_3,
-                        // From https://docs.google.com/spreadsheets/d/1LZo2zjm7wT2C7UeA40zMUXK-daBry_TDRjhAEd-a5a8/view
-                        //                      x^3                  x^2               x               b
-                        .regression = {0.0 /* no x^3    */, 0.0 /* no x^2    */, -0.014014014014014, 13.0710710710711},
                 },
         },
 };

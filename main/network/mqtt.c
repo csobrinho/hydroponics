@@ -129,10 +129,9 @@ static void mqtt_subscribe_callback(iotc_context_handle_t in_context_handle, iot
             ESP_LOGI(TAG, "Subscription [state: %2d]: MSG %s", state, params->message.topic);
             const uint8_t *payload = params->message.temporary_payload_data;
             const size_t payload_size = params->message.temporary_payload_data_length;
-            if (payload == NULL) {
-                ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
-            }
-            if (strcmp(subscribe_topic_config, params->message.topic) == 0) {
+            if (payload_size == 0 || payload == NULL) {
+                ESP_LOGW(TAG, "Message has no payload, ignoring!");
+            } else if (strcmp(subscribe_topic_config, params->message.topic) == 0) {
                 ESP_LOGI(TAG, "Config payload: %d bytes", params->message.temporary_payload_data_length);
                 ESP_ERROR_CHECK(mqtt_config->handle_config(context, payload, payload_size));
             } else if (strcmp(subscribe_topic_command, params->message.topic) == 0) {

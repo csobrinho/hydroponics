@@ -8,11 +8,11 @@
 #include "error.h"
 #include "driver/ezo.h"
 
-static const char *TAG = "ezo_ec";
-static ezo_sensor_t eca = {
+static const char *const TAG = "ezo_ec";
+static ezo_sensor_t ec = {
         .probe = "CS150",
-        .desc = "eca",
-        .address = CONFIG_ESP_SENSOR_EC_TANK_A_ADDR, /*!< Slave address for Atlas EZO EC module for tank A. */
+        .desc = "ec",
+        .address = CONFIG_ESP_SENSOR_EC_ADDR, /*!< I2C address for Atlas EZO EC module. */
         .delay_ms = EZO_DELAY_MS_SHORT,
         .delay_read_ms = EZO_DELAY_MS_SLOW,
         .delay_calibration_ms = EZO_DELAY_MS_SLOWEST,
@@ -22,39 +22,22 @@ static ezo_sensor_t eca = {
         .threshold = 15.f,
 #endif
 };
-static ezo_sensor_t ecb = {
-        .probe = "CS150",
-        .desc = "ecb",
-        .address = CONFIG_ESP_SENSOR_EC_TANK_B_ADDR, /*!< Slave address for Atlas EZO EC module for tank B. */
-        .delay_ms = EZO_DELAY_MS_SHORT,
-        .delay_read_ms = EZO_DELAY_MS_SLOW,
-        .delay_calibration_ms = EZO_DELAY_MS_SLOWEST,
-        .calibration = EZO_CALIBRATION_MODE_TWO_POINTS,
-#ifdef CONFIG_ESP_SENSOR_SIMULATE
-        .simulate = 1900.f,
-        .threshold = 15.f,
-#endif
-};
 
 static void ezo_ec_task(void *arg) {
     context_t *context = (context_t *) arg;
     ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
     // Give it a little time to initialize.
     vTaskDelay(pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_EC_MS));
-    ESP_ERROR_CHECK(ezo_init(&eca));
-    ESP_ERROR_CHECK(ezo_init(&ecb));
+    ESP_ERROR_CHECK(ezo_init(&ec));
 
     while (true) {
-        if (eca.pause | ecb.pause) {
+        if (ec.pause) {
             vTaskDelay(pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_EC_MS));
             continue;
         }
         TickType_t last_wake_time = xTaskGetTickCount();
         float temp = context->sensors.temp.probe;
-        ESP_ERROR_CHECK(context_set_ec(context, 0, ezo_read_and_print(&eca, temp, 'A', 0, "uS/cm")));
-#if CONFIG_ESP_SENSOR_TANKS == 2
-        ESP_ERROR_CHECK(context_set_ec(context, 1, ezo_read_and_print(&ecb, temp, 'B', 0, "uS/cm")));
-#endif
+        ESP_ERROR_CHECK(context_set_ec(context, 0, ezo_read_and_print(&ec, temp, 0, "uS/cm")));
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_EC_MS));
     }
 }

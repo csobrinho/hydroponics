@@ -23,7 +23,7 @@ menu "Project config"
     menu "Sensors"
         config ESP_SENSOR_TANKS
             int "Number of tanks"
-            default 2
+            default 1
             range 1 2
             help
                 Set the number of tanks.

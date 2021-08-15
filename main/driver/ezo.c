@@ -85,7 +85,7 @@ ezo_sensor_t *ezo_find(const char *desc) {
     return NULL;
 }
 
-float ezo_read_and_print(ezo_sensor_t *sensor, float temp, char id, int precision, const char *unit) {
+float ezo_read_and_print(ezo_sensor_t *sensor, float temp, int precision, const char *unit) {
     if (sensor->address == EZO_INVALID_ADDRESS) {
         return CONTEXT_UNKNOWN_VALUE;
     }
@@ -95,6 +95,6 @@ float ezo_read_and_print(ezo_sensor_t *sensor, float temp, char id, int precisio
     } else {
         ESP_ERROR_CHECK(ezo_read(sensor, &value));
     }
-    ESP_LOGD(TAG, "%s %c %.*f %s", sensor->type, id, precision, value, unit);
+    ESP_LOGD(TAG, "%s %.*f %s", sensor->type, precision, value, unit);
     return value;
 }

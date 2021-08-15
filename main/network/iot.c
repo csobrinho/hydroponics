@@ -98,11 +98,8 @@ static esp_err_t iot_handle_publish_telemetry(context_t *context) {
     ADD_VALUE(HYDROPONICS__STATE_TELEMETRY__TYPE__HUMIDITY, context->sensors.humidity);
     ADD_VALUE(HYDROPONICS__STATE_TELEMETRY__TYPE__PRESSURE, context->sensors.pressure);
     ADD_VALUE(HYDROPONICS__STATE_TELEMETRY__TYPE__EC_A, context->sensors.ec[CONFIG_TANK_A].value);
-    ADD_VALUE(HYDROPONICS__STATE_TELEMETRY__TYPE__EC_B, context->sensors.ec[CONFIG_TANK_B].value);
     ADD_VALUE(HYDROPONICS__STATE_TELEMETRY__TYPE__PH_A, context->sensors.ph[CONFIG_TANK_A].value);
-    ADD_VALUE(HYDROPONICS__STATE_TELEMETRY__TYPE__PH_B, context->sensors.ph[CONFIG_TANK_B].value);
     ADD_VALUE(HYDROPONICS__STATE_TELEMETRY__TYPE__TANK_A, context->sensors.tank[CONFIG_TANK_A].value);
-    ADD_VALUE(HYDROPONICS__STATE_TELEMETRY__TYPE__TANK_B, context->sensors.tank[CONFIG_TANK_B].value);
     context_unlock(context);
 
     ESP_ERROR_CHECK(state_push_telemetry(size, types, values));
