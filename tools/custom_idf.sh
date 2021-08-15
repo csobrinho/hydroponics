@@ -6,8 +6,10 @@ export IDF_TARGET="$(awk -F'[\(|\)]' '{ gsub("-", ""); print tolower($2) }' <<<$
 
 if [[ "${IDF_TARGET}" == "esp32" ]]; then
   export ESPBAUD=921600
+  export ESPPORT="/dev/cu.SLAB_USBtoUART"
 else
   export ESPBAUD=3000000
+  export ESPPORT="/dev/cu.usbserial-1410"
 fi
 
 echo "==========================================================================="
