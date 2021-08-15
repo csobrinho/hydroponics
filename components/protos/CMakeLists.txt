@@ -6,10 +6,14 @@
 # To upload the GreenMeanMachine.pb:
 # $ gcloud iot devices configs update --config-file=components/protos/GreenMeanMachine.pb --registry=registry --region=us-central1 --device=GreenMeanMachine-test
 # $ gcloud iot devices configs update --config-file=components/protos/GreenMeanMachine.pb --registry=registry --region=us-central1 --device=GreenMeanMachine
+# $ gcloud iot devices configs update --config-file=components/protos/RedMeanMachine.pb --registry=registry --region=us-central1 --device=RedMeanMachine-test
+# $ gcloud iot devices configs update --config-file=components/protos/RedMeanMachine.pb --registry=registry --region=us-central1 --device=RedMeanMachine
 #
 # To send a command:
 # $ gcloud iot devices commands send --command-file=components/protos/Commands.pb --registry=registry --region=us-central1 --device=GreenMeanMachine-test
 # $ gcloud iot devices commands send --command-file=components/protos/Commands.pb --registry=registry --region=us-central1 --device=GreenMeanMachine
+# $ gcloud iot devices commands send --command-file=components/protos/Commands.pb --registry=registry --region=us-central1 --device=RedMeanMachine-test
+# $ gcloud iot devices commands send --command-file=components/protos/Commands.pb --registry=registry --region=us-central1 --device=RedMeanMachine
 
 idf_component_register(SRC_DIRS "." INCLUDE_DIRS "." REQUIRES "protobuf-c")
 
@@ -26,8 +30,10 @@ set(PROTO_GO_OUTS
         "go/config.pb.go"
         "go/state.pb.go")
 
-set(CONFIG_TEXTPROTO_SRC "GreenMeanMachine.textproto")
-set(CONFIG_TEXTPROTO_OUT "GreenMeanMachine.pb")
+set(CONFIG_GM_TEXTPROTO_SRC "GreenMeanMachine.textproto")
+set(CONFIG_GM_TEXTPROTO_OUT "GreenMeanMachine.pb")
+set(CONFIG_RM_TEXTPROTO_SRC "RedMeanMachine.textproto")
+set(CONFIG_RM_TEXTPROTO_OUT "RedMeanMachine.pb")
 set(COMMANDS_TEXTPROTO_SRC "Commands.textproto")
 set(COMMANDS_TEXTPROTO_OUT "Commands.pb")
 
@@ -53,13 +59,20 @@ add_custom_target(protos_go DEPENDS ${PROTO_GO_OUTS})
 
 # Generate the hydroponics.Config binary proto.
 add_custom_command(
-        COMMAND ${PROTO_C_COMPILER} --encode=hydroponics.Config -I . ${PROTO_SRCS} < ${CONFIG_TEXTPROTO_SRC} > ${CONFIG_TEXTPROTO_OUT}
+        COMMAND ${PROTO_C_COMPILER} --encode=hydroponics.Config -I . ${PROTO_SRCS} < ${CONFIG_GM_TEXTPROTO_SRC} > ${CONFIG_GM_TEXTPROTO_OUT}
         WORKING_DIRECTORY ${COMPONENT_DIR}
-        DEPENDS ${CONFIG_TEXTPROTO_SRC}
-        OUTPUT "${CONFIG_TEXTPROTO_OUT}"
-        COMMENT "Generating hydroponics.Config for ${CONFIG_TEXTPROTO_SRC}."
+        DEPENDS ${CONFIG_GM_TEXTPROTO_SRC}
+        OUTPUT "${CONFIG_GM_TEXTPROTO_OUT}"
+        COMMENT "Generating hydroponics.Config for ${CONFIG_GM_TEXTPROTO_SRC}."
         VERBATIM)
-add_custom_target(config_protos DEPENDS "${CONFIG_TEXTPROTO_OUT}" protos)
+add_custom_command(
+        COMMAND ${PROTO_C_COMPILER} --encode=hydroponics.Config -I . ${PROTO_SRCS} < ${CONFIG_RM_TEXTPROTO_SRC} > ${CONFIG_RM_TEXTPROTO_OUT}
+        WORKING_DIRECTORY ${COMPONENT_DIR}
+        DEPENDS ${CONFIG_RM_TEXTPROTO_SRC}
+        OUTPUT "${CONFIG_RM_TEXTPROTO_OUT}"
+        COMMENT "Generating hydroponics.Config for ${CONFIG_RM_TEXTPROTO_SRC}."
+        VERBATIM)
+add_custom_target(config_protos DEPENDS "${CONFIG_GM_TEXTPROTO_OUT}" "${CONFIG_RM_TEXTPROTO_OUT}" protos)
 
 # Generate the hydroponics.Commands binary proto.
 add_custom_command(
