@@ -34,18 +34,16 @@ typedef const struct {
 
 static struct {
     const tank_i2c_address_t address;
-    tank_t tanks[CONFIG_ESP_SENSOR_TANKS];
+    tank_t tanks;
     ads1115_t handle;
 } config = {
         .address = TANK_I2C_ADDRESS_GND,
         .tanks = {
-                {
-                        .name = "Tank",
-                        .device_mux = ADS1115_MUX_0_1,
-                        // From https://docs.google.com/spreadsheets/d/1LZo2zjm7wT2C7UeA40zMUXK-daBry_TDRjhAEd-a5a8/view
-                        //                      x^3                  x^2               x               b
-                        .regression = {0.000000000654032205, -0.000005018729145, 0.0267722537539866, 44.0786225250312},
-                },
+                .name = "Tank",
+                .device_mux = ADS1115_MUX_0_1,
+                // From https://docs.google.com/spreadsheets/d/1LZo2zjm7wT2C7UeA40zMUXK-daBry_TDRjhAEd-a5a8/view
+                //                      x^3                   x^2                    x                    b
+                .regression = {-0.00000000000000185, -0.00000000021752058, -0.00002203925836691, 0.52318676617797200},
         },
 };
 
@@ -55,21 +53,19 @@ static void tank_task(void *arg) {
 
     while (true) {
         TickType_t last_wake_time = xTaskGetTickCount();
-        for (int idx = 0; idx < CONFIG_ESP_SENSOR_TANKS; ++idx) {
-            if (config.tanks[idx].name == NULL) {
-                continue;
-            }
-            int64_t scratch = 0;
-            ads1115_set_mux(&config.handle, config.tanks[idx].device_mux);
-            for (int i = 0; i < NO_OF_SAMPLES; i++) {
-                scratch += ads1115_get_raw(&config.handle);
-            }
-            // Average the value and run linear regression.
-            int32_t raw = (int32_t) (scratch / NO_OF_SAMPLES);
-            double average = lin_regression(config.tanks[idx].regression, COEFFICIENTS_MAX, raw);
-            ESP_ERROR_CHECK(context_set_tank(context, idx, (float) average / 100.f));
-            ESP_LOGI(TAG, "%s: %d / %.1f %%", config.tanks[idx].name, raw, average);
+        if (config.tanks.name == NULL) {
+            continue;
         }
+        int64_t scratch = 0;
+        ads1115_set_mux(&config.handle, config.tanks.device_mux);
+        for (int i = 0; i < NO_OF_SAMPLES; i++) {
+            scratch += ads1115_get_raw(&config.handle);
+        }
+        // Average the value and run linear regression.
+        int32_t raw = (int32_t) (scratch / NO_OF_SAMPLES);
+        double average = lin_regression(config.tanks.regression, COEFFICIENTS_MAX, raw);
+        ESP_ERROR_CHECK(context_set_tank(context, CONFIG_TANK_A, average));
+        ESP_LOGI(TAG, "%s: %d / %.1f %%", config.tanks.name, raw, average * 100);
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_TANK_MS));
     }
 }
@@ -80,6 +76,7 @@ esp_err_t tank_init(context_t *context) {
         config.handle = ads1115_config(I2C_MASTER_NUM, config.address);
         ads1115_set_mode(&config.handle, ADS1115_MODE_SINGLE);
         ads1115_set_sps(&config.handle, ADS1115_SPS_64);
+        ads1115_set_pga(&config.handle, ADS1115_FSR_0_512);
         ads1115_set_max_ticks(&config.handle, pdMS_TO_TICKS(I2C_TIMEOUT_MS));
     }
     xTaskCreatePinnedToCore(tank_task, "tank", 2560, context, 15, NULL, tskNO_AFFINITY);

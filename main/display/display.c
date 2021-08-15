@@ -47,6 +47,7 @@ static esp_err_t display_draw(context_t *context, bool connected, bool time_upda
     float indoor = context->sensors.temp.indoor;
     float probe = context->sensors.temp.probe;
     float humidity = context->sensors.humidity;
+    float tank = context->sensors.tank[CONFIG_TANK_A].value;
     float eca = context->sensors.ec[CONFIG_TANK_A].value;
     float pha = context->sensors.ph[CONFIG_TANK_A].value;
     context_unlock(context);
@@ -60,6 +61,9 @@ static esp_err_t display_draw(context_t *context, bool connected, bool time_upda
 
     snprintf_value(buf, sizeof(buf), "Hum: %.f %%", "Hum: ?? %%", humidity);
     u8g2_DrawStr(&u8g2, 0, 15, buf);
+
+    snprintf_value(buf, sizeof(buf), "Tank: %.f %%", "Tank: ?? %%", tank * 100);
+    u8g2_DrawStr(&u8g2, 64, 15, buf);
 
     len = strlcpy(buf, "EC:", sizeof(buf));
     len += snprintf_append(buf, len, sizeof(buf), " %.f", eca);
