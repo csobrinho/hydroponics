@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Write NVS (RedMeanMachine)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="&quot;$CMakeCurrentBuildDir$&quot; RedMeanMachine" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$ProjectFileDir$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="hydroponics" TARGET_NAME="flash" CONFIG_NAME="Default (ESP32-S2)" RUN_PATH="$PROJECT_DIR$/tools/write_nvs.sh">
+  <configuration default="false" name="Write NVS (RedMeanMachine)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="&quot;$CMakeCurrentProfileName$&quot; &quot;$CMakeCurrentBuildDir$&quot; RedMeanMachine" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$ProjectFileDir$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="hydroponics" TARGET_NAME="flash" CONFIG_NAME="Default (ESP32-S2)" RUN_PATH="$PROJECT_DIR$/tools/write_nvs.sh">
     <method v="2">
       <option name="RunConfigurationTask" enabled="true" run_configuration_name="Generate Protos" run_configuration_type="CMakeRunConfiguration" />
     </method>

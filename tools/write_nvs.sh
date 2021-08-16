@@ -1,8 +1,19 @@
 #!/usr/bin/env bash
 set -o errexit
 
-BUILD_DIR="$1"
-NAME="$2"
+TARGET=${1:-"Default (ESP32-S2)"}
+export IDF_TARGET="$(awk -F'[\(|\)]' '{ gsub("-", ""); print tolower($2) }' <<<$TARGET)"
+
+if [[ "${IDF_TARGET}" == "esp32" ]]; then
+  export ESPBAUD=921600
+  export ESPPORT="/dev/cu.usbserial-0001"
+else
+  export ESPBAUD=3000000
+  export ESPPORT="/dev/cu.usbserial-1410"
+fi
+
+BUILD_DIR="$2"
+NAME="$3"
 CSV="${BUILD_DIR}/nvs_config_${NAME}.csv"
 BIN="${BUILD_DIR}/nvs_config_${NAME}.bin"
 
