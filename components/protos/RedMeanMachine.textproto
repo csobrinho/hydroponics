@@ -66,11 +66,11 @@ task: {
   output: EXT_TUYA_OUT_2
   cron: {
     state: ON,
-    expression: "0,3,6 0,30 * * * *"  # On for 5m at 00:00.
+    expression: "0,3,6 0,30 * * * *"  # On for 15m at 00:00.
   }
   cron: {
     state: OFF,
-    expression: "0,3,6 10,40 * * * *"  # Off after 10m.
+    expression: "0,3,6 15,45 * * * *"  # Off after 15m.
   }
 }
 startup_state {

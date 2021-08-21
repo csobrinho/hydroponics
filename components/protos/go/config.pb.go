@@ -29,20 +29,21 @@ const _ = proto.ProtoPackageIsVersion4
 type Output int32
 
 const (
-	// PH Down.
+	// Water.
 	Output_EXT_GPIO_A_0 Output = 0 // EXT_GPIO_START
-	// PH Up.
+	// Mixer.
 	Output_EXT_GPIO_A_1 Output = 1
-	// Nutrients.
+	// Not used.
 	Output_EXT_GPIO_A_2 Output = 2
+	// Not used.
 	Output_EXT_GPIO_A_3 Output = 3
-	// Tank B Mixer.
+	// Not used.
 	Output_EXT_GPIO_A_4 Output = 4
-	// Tank B Water Intake.
+	// PH Down.
 	Output_EXT_GPIO_A_5 Output = 5
-	// Tank A Water Intake.
+	// PH Up.
 	Output_EXT_GPIO_A_6 Output = 6
-	// Tank A Mixer.
+	// Nutrients.
 	Output_EXT_GPIO_A_7 Output = 7
 	// LED.
 	Output_EXT_GPIO_B_0 Output = 8
