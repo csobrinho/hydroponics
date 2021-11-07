@@ -183,6 +183,21 @@ static esp_err_t ext_gpio_clear_bits(ext_gpio_reg_t reg_addr, uint8_t *data, uin
     return ext_gpio_write(reg_addr, data, 1);
 }
 
+static esp_err_t ext_gpio_reinit(const uint8_t *data, size_t len) {
+    // Reset the bank access to BANK=0.
+    ESP_ERROR_CHECK(ext_gpio_write_reg(EXT_GPIO_REG_IOCONA, 0x00));
+    ESP_ERROR_CHECK(ext_gpio_write_reg(EXT_GPIO_REG_IOCONB, 0x00));
+
+    // Force set the port values first, then all the registers since the IN/OUT register will instantly turn the port!
+    ESP_ERROR_CHECK(ext_gpio_write(EXT_GPIO_REG_BASE, &data[EXT_GPIO_REG_OLATA], 2));
+    ESP_ERROR_CHECK(ext_gpio_write(EXT_GPIO_REG_BASE, &data[EXT_GPIO_REG_GPIOA], 2));
+
+    // Reset all regs to known values, slightly different from POR values!
+    ESP_ERROR_CHECK(ext_gpio_write(EXT_GPIO_REG_BASE, data, len));
+
+    return ESP_OK;
+}
+
 // It seems the device sometimes resets itself. Try to detect that and re-init it.
 static esp_err_t ext_gpio_check_reset(void) {
     uint8_t iodirs[2] = {0};
@@ -194,7 +209,7 @@ static esp_err_t ext_gpio_check_reset(void) {
     // Preserve the same outputs.
     status.olat_a = status.gpio_a;
     status.olat_b = status.gpio_b;
-    ESP_ERROR_CHECK(ext_gpio_write(EXT_GPIO_REG_BASE, status.value, sizeof(status.value)));
+    ESP_ERROR_CHECK(ext_gpio_reinit(status.value, sizeof(status.value)));
     return ESP_OK;
 }
 
@@ -208,17 +223,16 @@ esp_err_t ext_gpio_init(void) {
 
     // Reset all regs to known values, slightly different from POR values!
     ESP_ERROR_CHECK(ext_gpio_write(EXT_GPIO_REG_BASE, EXT_GPIO_REG_POR_VALUES, sizeof(EXT_GPIO_REG_POR_VALUES)));
-    ESP_ERROR_CHECK(ext_gpio_read(EXT_GPIO_REG_BASE, (uint8_t *) &status.value, sizeof(status)));
+
+    ESP_ERROR_CHECK(ext_gpio_reinit(EXT_GPIO_REG_POR_VALUES, sizeof(EXT_GPIO_REG_POR_VALUES)));
+    ESP_ERROR_CHECK(ext_gpio_read(EXT_GPIO_REG_BASE, (uint8_t *) &status.value, sizeof(status.value)));
     return ESP_OK;
 }
 
 esp_err_t ext_gpio_config_intr(bool mirroring, bool openDrain, bool polarity) {
-    status.iocon_a.mirror = mirroring;
-    status.iocon_a.odr = openDrain;
-    status.iocon_a.intpol = polarity;
-    status.iocon_b.mirror = mirroring;
-    status.iocon_b.odr = openDrain;
-    status.iocon_b.intpol = polarity;
+    status.iocon_a.mirror = status.iocon_b.mirror = mirroring;
+    status.iocon_a.odr = status.iocon_b.odr = openDrain;
+    status.iocon_a.intpol = status.iocon_b.intpol = polarity;
     ESP_ERROR_CHECK(ext_gpio_write(EXT_GPIO_REG_IOCONA, (uint8_t *) &status.iocon_a, 2));
     return ESP_OK;
 }
@@ -261,7 +275,7 @@ int ext_gpio_get_level(ext_gpio_num_t gpio_num) {
     uint8_t *r = A_OR_B(gpio_num, &status.gpio_a, &status.gpio_b);
     ESP_ERROR_CHECK(ext_gpio_read(A_OR_B(gpio_num, EXT_GPIO_REG_GPIOA, EXT_GPIO_REG_GPIOB), r, 1));
     uint8_t mask = PIN_MASK(gpio_num);
-    return *r & mask ? 1 : 0;
+    return (*r & mask) ? 1 : 0;
 }
 
 uint16_t ext_gpio_get(void) {
@@ -279,10 +293,10 @@ esp_err_t ext_gpio_set_level(ext_gpio_num_t gpio_num, uint32_t level) {
 }
 
 esp_err_t ext_gpio_set(uint16_t value) {
-    status.gpio_a = value & 0xff;
-    status.gpio_b = value >> 8;
+    status.gpio_a = status.olat_a = value & 0xff;
+    status.gpio_b = status.olat_b = value >> 8;
     ESP_ERROR_CHECK(ext_gpio_write(EXT_GPIO_REG_GPIOA, &status.gpio_a, 2));
-    return ESP_OK;
+    return ext_gpio_check_reset();
 }
 
 esp_err_t ext_gpio_set_direction(ext_gpio_num_t gpio_num, gpio_mode_t mode) {
