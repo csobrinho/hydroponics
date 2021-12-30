@@ -101,7 +101,6 @@ static void io_generic_set(Hydroponics__Output output, Hydroponics__OutputState 
 }
 
 static void io_cron_callback(cron_handle_t handle, const char *name, void *data) {
-    ARG_UNUSED(handle);
     io_cron_args_t *args = (io_cron_args_t *) data;
     for (int i = 0; i < args->n_output; ++i) {
         ESP_LOGI(TAG, "io_cron_callback name: %s action: %3s output: %s", name,
@@ -109,19 +108,19 @@ static void io_cron_callback(cron_handle_t handle, const char *name, void *data)
                  enum_from_value(&hydroponics__output__descriptor, args->output[i]));
         io_generic_set(args->output[i], args->state);
     }
-    if (args->single_shot) {
-        entry_t *e = NULL, *tmp = NULL;
-        TAILQ_FOREACH_SAFE(e, &head, next, tmp) {
-            if (e->handle == handle) {
-                ESP_ERROR_CHECK(cron_delete(e->handle));
-                ESP_ERROR_CHECK(io_cron_args_destroy(e->cron_args));
-                TAILQ_REMOVE(&head, e, next);
-            }
-        }
+    if (!args->single_shot) {
+        return;
     }
-    if (args->single_shot) {
-        ESP_ERROR_CHECK(cron_delete(handle));
-        ESP_ERROR_CHECK(io_cron_args_destroy(args));
+    entry_t *e = NULL, *tmp = NULL;
+    TAILQ_FOREACH_SAFE(e, &head, next, tmp) {
+        if (e->handle == handle) {
+            ESP_ERROR_CHECK(cron_delete(e->handle));
+            handle = INVALID_CRON_HANDLE;
+            ESP_ERROR_CHECK(io_cron_args_destroy(e->cron_args));
+            args = NULL;
+
+            TAILQ_REMOVE(&head, e, next);
+        }
     }
 }
 
@@ -167,6 +166,19 @@ static esp_err_t io_cron_add(const char *name, const char *expression, const siz
     cron_handle_t handle = INVALID_CRON_HANDLE;
     ESP_ERROR_CHECK(io_cron_args_create(&cron_args, n_output, output, state));
     if (delay_ms > 0) {
+        cron_args->single_shot = true;
+        // Cleanup previous delayed schedules.
+        entry_t *e = NULL, *tmp = NULL;
+        TAILQ_FOREACH_SAFE(e, &head, next, tmp) {
+            if (cron_args->n_output == e->cron_args->n_output &&
+                memcmp(cron_args->output, e->cron_args->output,
+                       cron_args->n_output * sizeof(e->cron_args->output)) == 0) {
+                ESP_ERROR_CHECK(cron_delete(e->handle));
+                ESP_ERROR_CHECK(io_cron_args_destroy(e->cron_args));
+                TAILQ_REMOVE(&head, e, next);
+                ESP_LOGI(TAG, "Replaced single shot");
+            }
+        }
         ESP_ERROR_CHECK(cron_schedule_in(name, delay_ms, io_cron_callback, cron_args, &handle));
     } else {
         ESP_ERROR_CHECK(cron_create(name, expression, io_cron_callback, cron_args, &handle));
