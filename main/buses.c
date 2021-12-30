@@ -61,13 +61,14 @@ void buses_init(void) {
     buses_reset();
     buses_i2c_unstuck();
 
-    i2c_config_t conf;
-    conf.mode = I2C_MODE_MASTER;
-    conf.sda_io_num = I2C_MASTER_SDA;
-    conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
-    conf.scl_io_num = I2C_MASTER_SCL;
-    conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
-    conf.master.clk_speed = I2C_MASTER_FREQ_HZ;
+    const i2c_config_t conf = {
+            .mode = I2C_MODE_MASTER,
+            .sda_io_num = I2C_MASTER_SDA,
+            .sda_pullup_en = GPIO_PULLUP_ENABLE,
+            .scl_io_num = I2C_MASTER_SCL,
+            .scl_pullup_en = GPIO_PULLUP_ENABLE,
+            .master.clk_speed = I2C_MASTER_FREQ_HZ,
+    };
 
     ESP_LOGI(TAG, "I2C clock: %d kHz", I2C_MASTER_FREQ_HZ / 1000);
     ESP_ERROR_CHECK(i2c_param_config(I2C_MASTER_NUM, &conf));
