@@ -1,13 +1,19 @@
+#include <string.h>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/ringbuf.h"
+
+#include "driver/i2c.h"
 
 #include "esp_err.h"
 #include "esp_log.h"
 
+#include "buses.h"
 #include "commands.pb-c.h"
 #include "config.h"
 #include "context.h"
 #include "error.h"
+#include "i2c.h"
 #include "iot.h"
 #include "mqtt.h"
 #include "state.h"
@@ -40,6 +46,29 @@ typedef struct {
 static const char *const TAG = "iot";
 static RingbufHandle_t ring = NULL;
 
+static esp_err_t iot_handle_command_i2c(const Hydroponics__CommandI2c *i2c) {
+    const uint8_t addr = i2c->address & 0x7f;
+    const TickType_t wait = pdMS_TO_TICKS(I2C_TIMEOUT_MS);
+    ESP_LOGI(TAG, "i2c[0x%02x] reg: 0x%02x", i2c->address, i2c->reg_address);
+    ESP_LOG_BUFFER_HEX_LEVEL(TAG, i2c->write.data, i2c->write.len, ESP_LOG_INFO);
+
+    esp_err_t err = ESP_OK;
+    if (i2c->read_len > 0) {
+        uint8_t read[i2c->read_len];
+        memset(read, 0, i2c->read_len);
+        err = i2c_master_write_reg_read(I2C_MASTER_NUM, addr, i2c->reg_address, i2c->write.data, i2c->write.len, read,
+                                        i2c->read_len, wait);
+        ESP_LOG_BUFFER_HEX_LEVEL(TAG, read, i2c->read_len, ESP_LOG_INFO);
+    } else {
+        err = i2c_master_write_reg_read(I2C_MASTER_NUM, addr, i2c->reg_address, i2c->write.data, i2c->write.len, NULL,
+                                        0, wait);
+    }
+    if (err != ESP_OK) {
+        ESP_LOGI(TAG, "i2c[0x%02x] err: %s", i2c->address, esp_err_to_name(err));
+    }
+    return ESP_OK;
+}
+
 static esp_err_t iot_handle_command(context_t *context, const uint8_t *command, size_t size) {
     ARG_UNUSED(context);
     if (command == NULL || size == 0) {
@@ -51,8 +80,6 @@ static esp_err_t iot_handle_command(context_t *context, const uint8_t *command, 
     for (int i = 0; i < cmds->n_command; ++i) {
         Hydroponics__Command *cmd = cmds->command[i];
         switch (cmd->command_case) {
-            case HYDROPONICS__COMMAND__COMMAND__NOT_SET:
-                break;
             case HYDROPONICS__COMMAND__COMMAND_REBOOT: {
                 ESP_LOGW(TAG, "System going to reboot in 4s");
                 vTaskDelay(pdMS_TO_TICKS(4000));
@@ -72,6 +99,12 @@ static esp_err_t iot_handle_command(context_t *context, const uint8_t *command, 
                 }
                 break;
             }
+            case HYDROPONICS__COMMAND__COMMAND_I2C: {
+                ESP_ERROR_CHECK(iot_handle_command_i2c(cmd->i2c));
+                break;
+            }
+            case HYDROPONICS__COMMAND__COMMAND__NOT_SET:
+                // Fall-through.
             default:
                 ESP_LOGW(TAG, "Unknown command: %d", cmd->command_case);
                 break;
