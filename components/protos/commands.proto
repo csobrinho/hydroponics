@@ -23,11 +23,19 @@ message CommandImpulse {
   uint32 delay_ms = 3;
 }
 
+message CommandI2c {
+  uint32 address = 1;
+  uint32 reg_address = 2;
+  bytes write = 3;
+  uint32 read_len = 4;
+}
+
 message Command {
   oneof command {
     CommandReboot reboot = 1;
     CommandSet set = 2;
     CommandImpulse impulse = 3;
+    CommandI2c i2c = 4;
   }
 }
 

@@ -142,6 +142,51 @@ void   hydroponics__command_impulse__free_unpacked
   assert(message->base.descriptor == &hydroponics__command_impulse__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+void   hydroponics__command_i2c__init
+                     (Hydroponics__CommandI2c         *message)
+{
+  static const Hydroponics__CommandI2c init_value = HYDROPONICS__COMMAND_I2C__INIT;
+  *message = init_value;
+}
+size_t hydroponics__command_i2c__get_packed_size
+                     (const Hydroponics__CommandI2c *message)
+{
+  assert(message->base.descriptor == &hydroponics__command_i2c__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t hydroponics__command_i2c__pack
+                     (const Hydroponics__CommandI2c *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &hydroponics__command_i2c__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t hydroponics__command_i2c__pack_to_buffer
+                     (const Hydroponics__CommandI2c *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &hydroponics__command_i2c__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+Hydroponics__CommandI2c *
+       hydroponics__command_i2c__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (Hydroponics__CommandI2c *)
+     protobuf_c_message_unpack (&hydroponics__command_i2c__descriptor,
+                                allocator, len, data);
+}
+void   hydroponics__command_i2c__free_unpacked
+                     (Hydroponics__CommandI2c *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &hydroponics__command_i2c__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 void   hydroponics__command__init
                      (Hydroponics__Command         *message)
 {
@@ -365,7 +410,84 @@ const ProtobufCMessageDescriptor hydroponics__command_impulse__descriptor =
   (ProtobufCMessageInit) hydroponics__command_impulse__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor hydroponics__command__field_descriptors[3] =
+static const ProtobufCFieldDescriptor hydroponics__command_i2c__field_descriptors[4] =
+{
+  {
+    "address",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_UINT32,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__CommandI2c, address),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "reg_address",
+    2,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_UINT32,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__CommandI2c, reg_address),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "write",
+    3,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_BYTES,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__CommandI2c, write),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "read_len",
+    4,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_UINT32,
+    0,   /* quantifier_offset */
+    offsetof(Hydroponics__CommandI2c, read_len),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned hydroponics__command_i2c__field_indices_by_name[] = {
+  0,   /* field[0] = address */
+  3,   /* field[3] = read_len */
+  1,   /* field[1] = reg_address */
+  2,   /* field[2] = write */
+};
+static const ProtobufCIntRange hydroponics__command_i2c__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 4 }
+};
+const ProtobufCMessageDescriptor hydroponics__command_i2c__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "hydroponics.CommandI2c",
+  "CommandI2c",
+  "Hydroponics__CommandI2c",
+  "hydroponics",
+  sizeof(Hydroponics__CommandI2c),
+  4,
+  hydroponics__command_i2c__field_descriptors,
+  hydroponics__command_i2c__field_indices_by_name,
+  1,  hydroponics__command_i2c__number_ranges,
+  (ProtobufCMessageInit) hydroponics__command_i2c__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor hydroponics__command__field_descriptors[4] =
 {
   {
     "reboot",
@@ -403,8 +525,21 @@ static const ProtobufCFieldDescriptor hydroponics__command__field_descriptors[3]
     0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "i2c",
+    4,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(Hydroponics__Command, command_case),
+    offsetof(Hydroponics__Command, i2c),
+    &hydroponics__command_i2c__descriptor,
+    NULL,
+    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned hydroponics__command__field_indices_by_name[] = {
+  3,   /* field[3] = i2c */
   2,   /* field[2] = impulse */
   0,   /* field[0] = reboot */
   1,   /* field[1] = set */
@@ -412,7 +547,7 @@ static const unsigned hydroponics__command__field_indices_by_name[] = {
 static const ProtobufCIntRange hydroponics__command__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 3 }
+  { 0, 4 }
 };
 const ProtobufCMessageDescriptor hydroponics__command__descriptor =
 {
@@ -422,7 +557,7 @@ const ProtobufCMessageDescriptor hydroponics__command__descriptor =
   "Hydroponics__Command",
   "hydroponics",
   sizeof(Hydroponics__Command),
-  3,
+  4,
   hydroponics__command__field_descriptors,
   hydroponics__command__field_indices_by_name,
   1,  hydroponics__command__number_ranges,
