@@ -22,7 +22,9 @@ static void ntp_task(void *arg) {
     ESP_LOGI(TAG, "Set timezone to Pacific Time...");
 
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
-    sntp_setservername(0, "time.google.com");
+    sntp_setservername(0, "216.239.35.0"); // time1.google.com.
+    sntp_setservername(1, "216.239.35.4"); // time2.google.com.
+    sntp_setservername(2, "216.239.35.8"); // time3.google.com.
     sntp_init();
 
     // Wait for time to be set.
@@ -30,7 +32,7 @@ static void ntp_task(void *arg) {
     struct tm t = {0};
     while (t.tm_year < (2019 - 1900)) {
         ESP_LOGI(TAG, "Waiting for system time to be set...");
-        vTaskDelay(pdMS_TO_TICKS(2000));
+        vTaskDelay(pdMS_TO_TICKS(1000));
         time(&now);
         localtime_r(&now, &t);
     }
