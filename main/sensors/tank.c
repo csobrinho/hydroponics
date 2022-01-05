@@ -65,7 +65,7 @@ static void tank_task(void *arg) {
         int32_t raw = (int32_t) (scratch / NO_OF_SAMPLES);
         double average = lin_regression(config.tanks.regression, COEFFICIENTS_MAX, raw);
         ESP_ERROR_CHECK(context_set_tank(context, CONFIG_TANK_A, average));
-        ESP_LOGI(TAG, "%s: %d / %.1f %%", config.tanks.name, raw, average * 100);
+        ESP_LOGD(TAG, "%s: %d / %.1f %%", config.tanks.name, raw, average * 100);
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(CONFIG_ESP_SAMPLING_TANK_MS));
     }
 }
