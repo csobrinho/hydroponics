@@ -14,7 +14,7 @@ esp_err_t status_init(context_t *context) {
     /* Prepare and set configuration of timers that will be used by LED Controller. */
     ledc_timer_config_t ledc_timer = {
             .duty_resolution = LEDC_TIMER_10_BIT, // Resolution of PWM duty.
-            .freq_hz = LEDC_INITIAL_DUTY,                 // Frequency of PWM signal.
+            .freq_hz = LEDC_INITIAL_DUTY,         // Frequency of PWM signal.
             .speed_mode = LEDC_LOW_SPEED_MODE,    // Timer mode.
             .timer_num = LEDC_TIMER_0,            // Timer index.
             .clk_cfg = LEDC_AUTO_CLK,             // Auto select the source clock.
