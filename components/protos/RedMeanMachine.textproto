@@ -13,8 +13,8 @@ controller: {
     target: 1300
     min: 1100
     max: 1400
-    min_graph: 1150
-    max_graph: 1550
+    min_graph: 800
+    max_graph: 1200
     pid: {
       sampling: 20
       p: 1.0

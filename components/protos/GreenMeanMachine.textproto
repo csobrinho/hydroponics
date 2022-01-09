@@ -13,8 +13,8 @@ controller: {
     target: 1300
     min: 1100
     max: 1400
-    min_graph: 1150
-    max_graph: 1550
+    min_graph: 800
+    max_graph: 1200
     pid: {
       sampling: 20
       p: 1.0
@@ -35,32 +35,6 @@ controller: {
       d: 0.0
     }
   }
-  ecb: {
-    target: 1200
-    min: 1000
-    max: 1300
-    min_graph: 1050
-    max_graph: 1450
-    pid: {
-      sampling: 20
-      p: 1.0
-      i: 0.0
-      d: 0.0
-    }
-  }
-  phb: {
-    target: 5.9
-    min: 5.75
-    max: 6.05
-    min_graph: 5.2
-    max_graph: 6.6
-    pid: {
-      sampling: 20
-      p: 1.0
-      i: 0.0
-      d: 0.0
-    }
-  }
 }
 hardware_id {
   name: "Relays"
@@ -73,12 +47,6 @@ hardware_id {
   dev_id: "37517103d8f15be34e2c"
   dps_id: 2,
   output: EXT_TUYA_OUT_2
-}
-hardware_id {
-  name: "Lettuce"
-  dev_id: "37517103d8f15be34e2c"
-  dps_id: 3,
-  output: EXT_TUYA_OUT_3
 }
 task: {
   name: "Heartbeat"
@@ -96,14 +64,13 @@ task: {
 task: {
   name: "Pump Timers"
   output: EXT_TUYA_OUT_2
-  output: EXT_TUYA_OUT_3
   cron: {
     state: ON,
-    expression: "0,3,6 0,30 * * * *"  # On for 5m at 00:00.
+    expression: "0,3,6 0,30 * * * *"  # On for 15m at 00:00.
   }
   cron: {
     state: OFF,
-    expression: "0,3,6 10,40 * * * *"  # Off after 10m.
+    expression: "0,3,6 15,45 * * * *"  # Off after 15m.
   }
 }
 startup_state {
@@ -131,5 +98,5 @@ startup_state {
 firmware {
   type: RELEASE
   arch: ESP32
-  version: "0.1"
+  version: "0.3"
 }
