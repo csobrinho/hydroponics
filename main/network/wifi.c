@@ -1,4 +1,4 @@
-/* Adapted from esp-idf/examples/common_components/protocol_examples_common/connect.c */
+/* Adapted from esp-idf/blob/master/examples/wifi/getting_started/station/main/station_example_main.c */
 #include <string.h>
 
 #include "freertos/FreeRTOS.h"
@@ -17,7 +17,7 @@
 #define GOT_IPV4_BIT BIT(0)
 #define CONNECTED_BIT GOT_IPV4_BIT
 
-static const char *TAG = "nwifi";
+static const char *const TAG = "nwifi";
 
 typedef struct {
     context_t *context;
@@ -36,16 +36,14 @@ static void wifi_wait_and_notify(void) {
     ESP_ERROR_CHECK(context_set_network_connected(args.context, true));
 }
 
-static void wifi_connect(void) {
-    ESP_ERROR_CHECK(esp_wifi_connect());
-}
-
 static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
     ARG_UNUSED(arg);
-    ARG_UNUSED(event_data);
-    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
+        ESP_LOGI(TAG, "Connecting to %s...", args.ssid);
+        ESP_ERROR_CHECK(esp_wifi_connect());
+    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         ESP_LOGI(TAG, "Disconnected from %s", args.ssid);
-        wifi_connect();
+        ESP_ERROR_CHECK(esp_wifi_connect());
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *) event_data;
         memcpy(&ip4_addr, &event->ip_info.ip, sizeof(ip4_addr));
@@ -53,7 +51,7 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
     }
 }
 
-static esp_err_t initialize(void) {
+static esp_err_t initialize(wifi_config_t *wifi_config) {
     ESP_ERROR_CHECK(context_set_network_connected(args.context, false));
     static bool initialized = false;
     if (initialized) {
@@ -67,33 +65,32 @@ static esp_err_t initialize(void) {
     assert(sta_netif);
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_FLASH));
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
     initialized = true;
     return ESP_OK;
 }
 
 static void wifi_join(void) {
-    ESP_ERROR_CHECK(initialize());
     wifi_config_t wifi_config = {
             .sta = {
                     .ssid = CONFIG_ESP_WIFI_SSID,
                     .password = CONFIG_ESP_WIFI_PASSWORD,
+                    /* Setting a password implies station will connect to all security modes including WEP/WPA.
+                     * However, these modes are deprecated and not advisable to be used. Only allow WPA2! */
+                    .threshold.authmode = WIFI_AUTH_WPA2_PSK,
             }
     };
     if (args.ssid != NULL && args.password != NULL) {
         strlcpy((char *) wifi_config.sta.ssid, args.ssid, sizeof(wifi_config.sta.ssid));
         strlcpy((char *) wifi_config.sta.password, args.password, sizeof(wifi_config.sta.password));
     }
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
-
-    ESP_LOGI(TAG, "Connecting to %s...", args.ssid);
-    wifi_connect();
+    ESP_ERROR_CHECK(initialize(&wifi_config));
     wifi_wait_and_notify();
 }
 
