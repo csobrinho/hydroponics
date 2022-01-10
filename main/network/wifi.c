@@ -85,9 +85,18 @@ static void wifi_join(void) {
             .sta = {
                     .ssid = CONFIG_ESP_WIFI_SSID,
                     .password = CONFIG_ESP_WIFI_PASSWORD,
-                    /* Setting a password implies station will connect to all security modes including WEP/WPA.
-                     * However, these modes are deprecated and not advisable to be used. Only allow WPA2! */
-                    .threshold.authmode = WIFI_AUTH_WPA2_PSK,
+                    // Setting a password implies station will connect to all security modes including WEP/WPA.
+                    // However, these modes are deprecated and not advisable to be used. Only allow WPA2!
+                    .threshold = {
+                            .authmode = WIFI_AUTH_WPA2_PSK,
+                            .rssi = -127,
+                    },
+                    // Do a full scan to better workaround mesh networks.
+                    .scan_method = WIFI_ALL_CHANNEL_SCAN,
+                    .pmf_cfg = {
+                            .capable = true,
+                            .required = false,
+                    }
             },
     };
     if (args.ssid != NULL && args.password != NULL) {
