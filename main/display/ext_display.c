@@ -54,6 +54,6 @@ static void ext_display_task(void *arg) {
 }
 
 esp_err_t ext_display_init(context_t *context) {
-    xTaskCreatePinnedToCore(ext_display_task, "ext_display", 3072, context, 15, NULL, tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(ext_display_task, "ext_display", 4096, context, 15, NULL, tskNO_AFFINITY);
     return ESP_OK;
 }
