@@ -38,12 +38,13 @@ static void wifi_wait_and_notify(void) {
 
 static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
     ARG_UNUSED(arg);
+    ESP_LOGD(TAG, "Event base: %s, id: %d", event_base, event_id);
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         ESP_LOGI(TAG, "Connecting to %s...", args.ssid);
         ESP_ERROR_CHECK(esp_wifi_connect());
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         wifi_event_sta_disconnected_t *event = (wifi_event_sta_disconnected_t *) event_data;
-        ESP_LOGI(TAG, "Disconnected from %*s, bssid: %02X:%02X:%02X:%02X:%02X:%02X, reason: %d", event->ssid_len,
+        ESP_LOGI(TAG, "Disconnected from %*s, bssid: %02x:%02x:%02x:%02x:%02x:%02x, reason: %d", event->ssid_len,
                  event->ssid, event->bssid[0], event->bssid[1], event->bssid[2], event->bssid[3], event->bssid[4],
                  event->bssid[5], event->reason);
         ESP_ERROR_CHECK(esp_wifi_connect());
@@ -87,10 +88,6 @@ static void wifi_join(void) {
                     /* Setting a password implies station will connect to all security modes including WEP/WPA.
                      * However, these modes are deprecated and not advisable to be used. Only allow WPA2! */
                     .threshold.authmode = WIFI_AUTH_WPA2_PSK,
-//                    .pmf_cfg = {
-//                            .capable = true,
-//                            .required = false,
-//                    },
             },
     };
     if (args.ssid != NULL && args.password != NULL) {
