@@ -2,7 +2,7 @@
   <configuration default="false" name="Generate Protos" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="&quot;$CMakeCurrentBuildTypeName$&quot; protos protos_go config_protos commands_protos" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$ProjectFileDir$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="hydroponics" TARGET_NAME="config_protos" CONFIG_NAME="Default (ESP32-S2)" RUN_PATH="$PROJECT_DIR$/tools/custom_idf.sh">
     <method v="2" />
   </configuration>
-  <configuration default="false" name="Generate Protos" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="&quot;$CMakeCurrentProfileName$&quot; protos protos_go config_protos commands_protos" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$ProjectFileDir$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="hydroponics" TARGET_NAME="config_protos" CONFIG_NAME="Default (ESP32-S2)" RUN_PATH="$PROJECT_DIR$/tools/custom_idf.sh">
+  <configuration default="false" name="Generate Protos" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="&quot;$CMakeCurrentProfileName$&quot; protos protos_go config_protos commands_protos" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$ProjectFileDir$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="hydroponics" TARGET_NAME="config_protos" CONFIG_NAME="Default (ESP32)" RUN_PATH="$PROJECT_DIR$/tools/custom_idf.sh">
     <method v="2" />
   </configuration>
 </component>
