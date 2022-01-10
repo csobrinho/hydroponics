@@ -32,11 +32,13 @@ static context_t *context;
 void app_main() {
     context = context_create();
     ESP_ERROR_CHECK(syslog_init(context));
-    buses_init();
     ESP_ERROR_CHECK(storage_init(context));
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     ESP_ERROR_CHECK(config_init(context));
+    ESP_ERROR_CHECK(wifi_init(context, context->config.ssid, context->config.password));
+    ESP_ERROR_CHECK(ntp_init(context));
+    buses_init();
     ESP_ERROR_CHECK(cron_init(context));
     ESP_ERROR_CHECK(iot_init(context));
     ESP_ERROR_CHECK(ext_gpio_init());
@@ -52,8 +54,6 @@ void app_main() {
     ESP_ERROR_CHECK(ezo_ph_init(context));
     ESP_ERROR_CHECK(ezo_rtd_init(context));
     ESP_ERROR_CHECK(tank_init(context));
-    ESP_ERROR_CHECK(wifi_init(context, context->config.ssid, context->config.password));
-    ESP_ERROR_CHECK(ntp_init(context));
     ESP_ERROR_CHECK(monitor_init(context));
     ESP_ERROR_CHECK(console_init());
 }
