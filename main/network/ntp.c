@@ -22,9 +22,7 @@ static void ntp_task(void *arg) {
     ESP_LOGI(TAG, "Set timezone to Pacific Time...");
 
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
-    sntp_setservername(0, "216.239.35.0"); // time1.google.com.
-    sntp_setservername(1, "216.239.35.4"); // time2.google.com.
-    sntp_setservername(2, "216.239.35.8"); // time3.google.com.
+    sntp_setservername(0, "us.pool.ntp.org");
     sntp_init();
 
     // Wait for time to be set.
