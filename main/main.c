@@ -33,7 +33,6 @@ void app_main() {
     context = context_create();
     ESP_ERROR_CHECK(syslog_init(context));
     ESP_ERROR_CHECK(storage_init(context));
-    ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     ESP_ERROR_CHECK(config_init(context));
     ESP_ERROR_CHECK(wifi_init(context, context->config.ssid, context->config.password));
