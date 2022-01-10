@@ -97,7 +97,7 @@ static void io_generic_set(Hydroponics__Output output, Hydroponics__OutputState 
     }
 
     size_t buckets = 1;
-    ESP_ERROR_CHECK(state_push_output(1, &buckets, &output, &state));
+    // FIXME: ESP_ERROR_CHECK(state_push_output(1, &buckets, &output, &state));
 }
 
 static void io_cron_callback(cron_handle_t handle, const char *name, void *data) {
@@ -156,7 +156,7 @@ static void io_set_default_state(const Hydroponics__Config *config) {
         }
     }
 
-    ESP_ERROR_CHECK(state_push_output(config->n_startup_state, buckets, outputs, output_states));
+    // FIXME: ESP_ERROR_CHECK(state_push_output(config->n_startup_state, buckets, outputs, output_states));
 }
 
 static esp_err_t io_cron_add(const char *name, const char *expression, const size_t n_output,

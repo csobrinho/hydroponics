@@ -102,7 +102,7 @@ static void monitor_memory_callback(cron_handle_t handle, const char *name, void
     uint32_t free = esp_get_free_heap_size();
     ESP_LOGI(TAG, "Minimum free heap: %d    free heap: %d", min_free, free);
 
-    // FIXME: disabled ESP_ERROR_CHECK(state_push_memory(min_free, free));
+    // FIXME: ESP_ERROR_CHECK(state_push_memory(min_free, free));
 }
 
 esp_err_t monitor_init(context_t *context) {
