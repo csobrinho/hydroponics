@@ -48,6 +48,10 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
                  event->ssid, event->bssid[0], event->bssid[1], event->bssid[2], event->bssid[3], event->bssid[4],
                  event->bssid[5], event->reason);
         ESP_ERROR_CHECK(esp_wifi_connect());
+        if (event->reason == WIFI_REASON_CONNECTION_FAIL) {
+            esp_wifi_statis_dump(WIFI_STATIS_ALL);
+        }
+
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *) event_data;
         memcpy(&ip4_addr, &event->ip_info.ip, sizeof(ip4_addr));
@@ -71,7 +75,7 @@ static esp_err_t initialize(wifi_config_t *wifi_config) {
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
-    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_FLASH));
+    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, wifi_config));
