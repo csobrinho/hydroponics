@@ -297,9 +297,6 @@ static void mqtt_task(void *args) {
 
         iotc_shutdown();
 
-        /* Notify the system that there might be an issue with the network. */
-        context_set_network_error(context, true);
-
         ESP_LOGW(TAG, "Task restarting");
         vTaskDelay(pdMS_TO_TICKS(1000));
     }

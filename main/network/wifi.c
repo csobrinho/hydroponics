@@ -36,6 +36,82 @@ static void wifi_wait_and_notify(void) {
     ESP_ERROR_CHECK(context_set_network_connected(args.context, true));
 }
 
+static const char *reason_str(uint8_t reason) {
+    switch (reason) {
+        case WIFI_REASON_UNSPECIFIED:
+            return "UNSPECIFIED";
+        case WIFI_REASON_AUTH_EXPIRE:
+            return "AUTH_EXPIRE";
+        case WIFI_REASON_AUTH_LEAVE:
+            return "AUTH_LEAVE";
+        case WIFI_REASON_ASSOC_EXPIRE:
+            return "ASSOC_EXPIRE";
+        case WIFI_REASON_ASSOC_TOOMANY:
+            return "ASSOC_TOOMANY";
+        case WIFI_REASON_NOT_AUTHED:
+            return "NOT_AUTHED";
+        case WIFI_REASON_NOT_ASSOCED:
+            return "NOT_ASSOCED";
+        case WIFI_REASON_ASSOC_LEAVE:
+            return "ASSOC_LEAVE";
+        case WIFI_REASON_ASSOC_NOT_AUTHED:
+            return "ASSOC_NOT_AUTHED";
+        case WIFI_REASON_DISASSOC_PWRCAP_BAD:
+            return "DISASSOC_PWRCAP_BAD";
+        case WIFI_REASON_DISASSOC_SUPCHAN_BAD:
+            return "DISASSOC_SUPCHAN_BAD";
+        case WIFI_REASON_BSS_TRANSITION_DISASSOC:
+            return "BSS_TRANSITION_DISASSOC";
+        case WIFI_REASON_IE_INVALID:
+            return "IE_INVALID";
+        case WIFI_REASON_MIC_FAILURE:
+            return "MIC_FAILURE";
+        case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
+            return "4WAY_HANDSHAKE_TIMEOUT";
+        case WIFI_REASON_GROUP_KEY_UPDATE_TIMEOUT:
+            return "GROUP_KEY_UPDATE_TIMEOUT";
+        case WIFI_REASON_IE_IN_4WAY_DIFFERS:
+            return "IE_IN_4WAY_DIFFERS";
+        case WIFI_REASON_GROUP_CIPHER_INVALID:
+            return "GROUP_CIPHER_INVALID";
+        case WIFI_REASON_PAIRWISE_CIPHER_INVALID:
+            return "PAIRWISE_CIPHER_INVALID";
+        case WIFI_REASON_AKMP_INVALID:
+            return "AKMP_INVALID";
+        case WIFI_REASON_UNSUPP_RSN_IE_VERSION:
+            return "UNSUPP_RSN_IE_VERSION";
+        case WIFI_REASON_INVALID_RSN_IE_CAP:
+            return "INVALID_RSN_IE_CAP";
+        case WIFI_REASON_802_1X_AUTH_FAILED:
+            return "802_1X_AUTH_FAILED";
+        case WIFI_REASON_CIPHER_SUITE_REJECTED:
+            return "CIPHER_SUITE_REJECTED";
+        case WIFI_REASON_INVALID_PMKID:
+            return "INVALID_PMKID";
+        case WIFI_REASON_BEACON_TIMEOUT:
+            return "BEACON_TIMEOUT";
+        case WIFI_REASON_NO_AP_FOUND:
+            return "NO_AP_FOUND";
+        case WIFI_REASON_AUTH_FAIL:
+            return "AUTH_FAIL";
+        case WIFI_REASON_ASSOC_FAIL:
+            return "ASSOC_FAIL";
+        case WIFI_REASON_HANDSHAKE_TIMEOUT:
+            return "HANDSHAKE_TIMEOUT";
+        case WIFI_REASON_CONNECTION_FAIL:
+            return "CONNECTION_FAIL";
+        case WIFI_REASON_AP_TSF_RESET:
+            return "AP_TSF_RESET";
+        case WIFI_REASON_ROAMING:
+            return "ROAMING";
+        default: {
+            static char buffer[16] = {0};
+            snprintf(buffer, sizeof(buffer), "UNKNOWN %d", reason);
+            return buffer;
+        }
+    }
+}
+
 static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
     ARG_UNUSED(arg);
     ESP_LOGD(TAG, "Event base: %s, id: %d", event_base, event_id);
@@ -44,14 +120,10 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
         ESP_ERROR_CHECK(esp_wifi_connect());
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         wifi_event_sta_disconnected_t *event = (wifi_event_sta_disconnected_t *) event_data;
-        ESP_LOGI(TAG, "Disconnected from %*s, bssid: %02x:%02x:%02x:%02x:%02x:%02x, reason: %d", event->ssid_len,
+        ESP_LOGI(TAG, "Disconnected from %*s, bssid: %02x:%02x:%02x:%02x:%02x:%02x, reason: %s", event->ssid_len,
                  event->ssid, event->bssid[0], event->bssid[1], event->bssid[2], event->bssid[3], event->bssid[4],
-                 event->bssid[5], event->reason);
-        ESP_ERROR_CHECK(esp_wifi_connect());
-        if (event->reason == WIFI_REASON_CONNECTION_FAIL) {
-            esp_wifi_statis_dump(WIFI_STATIS_ALL);
-        }
-
+                 event->bssid[5], reason_str(event->reason));
+        ESP_ERROR_CHECK(context_set_network_error(args.context, true));
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *) event_data;
         memcpy(&ip4_addr, &event->ip_info.ip, sizeof(ip4_addr));
@@ -60,6 +132,7 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
 }
 
 static esp_err_t initialize(wifi_config_t *wifi_config) {
+    esp_log_level_set("wifi", ESP_LOG_VERBOSE);
     ESP_ERROR_CHECK(context_set_network_connected(args.context, false));
     static bool initialized = false;
     if (initialized) {
@@ -75,7 +148,7 @@ static esp_err_t initialize(wifi_config_t *wifi_config) {
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
-    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
+    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_FLASH));
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, wifi_config));
@@ -115,8 +188,8 @@ static void wifi_reconnect(void) {
     ESP_LOGI(TAG, "Reconnecting to %s...", args.ssid);
     ESP_ERROR_CHECK(context_set_network_connected(args.context, false));
 
-    // Forcing a disconnect will trigger a reconnect from the event handler.
     ESP_ERROR_CHECK(esp_wifi_disconnect());
+    ESP_ERROR_CHECK(esp_wifi_connect());
     xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
     ESP_ERROR_CHECK(context_set_network_connected(args.context, true));
 }
@@ -130,6 +203,9 @@ static void wifi_task(void *arg) {
         while (true) {
             // Wait until network error is dispatched.
             xEventGroupWaitBits(context->event_group, CONTEXT_EVENT_NETWORK_ERROR, pdTRUE, pdTRUE, portMAX_DELAY);
+            ESP_LOGW(TAG, "Network error, waiting 2s before reconnecting...");
+            vTaskDelay(pdMS_TO_TICKS(2000));
+            context_set_network_error(args.context, false);
             wifi_reconnect();
         }
     }
