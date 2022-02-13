@@ -47,7 +47,7 @@ void app_main() {
     ESP_ERROR_CHECK(status_init(context));
     ESP_ERROR_CHECK(display_init(context));
 #endif
-    ESP_ERROR_CHECK(ext_display_init(context));
+    // ESP_ERROR_CHECK(ext_display_init(context));
     ESP_ERROR_CHECK(humidity_pressure_init(context));
     ESP_ERROR_CHECK(ezo_ec_init(context));
     ESP_ERROR_CHECK(ezo_ph_init(context));
