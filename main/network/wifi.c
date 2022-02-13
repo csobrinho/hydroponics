@@ -17,7 +17,6 @@
 #define CONNECTED_BIT BIT(0)
 
 static const char *const TAG = "nwifi";
-const TickType_t CONNECTION_TIMEOUT_TICKS = pdMS_TO_TICKS(15000);
 
 typedef struct {
     context_t *context;
@@ -104,34 +103,6 @@ static const char *reason_str(uint8_t reason) {
     }
 }
 
-static const char *auth_mode_str(wifi_auth_mode_t mode) {
-    switch (mode) {
-        case WIFI_AUTH_OPEN:
-            return "OPEN";
-        case WIFI_AUTH_WEP:
-            return "WEP";
-        case WIFI_AUTH_WPA_PSK:
-            return "WPA_PSK";
-        case WIFI_AUTH_WPA2_PSK:
-            return "WPA2_PSK";
-        case WIFI_AUTH_WPA_WPA2_PSK:
-            return "WPA_WPA2_PSK";
-        case WIFI_AUTH_WPA2_ENTERPRISE:
-            return "WPA2_ENTERPRISE";
-        case WIFI_AUTH_WPA3_PSK:
-            return "WPA3_PSK";
-        case WIFI_AUTH_WPA2_WPA3_PSK:
-            return "WPA2_WPA3_PSK";
-        case WIFI_AUTH_WAPI_PSK:
-            return "WAPI_PSK";
-        default: {
-            static char buffer[16] = {0};
-            snprintf(buffer, sizeof(buffer), "UNKNOWN %d", mode);
-            return buffer;
-        }
-    }
-}
-
 static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
     ARG_UNUSED(arg);
     ESP_LOGD(TAG, "Event base: %s, id: %d", event_base, event_id);
@@ -139,14 +110,22 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
         ESP_LOGI(TAG, "Connecting to %s...", args.ssid);
         ESP_ERROR_CHECK(esp_wifi_connect());
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_CONNECTED) {
+        ESP_LOGI(TAG, "Connected to %s...", args.ssid);
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         wifi_event_sta_disconnected_t *event = (wifi_event_sta_disconnected_t *) event_data;
         ESP_LOGI(TAG, "Disconnected from %*s, bssid: %02x:%02x:%02x:%02x:%02x:%02x, reason: %s", event->ssid_len,
                  event->ssid, event->bssid[0], event->bssid[1], event->bssid[2], event->bssid[3], event->bssid[4],
                  event->bssid[5], reason_str(event->reason));
+        ESP_ERROR_CHECK(context_set_network_connected(args.context, false));
+        ESP_ERROR_CHECK(esp_wifi_connect());
+        xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
         ESP_ERROR_CHECK(context_set_network_error(args.context, true));
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+        ESP_LOGI(TAG, "Got ip address...");
         xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
+    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_LOST_IP) {
+        ESP_LOGI(TAG, "Lost ip address...");
+        xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
     }
 }
 
@@ -156,7 +135,6 @@ static void wifi_dev_init(void) {
         return;
     }
 
-    esp_log_level_set("wifi", ESP_LOG_VERBOSE);
     ESP_ERROR_CHECK(context_set_network_connected(args.context, false));
     ESP_LOGI(TAG, "Initializing wifi...");
 
@@ -170,8 +148,6 @@ static void wifi_dev_init(void) {
                             .authmode = WIFI_AUTH_WPA2_PSK,
                             .rssi = -127,
                     },
-                    // Do a full scan to better workaround mesh networks.
-                    .scan_method = WIFI_ALL_CHANNEL_SCAN,
                     .pmf_cfg = {
                             .capable = true,
                             .required = false,
@@ -191,6 +167,7 @@ static void wifi_dev_init(void) {
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_LOST_IP, &event_handler, NULL));
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_FLASH));
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
@@ -199,37 +176,25 @@ static void wifi_dev_init(void) {
     initialized = true;
 }
 
-static void wifi_connect(void) {
-    ESP_LOGI(TAG, "Connecting to %s...", args.ssid);
-    ESP_ERROR_CHECK(context_set_network_connected(args.context, false));
-    ESP_ERROR_CHECK(context_set_network_error(args.context, false));
-
-    EventBits_t bits = xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT, pdTRUE, pdTRUE, CONNECTION_TIMEOUT_TICKS);
-    if (bits & CONNECTED_BIT) {
-        ESP_ERROR_CHECK(context_set_network_connected(args.context, true));
-        ESP_ERROR_CHECK(context_set_network_error(args.context, false));
-    } else {
-        ESP_LOGW(TAG, "Failed to connect to %s in 10s...", args.ssid);
-        ESP_ERROR_CHECK(context_set_network_connected(args.context, false));
-        ESP_ERROR_CHECK(context_set_network_error(args.context, true));
-    }
-}
-
 static void wifi_task(void *arg) {
     context_t *context = (context_t *) arg;
     ARG_ERROR_CHECK(context != NULL, ERR_PARAM_NULL);
 
+    ESP_ERROR_CHECK(context_set_network_connected(args.context, false));
+    ESP_ERROR_CHECK(context_set_network_error(args.context, false));
     while (true) {
         wifi_dev_init();
         while (true) {
-            wifi_connect();
+            ESP_ERROR_CHECK(context_set_network_connected(args.context, false));
+            xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
+            ESP_ERROR_CHECK(context_set_network_connected(args.context, true));
+            ESP_ERROR_CHECK(context_set_network_error(args.context, false));
+
             // Wait until network error is dispatched.
             xEventGroupWaitBits(context->event_group, CONTEXT_EVENT_NETWORK_ERROR, pdTRUE, pdTRUE, portMAX_DELAY);
-            ESP_LOGW(TAG, "Network error, waiting 2s before reconnecting...");
-            vTaskDelay(pdMS_TO_TICKS(2000));
+            ESP_LOGW(TAG, "Potential network error, reconnecting...");
             ESP_ERROR_CHECK(esp_wifi_disconnect());
             ESP_ERROR_CHECK(esp_wifi_connect());
-            ESP_ERROR_CHECK(context_set_network_error(args.context, false));
         }
     }
 }
