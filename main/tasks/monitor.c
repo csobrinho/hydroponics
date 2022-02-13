@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <string.h>
 
 #include "freertos/FreeRTOS.h"
@@ -6,6 +5,7 @@
 
 #include "esp_err.h"
 #include "esp_log.h"
+#include "esp_wifi.h"
 
 #include "cron.h"
 #include "error.h"
@@ -13,8 +13,9 @@
 #include "network/state.h"
 #include "utils.h"
 
-#define MONITOR_CRON_MEMORY "0 * * * * *"   // Once every minute.
-#define MONITOR_CRON_TASKS  "0 */2 * * * *" // Once every 2 minutes.
+#define MONITOR_CRON_MEMORY "0 * * * * *"    // Once every minute.
+#define MONITOR_CRON_WIFI   "*/30 * * * * *" // Once every 30s.
+#define MONITOR_CRON_TASKS  "0 */2 * * * *"  // Once every 2 minutes.
 
 static const char *const TAG = "monitor";
 static const uint8_t STATES[] = {'R', '*', 'B', 'S', 'D', '?'};
@@ -105,8 +106,21 @@ static void monitor_memory_callback(cron_handle_t handle, const char *name, void
     // FIXME: ESP_ERROR_CHECK(state_push_memory(min_free, free));
 }
 
+static void monitor_wifi_callback(cron_handle_t handle, const char *name, void *data) {
+    ARG_UNUSED(handle);
+    ARG_UNUSED(name);
+    ARG_UNUSED(data);
+
+    wifi_ap_record_t record = {0};
+    if (esp_wifi_sta_get_ap_info(&record) != ESP_OK) {
+        return;
+    }
+    ESP_LOGI(TAG, "Wifi rssi: %d", record.rssi);
+}
+
 esp_err_t monitor_init(context_t *context) {
     ARG_UNUSED(context);
+    ESP_ERROR_CHECK(cron_create("monitor_wifi", MONITOR_CRON_WIFI, monitor_wifi_callback, NULL, NULL));
     ESP_ERROR_CHECK(cron_create("monitor_memory", MONITOR_CRON_MEMORY, monitor_memory_callback, NULL, NULL));
     ESP_ERROR_CHECK(cron_create("monitor_tasks", MONITOR_CRON_TASKS, monitor_tasks_callback, NULL, NULL));
     return ESP_OK;
