@@ -136,18 +136,18 @@ static ext_gpio_status_t status = {0};
 #define PIN_MASK(gpio_num) (BIT(((gpio_num) % 8)))
 
 static esp_err_t ext_gpio_read(ext_gpio_reg_t reg_addr, uint8_t *data, size_t data_len) {
-    ESP_LOGI(TAG, "READ 0x%02x -> 0x%02x", (EXT_GPIO_ADDRESS << 1) | I2C_MASTER_READ, reg_addr);
+    ESP_LOGD(TAG, "READ 0x%02x -> 0x%02x", (EXT_GPIO_ADDRESS << 1) | I2C_MASTER_READ, reg_addr);
     ESP_ERROR_CHECK(i2c_master_write_reg_read(I2C_MASTER_NUM, EXT_GPIO_ADDRESS, reg_addr, NULL, 0, data, data_len,
                                               pdMS_TO_TICKS(I2C_TIMEOUT_MS)));
-    ESP_LOG_BUFFER_HEX_LEVEL(TAG, data, data_len, ESP_LOG_INFO);
+    ESP_LOG_BUFFER_HEX_LEVEL(TAG, data, data_len, ESP_LOG_DEBUG);
     return ESP_OK;
 }
 
 static esp_err_t ext_gpio_write(ext_gpio_reg_t reg_addr, const uint8_t *data, size_t data_len) {
-    ESP_LOGI(TAG, "WRITE 0x%02x -> 0x%02x", (EXT_GPIO_ADDRESS << 1) | I2C_MASTER_WRITE, reg_addr);
+    ESP_LOGD(TAG, "WRITE 0x%02x -> 0x%02x", (EXT_GPIO_ADDRESS << 1) | I2C_MASTER_WRITE, reg_addr);
     ESP_ERROR_CHECK(i2c_master_write_reg_read(I2C_MASTER_NUM, EXT_GPIO_ADDRESS, reg_addr, data, data_len, NULL, 0,
                                               pdMS_TO_TICKS(I2C_TIMEOUT_MS)));
-    ESP_LOG_BUFFER_HEX_LEVEL(TAG, data, data_len, ESP_LOG_INFO);
+    ESP_LOG_BUFFER_HEX_LEVEL(TAG, data, data_len, ESP_LOG_DEBUG);
     return ESP_OK;
 }
 
@@ -269,7 +269,7 @@ esp_err_t ext_gpio_set_level(ext_gpio_num_t gpio_num, uint32_t level) {
     ext_gpio_reg_t reg = A_OR_B(gpio_num, EXT_GPIO_REG_GPIOA, EXT_GPIO_REG_GPIOB);
     uint8_t *r = A_OR_B(gpio_num, &status.gpio_a, &status.gpio_b);
     uint8_t mask = PIN_MASK(gpio_num);
-    ESP_LOGI(TAG, "SET num: %d val: %d now: 0x%02x | 0x%02x", gpio_num, level, *r, mask);
+    ESP_LOGD(TAG, "SET num: %d val: %d now: 0x%02x | 0x%02x", gpio_num, level, *r, mask);
     ESP_ERROR_CHECK(level ? ext_gpio_set_bits(reg, r, mask) : ext_gpio_clear_bits(reg, r, mask));
     return ext_gpio_check_reset();
 }
