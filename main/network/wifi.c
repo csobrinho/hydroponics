@@ -26,7 +26,6 @@ typedef struct {
 } args_t;
 
 static EventGroupHandle_t wifi_event_group;
-static esp_ip4_addr_t ip4_addr;
 static args_t args = {0};
 
 static const char *reason_str(uint8_t reason) {
@@ -140,10 +139,6 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
         ESP_LOGI(TAG, "Connecting to %s...", args.ssid);
         ESP_ERROR_CHECK(esp_wifi_connect());
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_CONNECTED) {
-        wifi_event_sta_connected_t *event = (wifi_event_sta_connected_t *) event_data;
-        ESP_LOGI(TAG, "Connected to %*s, bssid: %02x:%02x:%02x:%02x:%02x:%02x, ch: %d, auth: %s", event->ssid_len,
-                 event->ssid, event->bssid[0], event->bssid[1], event->bssid[2], event->bssid[3], event->bssid[4],
-                 event->bssid[5], event->channel, auth_mode_str(event->authmode));
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         wifi_event_sta_disconnected_t *event = (wifi_event_sta_disconnected_t *) event_data;
         ESP_LOGI(TAG, "Disconnected from %*s, bssid: %02x:%02x:%02x:%02x:%02x:%02x, reason: %s", event->ssid_len,
@@ -151,8 +146,6 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
                  event->bssid[5], reason_str(event->reason));
         ESP_ERROR_CHECK(context_set_network_error(args.context, true));
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
-        ip_event_got_ip_t *event = (ip_event_got_ip_t *) event_data;
-        memcpy(&ip4_addr, &event->ip_info.ip, sizeof(ip4_addr));
         xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
     }
 }
@@ -213,8 +206,6 @@ static void wifi_connect(void) {
 
     EventBits_t bits = xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT, pdTRUE, pdTRUE, CONNECTION_TIMEOUT_TICKS);
     if (bits & CONNECTED_BIT) {
-        ESP_LOGI(TAG, "Connected to %s", args.ssid);
-        ESP_LOGI(TAG, "  IPv4 address: " IPSTR, IP2STR(&ip4_addr));
         ESP_ERROR_CHECK(context_set_network_connected(args.context, true));
         ESP_ERROR_CHECK(context_set_network_error(args.context, false));
     } else {
