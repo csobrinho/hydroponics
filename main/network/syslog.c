@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 
 #include "freertos/FreeRTOS.h"
+#include "freertos/ringbuf.h"
 #include "freertos/semphr.h"
 
 #include "esp_err.h"
@@ -10,17 +11,15 @@
 #include "context.h"
 #include "error.h"
 #include "syslog.h"
+#include "utils.h"
 
-#define SYSLOG_BUF_MAX_SIZE    (4 * 1024)
-#define SYSLOG_SOCKET_MAX_SIZE 1024
-#define SYSLOG_WAIT_TIME_MS    2000
+#define SYSLOG_BUF_MAX_SIZE     (8 * 1024)
+#define SYSLOG_SOCKET_MAX_SIZE  1400
+#define SYSLOG_RETRY_TIME_TICKS (pdMS_TO_TICKS(3000))
+#define SYSLOG_DONT_WAIT        0
 
-static const char *TAG = "syslog";
-static const char SNIP[] = "<SNIP>";
-static SemaphoreHandle_t lock;
-static FILE *stream;
-static char *stream_buf = NULL;
-static size_t stream_len = 0;
+static const char *const TAG = "syslog";
+static RingbufHandle_t ring;
 
 static struct sockaddr_in dest_addr = {0};
 static int socket_fd = -1;
@@ -71,37 +70,28 @@ static esp_err_t syslog_send(const char *buf, size_t len) {
     return ESP_ERR_INVALID_STATE;
 }
 
-static void syslog_remove_start(size_t to_remove) {
-    // When we seek and flush, the current position is replaced by '\0' and the original 'char' is saved.
-    // By adding an extra '\0', that char is restored.
-    // fputc(0, stream);
-    off_t eob = ftello(stream);
-    fflush(stream);
-    memmove(stream_buf, &stream_buf[to_remove], eob - to_remove);
-    fseek(stream, -to_remove, SEEK_CUR);
-}
-
 static int syslog_printf(const char *fmt, va_list va) {
-    time_t now = 0;
-    time(&now);
-
-    TickType_t start = xTaskGetTickCount();
-    xSemaphoreTake(lock, portMAX_DELAY);
-    TickType_t end = xTaskGetTickCount();
-    if (pdTICKS_TO_MS(end - start) > 50) {
-        LOCAL_LOG(W, "BLOCKED for %d ms", pdTICKS_TO_MS(end - start));
+    char *buffer = NULL;
+    int written = vasprintf(&buffer, fmt, va);
+    if (written == -1) {
+        LOCAL_LOG(E, "Failed to log '%s'", fmt);
+        goto fail;
     }
-
-    off_t eob = ftello(stream);
-    if (eob > SYSLOG_BUF_MAX_SIZE) {
-        syslog_remove_start(eob - SYSLOG_BUF_MAX_SIZE);
-        memcpy(stream_buf, SNIP, sizeof(SNIP));
-        eob = ftello(stream);
+    if (written == 0) {
+        goto fail;
     }
-    size_t written = vfprintf(stream, fmt, va);
-    fflush(stream);
-    printf("%.*s", written, &stream_buf[eob]);
-    xSemaphoreGive(lock);
+    if (written >= SYSLOG_BUF_MAX_SIZE) {
+        LOCAL_LOG(E, "Failed to log '%s'", fmt);
+        printf("%.*s", written, buffer);
+        goto fail;
+    }
+    printf("%.*s", written, buffer);
+    if (xRingbufferSend(ring, buffer, written, SYSLOG_DONT_WAIT) != pdTRUE) {
+        LOCAL_LOG(E, "Failed append to log");
+        goto fail;
+    }
+    fail:
+    SAFE_FREE(buffer);
     return written;
 }
 
@@ -115,6 +105,8 @@ static void syslog_task(void *arg) {
     dest_addr.sin_port = htons(context->config.syslog_port);
     dest_addr.sin_addr.s_addr = inet_addr(context->config.syslog_hostname);
 
+    void *item = NULL;
+    size_t to_send = 0;
     while (true) {
         // Wait for the network to be up.
         xEventGroupWaitBits(context->event_group, CONTEXT_EVENT_NETWORK, pdFALSE, pdTRUE, portMAX_DELAY);
@@ -125,46 +117,33 @@ static void syslog_task(void *arg) {
         ESP_ERROR_CHECK(syslog_connect());
 
         while (true) {
-            // Lock and fetch the current stream bytes.
-            xSemaphoreTake(lock, portMAX_DELAY);
-            fflush(stream);
-            off_t eob = ftello(stream);
-            if (eob <= 0) {
+            if (item == NULL) {
+                item = xRingbufferReceiveUpTo(ring, &to_send, portMAX_DELAY, SYSLOG_SOCKET_MAX_SIZE);
+            }
+            if (item == NULL || to_send == 0) {
                 // Nothing in the stream, try again in a few seconds.
-                xSemaphoreGive(lock);
                 break;
             }
-            size_t to_send = eob > SYSLOG_SOCKET_MAX_SIZE ? SYSLOG_SOCKET_MAX_SIZE : eob;
-            esp_err_t err = syslog_send(stream_buf, to_send);
+            esp_err_t err = syslog_send(item, to_send);
             if (err != ESP_OK) {
                 // Disconnect and try again in a few seconds.
                 syslog_disconnect();
-                xSemaphoreGive(lock);
                 break;
             }
-            if (eob <= SYSLOG_SOCKET_MAX_SIZE) {
-                // Send was successful and the whole buffer should be discarded, so rewind the stream to 0.
-                fseeko(stream, 0, SEEK_SET);
-                fflush(stream);
-            } else {
-                // Truncate the start.
-                syslog_remove_start(SYSLOG_SOCKET_MAX_SIZE);
-            }
-            xSemaphoreGive(lock);
+            vRingbufferReturnItem(ring, item);
+            item = NULL;
+            to_send = 0;
         }
         // Try again in a few seconds.
-        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(SYSLOG_WAIT_TIME_MS));
+        vTaskDelayUntil(&last_wake_time, SYSLOG_RETRY_TIME_TICKS);
     }
 }
 
 esp_err_t syslog_init(context_t *context) {
     ARG_CHECK(context != NULL, ERR_PARAM_NULL);
 
-    lock = xSemaphoreCreateMutex();
-    CHECK_NO_MEM(lock);
-
-    stream = open_memstream(&stream_buf, &stream_len);
-    CHECK_NO_MEM(stream);
+    ring = xRingbufferCreate(SYSLOG_BUF_MAX_SIZE, RINGBUF_TYPE_BYTEBUF);
+    CHECK_NO_MEM(ring);
 
     // Setup the new remote logging.
     esp_log_set_vprintf(syslog_printf);
