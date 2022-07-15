@@ -145,7 +145,7 @@ static void wifi_dev_init(void) {
                     // Setting a password implies station will connect to all security modes including WEP/WPA.
                     // However, these modes are deprecated and not advisable to be used. Only allow WPA2!
                     .threshold = {
-                            .authmode = WIFI_AUTH_WPA2_PSK,
+                            .authmode = WIFI_AUTH_WPA2_WPA3_PSK,
                             .rssi = -127,
                     },
                     .pmf_cfg = {
