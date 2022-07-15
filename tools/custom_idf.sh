@@ -6,10 +6,15 @@ export IDF_TARGET="$(awk -F'[\(|\)]' '{ gsub("-", ""); print tolower($2) }' <<<$
 
 if [[ "${IDF_TARGET}" == "esp32" ]]; then
   export ESPBAUD=921600
-  export ESPPORT="/dev/cu.usbserial-0001"
-else
+  export ESPPORT="/dev/cu.SLAB_USBtoUART"
+elif [[ "${IDF_TARGET}" == "esp32s2" ]]; then
   export ESPBAUD=3000000
   export ESPPORT="/dev/cu.usbserial-1410"
+elif [[ "${IDF_TARGET}" == "esp32s3" ]]; then
+  export ESPBAUD=2000000
+  export ESPPORT="/dev/cu.usbmodem14101"
+else
+  echo "Target ${IDF_TARGET} is not supported"
 fi
 
 echo "==========================================================================="
