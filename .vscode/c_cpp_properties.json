@@ -1,0 +1,27 @@
+{
+    "configurations": [
+        {
+            "name": "ESP-IDF",
+            "compilerPath": "${config:idf.toolsPath}/tools/xtensa-${config:idf.adapterTargetName}-elf/esp-2021r2-patch5-8.4.0/xtensa-${config:idf.adapterTargetName}-elf/bin/xtensa-${config:idf.adapterTargetName}-elf-gcc",
+            "includePath": [
+                "${config:idf.espIdfPath}/components/**",
+                "${config:idf.espIdfPathWin}/components/**",
+                "${config:idf.espAdfPath}/components/**",
+                "${config:idf.espAdfPathWin}/components/**",
+                "${workspaceFolder}/**"
+            ],
+            "browse": {
+                "path": [
+                    "${config:idf.espIdfPath}/components",
+                    "${config:idf.espIdfPathWin}/components",
+                    "${config:idf.espAdfPath}/components/**",
+                    "${config:idf.espAdfPathWin}/components/**",
+                    "${workspaceFolder}"
+                ],
+                "limitSymbolsToIncludedHeaders": false
+            },
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json"
+        }
+    ],
+    "version": 4
+}

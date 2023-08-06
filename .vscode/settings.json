@@ -1,0 +1,11 @@
+{
+    "cmake.configureOnOpen": true,
+    "idf.adapterTargetName": "esp32",
+    "idf.openOcdConfigs": [
+        "board/esp32-wrover-kit-1.8v.cfg"
+    ],
+    "files.associations": {
+        "*.h": "c",
+        "*.c": "c",
+    }
+}
