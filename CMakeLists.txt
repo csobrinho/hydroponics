@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.16)
 
 set(EXTRA_COMPONENT_DIRS
         "$ENV{IDF_PATH}/../esp-iot-solution/components/i2s_devices/lcd_common"
@@ -8,6 +8,8 @@ set(EXTRA_COMPONENT_DIRS
 # Compile less components.
 set(COMPONENTS cxx app bootloader esptool_py main)
 
+# Enable multi config. Save an individual sdkconfig per target.
+set(SDKCONFIG "sdkconfig_$ENV{IDF_TARGET}")
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
 # Disable the random [0-5s] startup delay for the SNTP.
